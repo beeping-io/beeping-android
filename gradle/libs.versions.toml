@@ -1,0 +1,41 @@
+# Version catalog — single source of truth for plugins, libs, and bundles.
+# https://docs.gradle.org/current/userguide/platforms.html
+
+[versions]
+# Android Gradle Plugin + NDK
+agp = "8.5.2"
+ndk = "27.0.12077973"
+
+# Android SDK levels (Android 7.0+ → Android 15)
+compileSdk = "35"
+targetSdk = "35"
+minSdk = "24"
+
+# Java toolchain — Gradle 8.7 requires JDK 17+
+javaTarget = "17"
+
+# Kotlin BOM — aligns transitive kotlin-stdlib variants brought in by AndroidX
+# libs (avoids duplicate-class errors between 1.6.x stdlib-jdk7/jdk8 and 1.8.x
+# stdlib which already includes JDK7/8 features). Bumped together with Kotlin
+# in BEE-53.
+kotlinBom = "1.8.22"
+
+# AndroidX libraries (replaces deprecated com.android.support)
+androidxAppcompat = "1.7.0"
+androidxCore = "1.13.1"
+
+# Test libraries
+junit = "4.13.2"
+
+[libraries]
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlinBom" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppcompat" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidxCore" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[bundles]
+androidx-base = ["androidx-appcompat", "androidx-core"]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }

@@ -94,7 +94,7 @@ section 11 for state/error semantics.
 To work on this repo you need:
 
 - **Node 20+** for dev tooling (commitlint, lefthook hooks). Install via `nvm`, `fnm` or `brew install node`.
-- **JDK 11** for the legacy build (will become **JDK 17+** post-BEE-52).
+- **JDK 17+** for the Android build (Gradle 8.7 requirement).
 
 ```bash
 # install dev tooling + activate git hooks
@@ -113,13 +113,11 @@ To bypass hooks (never without explicit authorization): `git commit --no-verify`
 
 ---
 
-## 🔧 Building (current legacy stack)
-
-> Until BEE-52 modernizes the build, the project requires JDK 11.
+## 🔧 Building
 
 ```bash
-# macOS
-export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+# macOS — point JAVA_HOME at JDK 17+
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 
 # build the SDK + sample APK and run unit tests
 ./build.sh
