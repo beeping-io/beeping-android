@@ -14,8 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-28 (trigger: `Initial ROADMAP creation`)
+- **Última actualización**: 2026-04-28 (trigger: `Closed BEE-51`)
 - **Story points totales**: 99 SP (Phase 8)
+- **Story points cerrados**: 2 SP (BEE-51)
+- **Story points remaining**: 97 SP
 - **Days esfuerzo (con margen)**: 15 días hábiles
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
@@ -25,6 +27,33 @@
 ---
 
 ## 📜 History
+
+### [2026-04-28] — Closed BEE-51
+
+**Trigger detallado**: BEE-51 cerrada el 2026-04-28 — la fecha real coincidió con la estimada (mismo día). Scope refinado durante el work: el "rename" del título original no aplicaba (init creó repo desde cero, no rename); el trabajo real fue commitlint preset + lefthook hooks + CI commitlint job + branch protection en develop+main.
+
+**Net delta global**: **0 días** — milestone Phase 8 sigue terminando 2026-05-18.
+
+**Nueva fecha fin estimada**: 2026-05-18 (lun) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio — R1, R2, R3 siguen vigentes).
+
+#### Adelantados / retrasados
+
+- (ninguno) — BEE-51 cerró exactamente en su `Fin estimado`.
+
+#### Cambios de estado
+
+- BEE-51: `⏳ Pending` → `✅ Done` (2 SP cerrados; 97 SP remaining de 99 totales)
+
+#### Notas
+
+- BEE-51 cerró con **1 ciclo de Human QA Checkpoint** (sin rework) — caso ideal del workflow.
+- Branch protection ahora activa en `develop` y `main`: todos los commits futuros deben ir vía PR.
+- 3 follow-ups capturados en `docs/PENDING.md` (lefthook pre-commit hooks adicionales, Node 24 migration GH Actions, CI triggers para modo individual).
+- Velocidad observada con 1 task: insuficiente para recalibrar — esperar a 3-4 cierres antes de ajustar el `8 SP/día` asumido.
+
+---
 
 ### [2026-04-28] — Initial ROADMAP creation
 
