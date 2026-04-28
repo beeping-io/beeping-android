@@ -1,0 +1,18 @@
+{
+  "name": "@beeping.io/beeping-android-devtools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dev tooling (commitlint + lefthook hooks) for the beeping-android Kotlin SDK repo. Not the SDK itself — the SDK is published as Maven Central artifact io.beeping:beeping-android.",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "prepare": "lefthook install",
+    "commitlint": "commitlint --from origin/develop --to HEAD --verbose"
+  },
+  "devDependencies": {
+    "@beeping.io/commitlint-config": "^0.1.0",
+    "@commitlint/cli": "^19.8.0",
+    "lefthook": "^1.7.0"
+  }
+}

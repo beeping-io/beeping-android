@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [develop, main]
+    branches:
+      - develop
+      - main
+      - 'milestone/**'
   pull_request:
     branches: [develop, main]
   workflow_dispatch:
@@ -57,3 +60,37 @@ jobs:
           path: AndroidBeepingCore/build/reports/tests/test/
           if-no-files-found: ignore
           retention-days: 7
+
+  commitlint:
+    name: 📝 Commitlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🟢 Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install deps
+        run: npm ci
+
+      - name: 📝 Lint commits
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            BASE="HEAD~1"
+            HEAD="HEAD"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+          echo "Linting commits from $BASE to $HEAD"
+          npx commitlint --from "$BASE" --to "$HEAD" --verbose

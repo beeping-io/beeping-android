@@ -66,6 +66,10 @@ coverage/
 jacoco.xml
 jacoco/
 
+# ── Node / npm (dev tooling only — SDK is Kotlin/Gradle) ─────────────────
+node_modules/
+npm-debug.log*
+
 # ── Generated ────────────────────────────────────────────────────────────
 generated/
 

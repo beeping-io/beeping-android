@@ -89,6 +89,30 @@ section 11 for state/error semantics.
 
 ---
 
+## 💻 Local development setup
+
+To work on this repo you need:
+
+- **Node 20+** for dev tooling (commitlint, lefthook hooks). Install via `nvm`, `fnm` or `brew install node`.
+- **JDK 11** for the legacy build (will become **JDK 17+** post-BEE-52).
+
+```bash
+# install dev tooling + activate git hooks
+npm install
+```
+
+Hooks active after `npm install`:
+
+- 🪝 **`commit-msg`** — every commit message must follow Conventional Commits
+  (validated by [commitlint](https://commitlint.js.org/) with the shared preset
+  [`@beeping.io/commitlint-config`](https://github.com/beeping-io/commitlint-config))
+- 🛡️ **`pre-push`** — direct pushes to `develop` / `main` are blocked
+  (defense in depth — GitHub branch protection is authoritative)
+
+To bypass hooks (never without explicit authorization): `git commit --no-verify`.
+
+---
+
 ## 🔧 Building (current legacy stack)
 
 > Until BEE-52 modernizes the build, the project requires JDK 11.
