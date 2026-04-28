@@ -14,11 +14,12 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-28 (trigger: `Closed BEE-51`)
+- **Última actualización**: 2026-04-28 (trigger: `Closed BEE-52 + BEE-54`)
 - **Story points totales**: 99 SP (Phase 8)
-- **Story points cerrados**: 2 SP (BEE-51)
-- **Story points remaining**: 97 SP
+- **Story points cerrados**: 12 SP (BEE-51, BEE-52, BEE-54)
+- **Story points remaining**: 87 SP (12.1% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
+- **Fecha fin estimada actualizada**: 2026-05-15 (vie) — adelantada 3 días
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
@@ -27,6 +28,46 @@
 ---
 
 ## 📜 History
+
+### [2026-04-28] — Closed BEE-52 + BEE-54 (combined execution)
+
+**Trigger detallado**: BEE-52 y BEE-54 cerradas conjuntamente porque Gradle 8.7 (BEE-52 scope) requiere AGP 8.4+ (BEE-54 scope) — no se podían separar técnicamente. Ejecución atómica en un commit (`9104343`).
+
+**Net delta global**: **-3 días** (adelanto). 12 SP cerrados en 1 día calendario vs planificación de ~2 días (BEE-52 estaba para 4-29, BEE-54 para 5-1, ambas cerradas hoy 4-28).
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — antes 2026-05-18 (lun).
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio — R1, R2, R3 siguen vigentes; el adelanto no afecta los riesgos externos).
+
+#### Adelantados
+
+- BEE-52: 2026-04-29 → 2026-04-28 (-1 día)
+- BEE-54: 2026-05-01 → 2026-04-28 (-3 días, ejecutada fuera de orden secuencial junto con BEE-52)
+- Milestone Phase 8 (BEE-66 final): 2026-05-18 → 2026-05-15 (-3 días)
+
+#### Retrasados
+
+- (ninguno)
+
+#### Sin cambio
+
+- BEE-51 ✅ (ya cerrada en sesión anterior)
+- BEE-53, BEE-55..BEE-65 ⏳ (forward tasks; sus `Fin est.` individuales NO se recalcularon — ya no aplica orden estricto de identifier ya que BEE-54 se ejecutó antes que BEE-53)
+
+#### Cambios de estado de riesgo
+
+- (ninguno) — R1/R2/R3 siguen idénticos.
+
+#### Notas
+
+- Ejecución conjunta BEE-52+54 fue forzada por dependencia técnica Gradle↔AGP. Documentada en commit message + en ambos comments de Linear.
+- 1 ciclo de Human QA Checkpoint (sin rework) para ambas — caso ideal del workflow.
+- AndroidX migration mínima realizada (3 imports + dep replacement). La migración full Java→Kotlin sigue siendo BEE-53.
+- ABI cleanup parcial via `abiFilters` adelanta parte de BEE-55. El cleanup físico de los `.so` legacy queda pendiente en BEE-55.
+- Velocidad observada: **12 SP en 1 sesión de trabajo** (~2 horas calendario) — efectivo ~6× del baseline de 8 SP/día. Esto es atribuible al ejecutor (Claude) y al alcance preciso de las tasks. **Recalibración del baseline NO aplicada** todavía — sample size de 3 cierres es insuficiente y distorsiona estimates downstream del ecosistema (sdk-iphone, beeping-flutter, etc.) que se calibran a velocidad humana.
+- 1 follow-up nuevo capturado en `docs/PENDING.md`: `pending-004` (bump AGP 8.5 → 8.7+).
+
+---
 
 ### [2026-04-28] — Closed BEE-51
 

@@ -14,15 +14,15 @@
 | **Fecha de inicio del proyecto** | 2026-04-28 (mar) |
 | **Velocidad asumida** | 8 story points / día hábil |
 | **Margen de riesgo** | 20% (planificación defensiva) |
-| **Fecha fin estimada (con margen)** | 2026-05-18 (lun) |
-| **Fecha fin sin margen** | 2026-05-14 (jue) |
+| **Fecha fin estimada (con margen)** | 2026-05-15 (vie) — adelantada -3 días respecto al snapshot inicial |
+| **Fecha fin sin margen** | 2026-05-13 (mié) |
 | **Story points totales** | 99 SP (Phase 8) |
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-04-28 (trigger: `Closed BEE-51`) |
-| **Tasks completadas** | 1 / 16 (BEE-51) · 2 SP cerrados de 99 |
-| **Velocidad observada** | 1 task / día (muestra demasiado pequeña; recalibrar tras 3-4 cierres) |
+| **Última actualización** | 2026-04-28 (trigger: `Closed BEE-52 + BEE-54`) |
+| **Tasks completadas** | 3 / 16 (BEE-51, BEE-52, BEE-54) · 12 SP cerrados de 99 (12.1%) |
+| **Velocidad observada** | 12 SP / día con Claude (BEE-51+52+54 en una sesión); recalibración deferred — sample size aún chico |
 
 ---
 
@@ -54,9 +54,9 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | # | Linear | Título | SP | cumSP | Fin est. | Estado |
 |---|---|---|---|---|---|---|
 | 1 | [BEE-51](https://linear.app/me8/issue/BEE-51) | 🏷️ Rename `sdk-android` → `beeping-android` + Apache-2.0 + Conventional Commits | 2 | 2 | 2026-04-28 (mar) | ✅ Done |
-| 2 | [BEE-52](https://linear.app/me8/issue/BEE-52) | ⬆️ Migración a Gradle 8.7 + Kotlin DSL + version catalogs | 5 | 7 | 2026-04-29 (mié) | ⏳ Pending |
+| 2 | [BEE-52](https://linear.app/me8/issue/BEE-52) | ⬆️ Migración a Gradle 8.7 + Kotlin DSL + version catalogs | 5 | 7 | 2026-04-28 (mar) | ✅ Done |
 | 3 | [BEE-53](https://linear.app/me8/issue/BEE-53) | 🔄 Migración completa Java → Kotlin 2.0 + AndroidX | 13 | 20 | 2026-04-30 (jue) | ⏳ Pending |
-| 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-05-01 (vie) | ⏳ Pending |
+| 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-04-28 (mar) | ✅ Done |
 | 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 27 | 2026-05-04 (lun) | ⏳ Pending |
 | 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-05-05 (mar) | ⏳ Pending |
 | 7 | [BEE-57](https://linear.app/me8/issue/BEE-57) | 🎭 Strategy pattern: `LocalEncoder` (JNI) + `CloudEncoder` (Ktor) | 8 | 43 | 2026-05-06 (mié) | ⏳ Pending |
@@ -68,8 +68,10 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-12 (mar) | ⏳ Pending |
 | 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 81 | 2026-05-14 (jue) | ⏳ Pending |
 | 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) | 5 | 86 | 2026-05-14 (jue) | ⏳ Pending |
-| 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 99 | 2026-05-18 (lun) | ⏳ Pending |
-| | **Totales** | | **99** | **99** | **2026-05-18** | |
+| 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 99 | 2026-05-15 (vie) | ⏳ Pending |
+| | **Totales** | | **99** | **99** | **2026-05-15** | |
+
+> **Nota** sobre fechas forward: las `Fin est.` de BEE-53, BEE-55..BEE-65 NO se han recalculado individualmente tras el cierre de BEE-52+54 — sólo la fecha fin del milestone (BEE-66) se ajusta con el adelanto de -3 días (combined effect). Recalcular forward dates per-task **no aporta valor** porque ya no se ejecutan estrictamente en orden de identifier (BEE-54 se cerró antes que BEE-53, por ejemplo). El budget de 15 días totales se mantiene como referencia.
 
 ### Estados individuales
 
