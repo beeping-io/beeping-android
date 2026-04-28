@@ -1,22 +1,75 @@
-# Android Studio / IntelliJ
+# ── Android Studio / IntelliJ ────────────────────────────────────────────
 .idea/
 *.iml
+*.iws
+*.ipr
 
-# VS Code
+# ── VS Code ──────────────────────────────────────────────────────────────
 .vscode/
 
-# Gradle
+# ── Gradle ───────────────────────────────────────────────────────────────
 .gradle/
 build/
 
-# Local config
+# ── Local config (machine-specific, NEVER commit) ────────────────────────
 local.properties
+keystore.properties
+*.keystore
+*.jks
 
-# OS
+# ── Secrets / env ────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.gpg
+*.asc
+
+# ── Native build (NDK / CMake) ───────────────────────────────────────────
+.externalNativeBuild/
+.cxx/
+*.o
+*.obj
+
+# ── Android artifacts ────────────────────────────────────────────────────
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+release/
+out/
+bin/
+
+# ── Java / Kotlin runtime ────────────────────────────────────────────────
+*.class
+hs_err_pid*
+replay_pid*
+
+# ── Logs ─────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS junk ──────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Captures
-captures/
+# ── Test reports ─────────────────────────────────────────────────────────
+test-results/
+coverage/
+.nyc_output/
+*.exec
+jacoco.xml
+jacoco/
 
-# (full Android-comprehensive .gitignore added in Paso 3)
+# ── Generated ────────────────────────────────────────────────────────────
+generated/
+
+# ── Documentation builds (Dokka, mkdocs, etc.) ───────────────────────────
+docs/_build/
+docs/api/  # generated Dokka output (BEE-53+)
+site/
