@@ -14,11 +14,12 @@ minSdk = "24"
 # Java toolchain — Gradle 8.7 requires JDK 17+
 javaTarget = "17"
 
-# Kotlin BOM — aligns transitive kotlin-stdlib variants brought in by AndroidX
-# libs (avoids duplicate-class errors between 1.6.x stdlib-jdk7/jdk8 and 1.8.x
-# stdlib which already includes JDK7/8 features). Bumped together with Kotlin
-# in BEE-53.
-kotlinBom = "1.8.22"
+# Kotlin — applied to the Android modules in BEE-53 (Java→Kotlin migration)
+kotlin = "2.0.21"
+kotlinBom = "2.0.21"
+
+# Kotlin coroutines (replaces legacy Timer/TimerTask polling loops)
+coroutines = "1.9.0"
 
 # AndroidX libraries (replaces deprecated com.android.support)
 androidxAppcompat = "1.7.0"
@@ -29,6 +30,7 @@ junit = "4.13.2"
 
 [libraries]
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlinBom" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppcompat" }
 androidx-core = { module = "androidx.core:core", version.ref = "androidxCore" }
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -39,3 +41,4 @@ androidx-base = ["androidx-appcompat", "androidx-core"]
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

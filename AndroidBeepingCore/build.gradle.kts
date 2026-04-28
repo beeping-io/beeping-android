@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -33,6 +34,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     packaging {
         // Required for 16 KB page size compliance (Android 15+ Play Store policy).
         // Vendored .so files do NOT comply yet — that's deferred to BEE-65 when
@@ -54,5 +59,6 @@ dependencies {
     implementation(platform(libs.kotlin.bom))
 
     implementation(libs.bundles.androidx.base)
+    implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
 }
