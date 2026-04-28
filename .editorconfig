@@ -1,0 +1,37 @@
+# EditorConfig — https://editorconfig.org
+#
+# Universal style baseline. Real ktlint + detekt + Android Lint config
+# lands in BEE-63 when the Kotlin migration is far enough along.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.{kt,kts,java}]
+indent_size = 4
+max_line_length = 120
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+[*.{xml,html,svg}]
+indent_size = 4
+
+[*.{yml,yaml,json,md}]
+indent_size = 2
+
+[*.gradle]
+indent_size = 4
+
+[*.{properties,toml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.sh]
+indent_size = 2
