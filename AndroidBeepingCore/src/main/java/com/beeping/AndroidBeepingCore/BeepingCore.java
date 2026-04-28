@@ -1,0 +1,330 @@
+/* ----------------------------------------------------------------------------
+ * BeepingCore java class
+ * ----------------------------------------------------------------------------- */
+
+package com.beeping.AndroidBeepingCore;
+
+import android.Manifest;
+import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.content.Context;
+import android.os.Handler;
+import android.media.AudioManager;
+
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class BeepingCore {
+
+    private Context bContext;
+    private Thread mThread = null;
+    private BeepHandler beeps;
+    private long mBeepingObject = 0; //pointer to exchange with JNI class
+    private BeepingCoreJNI mBeepingCoreJNI = new BeepingCoreJNI(this);
+    private char[] fullCode = new char[10];
+    private boolean mDecoding = false;
+
+    // Timmers
+    Timer timer = null;
+    TimerTask tt = null;
+
+    final String TAG = "BEEPING:SDK";
+
+    private final int RECORD_AUDIO_PERMISSIONS = 1;
+
+    private boolean ensureNativeLoaded() {
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            Log.e(TAG, "Native library not loaded; BeepingCore will not start.");
+            // TODO: notify host app about native load failure via callback
+            return false;
+        }
+        return true;
+    }
+
+    //Class constructor
+    public BeepingCore(Context context) {
+
+        this.bContext = context;
+
+        Log.d(TAG, "CORE");
+
+        beeps = new BeepHandler();
+        beeps.addListener((BeepingCoreEvent) context);
+
+        Log.d(TAG, "AUDIO-MANAGER");
+        AudioManager am = (AudioManager) bContext.getSystemService(Context.AUDIO_SERVICE);
+        am.requestAudioFocus(new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(
+                        new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_GAME)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                )
+                .setAcceptsDelayedFocusGain(true)
+                .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
+                    @Override
+                    public void onAudioFocusChange(int focusChange) {
+                        switch (focusChange) {
+                            case AudioManager.AUDIOFOCUS_GAIN:
+                                Log.d(TAG, "AUDIOFOCUS_GAIN");
+                                break;
+                            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+                                Log.d(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                                break;
+                            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+                                Log.d("SDK:BEEPING:CORE", "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS:
+                                Log.d(TAG, "AUDIOFOCUS_LOSS");
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                                break;
+                            case AudioManager.AUDIOFOCUS_REQUEST_FAILED:
+                                Log.d(TAG, "AUDIOFOCUS_REQUEST_FAILED");
+                                break;
+
+                        }
+                    }
+                }).build()
+        );
+
+        am.requestAudioFocus(new AudioFocusRequest.Builder(AudioManager.STREAM_MUSIC)
+                .setAudioAttributes(
+                        new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_GAME)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                )
+                .setAcceptsDelayedFocusGain(true)
+                .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
+                    @Override
+                    public void onAudioFocusChange(int focusChange) {
+                        switch (focusChange) {
+                            case AudioManager.AUDIOFOCUS_GAIN:
+                                Log.d(TAG, "AUDIOFOCUS_GAIN");
+                                break;
+                            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+                                Log.d(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                                break;
+                            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+                                Log.d("SDK:BEEPING:CORE", "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS:
+                                Log.d(TAG, "AUDIOFOCUS_LOSS");
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                                break;
+                            case AudioManager.AUDIOFOCUS_REQUEST_FAILED:
+                                Log.d(TAG, "AUDIOFOCUS_REQUEST_FAILED");
+                                break;
+
+                        }
+                    }
+                }).build()
+        );
+
+    }
+
+    private void alloc(){
+
+        if (!ensureNativeLoaded()) {
+            return;
+        }
+
+        Log.d(TAG, "ALLOC");
+
+        mBeepingObject = mBeepingCoreJNI.init();
+
+        //bContext
+        mThread = new Thread()
+        {
+            public void run()
+            {
+                setPriority(Thread.MAX_PRIORITY);
+                mBeepingCoreJNI.start(mBeepingObject);
+            }
+        };
+        mThread.start();
+        configure(EnumBeepingMode.MODE_NONAUDIBLE);
+    }
+
+    private int dealloc()
+    {
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            return 0;
+        }
+
+        Log.d(TAG, "DEALLOC");
+        int ret = mBeepingCoreJNI.dealloc(mBeepingObject);
+        try {
+            mThread.join();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        mThread = null;
+
+        return ret;
+    }
+
+    private void configure(final EnumBeepingMode mode) {
+
+        if (!ensureNativeLoaded()) {
+            return;
+        }
+
+        Log.d(TAG, "CONFIGURE");
+
+        int ret = 0;
+        if (mode==EnumBeepingMode.MODE_AUDIBLE) {
+            ret = mBeepingCoreJNI.configure(2, mBeepingObject);
+        } else if (mode==EnumBeepingMode.MODE_NONAUDIBLE) {
+            ret = mBeepingCoreJNI.configure(3, mBeepingObject);
+        } else if (mode==EnumBeepingMode.MODE_HIDDEN) {
+            ret = mBeepingCoreJNI.configure(4, mBeepingObject);
+        } else if (mode==EnumBeepingMode.MODE_ALL) {
+            ret = mBeepingCoreJNI.configure(5, mBeepingObject);
+        } else if (mode==EnumBeepingMode.MODE_CUSTOM) {
+            ret = mBeepingCoreJNI.configure(6, mBeepingObject);
+        } else {
+            ret = mBeepingCoreJNI.configure(5, mBeepingObject);
+        }
+    }
+    public void startBeepingListen()
+    {
+        if (!ensureNativeLoaded()) {
+            return;
+        }
+        this.checkMicrophone();
+    }
+
+    private String getBeepId()
+    {
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            return "";
+        }
+        mBeepingCoreJNI.getDecodedString(fullCode, mBeepingObject);
+
+        return this.getBeepKey();
+    }
+
+    public void stopBeepingListen()
+    {
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            Log.w(TAG, "stopBeepingListen called but native library is not loaded.");
+            return;
+        }
+
+        if(mDecoding == true){
+            dealloc();
+        }
+
+        mDecoding = false;
+        mBeepingCoreJNI.stopBeepingListen(mBeepingObject);
+        Log.d(TAG, "stopBeepingListen");
+    }
+
+    private String getBeepKey() {
+        char[] beepKey = new char[5];
+
+        for (int i=0;i<5;i++)
+            beepKey[i] = fullCode[i];
+
+        return String.valueOf(beepKey);
+    }
+
+    //Permissions
+    private void checkMicrophone () {
+
+        if (!ensureNativeLoaded()) {
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(bContext,
+                Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Se inicializa el timmer hasta que los permisos estén activos
+            this.timer = new Timer();
+            this.tt = new TimerTask() {
+
+                public void run()
+                {
+                    if (ContextCompat.checkSelfPermission(bContext,
+                            Manifest.permission.RECORD_AUDIO)
+                            == PackageManager.PERMISSION_GRANTED) {
+
+                        if(mThread == null && mDecoding == false){
+                            alloc();
+                        }
+
+                        mDecoding = true;
+
+                        mBeepingCoreJNI.startBeepingListen(mBeepingObject);
+
+                        timer.cancel();
+
+                        Log.d(TAG, "LISTENING");
+
+                    }
+                };
+            };
+            this.timer.schedule(tt, 500, 500);
+
+            //Give user option to still opt-in the permissions
+            ActivityCompat.requestPermissions((Activity) bContext ,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    RECORD_AUDIO_PERMISSIONS);
+        }
+        else {
+
+            if(mThread == null && mDecoding == false){
+                alloc();
+            }
+
+            mDecoding = true;
+
+            mBeepingCoreJNI.startBeepingListen(mBeepingObject);
+
+            Log.d(TAG, "LISTENING");
+        }
+    }
+
+    //User callback
+    protected void BeepingCallback(int value) {
+
+        final String TAG = "BEEPING:SDK";
+
+        Log.d(TAG, "BeepingCallback");
+
+        if (value == BeepingCoreJNI.BC_TOKEN_END_OK) {
+
+            Log.d(TAG, "BC_TOKEN_END");
+
+            new Handler(bContext.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    beeps.sendListener(getBeepId());
+                }
+
+            });
+
+        }
+    }
+
+}
+

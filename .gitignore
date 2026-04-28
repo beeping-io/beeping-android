@@ -1,0 +1,22 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Gradle
+.gradle/
+build/
+
+# Local config
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Captures
+captures/
+
+# (full Android-comprehensive .gitignore added in Paso 3)
