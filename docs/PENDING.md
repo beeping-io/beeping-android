@@ -94,13 +94,13 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
   Node 24 nativo van llegando.
 - 🚦 **Estado**: 🆕 Nuevo
 
-### ⏳ pending-004 — Bump AGP 8.5.2 → 8.7+ + Gradle 8.7 → 8.10+ (silenciar warning compileSdk 35)
+### ⏳ pending-005 — Toolchain deterministic JDK 17 download (Foojay alternative)
 
 - 📅 **Fecha añadida**: 2026-04-28
-- 🏷️ **Tipo**: chore
-- 🧭 **Trigger**: durante BEE-52 + BEE-54 se eligió AGP 8.5.2 (cumple "AGP 8.5+" del scope) + Gradle 8.7 (lo que pedía BEE-52). Build pasa pero AGP 8.5.2 emite WARNING al usar `compileSdk = 35` (tested up to 34). Bump a AGP 8.7+ requiere Gradle 8.9+. Funciona perfecto pero se queda con un warning ruidoso.
-- ⚙️ **Acción requerida**: bumpear `agp = "8.5.2"` → `"8.7.3"` o más reciente en `gradle/libs.versions.toml` + actualizar el wrapper a Gradle 8.10.2 (necesita pasar SHA256 explícito al `./gradlew wrapper --gradle-version 8.10.2 --distribution-type bin --gradle-distribution-sha256-sum <SHA>`). SHA256 de las distros: `https://gradle.org/release-checksums/`. Validar build verde + warning desaparecido.
-- 🚧 **Bloqueado por**: nada — trabajo de housekeeping. Bueno empotrarlo durante BEE-53 (Java→Kotlin migration) que va a tocar build.gradle.kts igualmente.
+- 🏷️ **Tipo**: infra
+- 🧭 **Trigger**: durante BEE-1793 se intentó añadir Foojay toolchain resolver (`org.gradle.toolchains.foojay-resolver-convention`) + `kotlin { jvmToolchain(17) }` para garantizar descarga automática de JDK 17 en cualquier máquina/CI sin JDK 17 local. Foojay tuvo un outage transitorio ("There was an internal error and the pkg cache is currently being restored") que bloqueó el build verification. Como el feedback del usuario era "no riesgos", se eligió dropear Foojay+jvmToolchain y quedarse con `compilerOptions { jvmTarget = JvmTarget.JVM_17 }` solo (bytecode 17, JDK runtime = el del entorno). Desventaja: el build no es estrictamente determinista entre máquinas — usa el JDK que esté instalado.
+- ⚙️ **Acción requerida**: evaluar alternativas a Foojay para el toolchain auto-download (Adoptium resolver, custom `JavaToolchainResolverPlugin`, o documentar required JDK 17 + provisioning via brew/apt/sdkman). Cuando la elección esté clara, re-añadir `jvmToolchain(17)` en ambos `:AndroidBeepingCore` y `:app` build files. CI ya usa `actions/setup-java@v4` con `java-version: '17'` así que la determinismo en CI ya está cubierto — esto es para developers locales.
+- 🚧 **Bloqueado por**: nada — investigación + decisión.
 - 🚦 **Estado**: 🆕 Nuevo
 
 ### ⏳ pending-003 — Añadir `feat/**`, `fix/**`, etc. a triggers de CI (modo individual)
