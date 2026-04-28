@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-28 (trigger: `Closed BEE-52 + BEE-54`)
+- **Última actualización**: 2026-04-28 (trigger: `Closed BEE-53`)
 - **Story points totales**: 99 SP (Phase 8)
-- **Story points cerrados**: 12 SP (BEE-51, BEE-52, BEE-54)
-- **Story points remaining**: 87 SP (12.1% completado)
+- **Story points cerrados**: 25 SP (BEE-51, BEE-52, BEE-53, BEE-54)
+- **Story points remaining**: 74 SP (25.3% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — adelantada 3 días
 
@@ -28,6 +28,32 @@
 ---
 
 ## 📜 History
+
+### [2026-04-28] — Closed BEE-53
+
+**Trigger detallado**: BEE-53 cerrada — migración completa Java → Kotlin 2.0 (6 ficheros), 3 ficheros muertos eliminados (WavFile + WavFileException + ApplicationTest), bug AudioFocus duplicado fixed, Timer/TimerTask → coroutines. JNI ABI preservada al 100% (verificado javap). 1 commit (`011f6ec`).
+
+**Net delta global**: **0 días adicionales** (la fecha fin del milestone se mantiene en 2026-05-15 — el adelanto de BEE-53 se computa contra la fecha que ya estaba ajustada para BEE-52+54).
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio (ya adelantada de 2026-05-18 en el closure anterior).
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-53: 2026-04-30 → 2026-04-28 (-2 días respecto a su Fin estimado original)
+- Acumulado del milestone: 25 SP cerrados en 1 sesión calendario vs ~3 días planificados — alta velocidad sostenida
+
+#### Cambios de estado
+
+- BEE-53: `⏳ Pending` → `✅ Done` (13 SP, la task más grande de Phase 8 hasta ahora)
+
+#### Notas
+
+- BEE-53 cerró con 1 ciclo de Human QA (sin rework). El usuario aprobó pero pidió "no riesgos" — los caveats C1 (`kotlinOptions` deprecated), C2 (no toolchain resolver), y `pending-004` (AGP 8.5 → 8.7 + Gradle 8.7 → 8.10) se atajan en una stabilization mini-task antes de BEE-55.
+- 4/16 tasks closed, 25 SP, en una sesión efectiva — velocidad observada >>baseline pero no recalibramos hasta 5+ closures.
+
+---
 
 ### [2026-04-28] — Closed BEE-52 + BEE-54 (combined execution)
 

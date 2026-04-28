@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-04-28 (trigger: `Closed BEE-52 + BEE-54`) |
-| **Tasks completadas** | 3 / 16 (BEE-51, BEE-52, BEE-54) · 12 SP cerrados de 99 (12.1%) |
-| **Velocidad observada** | 12 SP / día con Claude (BEE-51+52+54 en una sesión); recalibración deferred — sample size aún chico |
+| **Última actualización** | 2026-04-28 (trigger: `Closed BEE-53`) |
+| **Tasks completadas** | 4 / 16 (BEE-51, BEE-52, BEE-53, BEE-54) · 25 SP cerrados de 99 (25.3%) |
+| **Velocidad observada** | 25 SP en una sesión (BEE-51+52+53+54); recalibración deferred — esperar 5+ cierres |
 
 ---
 
@@ -55,7 +55,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 |---|---|---|---|---|---|---|
 | 1 | [BEE-51](https://linear.app/me8/issue/BEE-51) | 🏷️ Rename `sdk-android` → `beeping-android` + Apache-2.0 + Conventional Commits | 2 | 2 | 2026-04-28 (mar) | ✅ Done |
 | 2 | [BEE-52](https://linear.app/me8/issue/BEE-52) | ⬆️ Migración a Gradle 8.7 + Kotlin DSL + version catalogs | 5 | 7 | 2026-04-28 (mar) | ✅ Done |
-| 3 | [BEE-53](https://linear.app/me8/issue/BEE-53) | 🔄 Migración completa Java → Kotlin 2.0 + AndroidX | 13 | 20 | 2026-04-30 (jue) | ⏳ Pending |
+| 3 | [BEE-53](https://linear.app/me8/issue/BEE-53) | 🔄 Migración completa Java → Kotlin 2.0 + AndroidX | 13 | 20 | 2026-04-28 (mar) | ✅ Done |
 | 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-04-28 (mar) | ✅ Done |
 | 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 27 | 2026-05-04 (lun) | ⏳ Pending |
 | 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-05-05 (mar) | ⏳ Pending |
