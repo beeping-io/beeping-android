@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-04-29 (trigger: `Closed BEE-1793` + Scope change: +2 SP) |
-| **Tasks completadas** | 5 / 17 (BEE-51, BEE-52, BEE-53, BEE-54, BEE-1793) · 27 SP cerrados de 101 (26.7%) |
-| **Velocidad observada** | 27 SP en 2 sesiones (5 closures); recalibración deferred — esperar más data |
+| **Última actualización** | 2026-04-29 (trigger: `Closed BEE-55`) |
+| **Tasks completadas** | 6 / 17 (BEE-51, BEE-52, BEE-53, BEE-54, BEE-55, BEE-1793) · 29 SP cerrados de 101 (28.7%) |
+| **Velocidad observada** | 29 SP en 2 sesiones (6 closures); recalibración deferred — esperar más data |
 
 ---
 
@@ -58,7 +58,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 3 | [BEE-53](https://linear.app/me8/issue/BEE-53) | 🔄 Migración completa Java → Kotlin 2.0 + AndroidX | 13 | 20 | 2026-04-28 (mar) | ✅ Done |
 | 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-04-28 (mar) | ✅ Done |
 | 4b | [BEE-1793](https://linear.app/me8/issue/BEE-1793) | 🛠️ Build chain stabilization (Foojay + AGP 8.7 + Gradle 8.10) — **scope addition durante execution** | 2 | 27 | 2026-04-29 (mié) | ✅ Done |
-| 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 29 | 2026-05-04 (lun) | ⏳ Pending |
+| 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 29 | 2026-04-29 (mié) | ✅ Done |
 | 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-05-05 (mar) | ⏳ Pending |
 | 7 | [BEE-57](https://linear.app/me8/issue/BEE-57) | 🎭 Strategy pattern: `LocalEncoder` (JNI) + `CloudEncoder` (Ktor) | 8 | 43 | 2026-05-06 (mié) | ⏳ Pending |
 | 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-05-06 (mié) | ⏳ Pending |

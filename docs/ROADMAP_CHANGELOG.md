@@ -14,11 +14,11 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-29 (trigger: `Closed BEE-1793` + Scope change: +2 SP)
+- **Última actualización**: 2026-04-29 (trigger: `Closed BEE-55`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 27 SP (BEE-51, BEE-52, BEE-53, BEE-54, BEE-1793)
-- **Story points remaining**: 74 SP (26.7% completado)
-- **Days esfuerzo (con margen)**: 15 días hábiles (sin cambio — BEE-1793 ejecutada en paralelo)
+- **Story points cerrados**: 29 SP (BEE-51, BEE-52, BEE-53, BEE-54, BEE-55, BEE-1793)
+- **Story points remaining**: 72 SP (28.7% completado)
+- **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
@@ -28,6 +28,36 @@
 ---
 
 ## 📜 History
+
+### [2026-04-29] — Closed BEE-55
+
+**Trigger detallado**: BEE-55 cerrada — eliminados 4 directorios `jniLibs/{mips,mips64,armeabi,x86}` + sus `.so` files. Solo quedan las 3 ABIs Google-Play-compatible (arm64-v8a, armeabi-v7a, x86_64).
+
+**Net delta global**: 0 días en fin date. BEE-55 cerró **6 días antes** de su Fin estimado (2026-05-04 → 2026-04-29) pero ese adelanto ya está absorbido por la velocidad acumulada.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-55: 2026-05-04 → 2026-04-29 (-6 días)
+
+#### Cambios de estado
+
+- BEE-55: `⏳ Pending` → `✅ Done` (2 SP)
+
+#### Hallazgo / lección
+
+- Hipótesis previa (BEE-54 + BEE-1793) era que `defaultConfig.ndk.abiFilters` ya filtraba las 4 ABIs deprecadas del AAR. **Era falso**: `abiFilters` en bloque `ndk{}` solo aplica a código nativo COMPILADO, no a `.so` vendoreados. El delete físico es lo que efectivamente reduce el AAR.
+- Resultado: AAR 614 KB → **262 KB** (-57%). Mucho mejor de lo esperado.
+
+#### Notas
+
+- 6/17 tasks cerradas, 29/101 SP, en 2 sesiones efectivas.
+- Próxima task: BEE-56 (8 SP) — la primera task de feature real (API pública nueva `BeepingClient`).
+
+---
 
 ### [2026-04-29] — Closed BEE-1793 (Scope change: +2 SP)
 
