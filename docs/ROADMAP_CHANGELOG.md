@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-29 (trigger: `Closed BEE-55`)
+- **Última actualización**: 2026-04-29 (trigger: `Closed BEE-56`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 29 SP (BEE-51, BEE-52, BEE-53, BEE-54, BEE-55, BEE-1793)
-- **Story points remaining**: 72 SP (28.7% completado)
+- **Story points cerrados**: 37 SP (BEE-51..56 + BEE-1793)
+- **Story points remaining**: 64 SP (36.6% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,40 @@
 ---
 
 ## 📜 History
+
+### [2026-04-29] — Closed BEE-56
+
+**Trigger detallado**: BEE-56 cerrada — nueva API SHELL `BeepingClient` + sealed classes (BeepingEvent, BeepingError, BeepingMode) + BeepingPayload + internal Encoder interface. Tests Turbine verdes. La implementación real (encode/decode) llega en BEE-57.
+
+**Net delta global**: 0 días en fin date. BEE-56 cerró **6 días antes** de su Fin estimado (2026-05-05 → 2026-04-29). Adelanto absorbido por velocidad acumulada.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-56: 2026-05-05 → 2026-04-29 (-6 días)
+
+#### Cambios de estado
+
+- BEE-56: `⏳ Pending` → `✅ Done` (8 SP)
+
+#### Detalle implementation
+
+- 7 ficheros `.kt` nuevos: `BeepingClient`, `BeepingEvent`, `BeepingError`, `BeepingMode`, `BeepingPayload`, `Encoder` (internal), `BeepingClientTest`.
+- 3 ficheros legacy eliminados: `BeepingCore`, `BeepingCoreEvent`, `BeepHandler` (per PRODUCTO.md §7 sin back-compat).
+- `BeepingCoreJNI` refactor: `BeepingCore` ref → callback field. JNI ABI preservada (verified javap-style listing).
+- 5 tests Turbine verdes + 1 JNI test existente.
+- Bug menor encontrado y arreglado: TurbineAssertionError vs IllegalStateException catch — fix con `awaitError()`.
+
+#### Notas
+
+- 7/17 tasks closed, 37/101 SP (36.6%), en 2 sesiones efectivas.
+- AAR 262 → 275 KB (+13 KB por sealed class hierarchies).
+- `send()` y full `listen()` Flow se completan en BEE-57.
+
+---
 
 ### [2026-04-29] — Closed BEE-55
 
