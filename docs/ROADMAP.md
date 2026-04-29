@@ -59,7 +59,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-04-28 (mar) | ✅ Done |
 | 4b | [BEE-1793](https://linear.app/me8/issue/BEE-1793) | 🛠️ Build chain stabilization (Foojay + AGP 8.7 + Gradle 8.10) — **scope addition durante execution** | 2 | 27 | 2026-04-29 (mié) | ✅ Done |
 | 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 29 | 2026-04-29 (mié) | ✅ Done |
-| 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-05-05 (mar) | ⏳ Pending |
+| 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-04-29 (mié) | ✅ Done |
 | 7 | [BEE-57](https://linear.app/me8/issue/BEE-57) | 🎭 Strategy pattern: `LocalEncoder` (JNI) + `CloudEncoder` (Ktor) | 8 | 43 | 2026-05-06 (mié) | ⏳ Pending |
 | 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-05-06 (mié) | ⏳ Pending |
 | 9 | [BEE-59](https://linear.app/me8/issue/BEE-59) | 🔌 Cliente HTTP generado desde OpenAPI (Ktor + kotlinx.serialization) | 3 | 49 | 2026-05-07 (jue) | ⏳ Pending |
