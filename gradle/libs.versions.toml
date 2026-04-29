@@ -27,6 +27,7 @@ androidxCore = "1.13.1"
 
 # Test libraries
 junit = "4.13.2"
+turbine = "1.1.0"
 
 [libraries]
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlinBom" }
@@ -34,6 +35,8 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppcompat" }
 androidx-core = { module = "androidx.core:core", version.ref = "androidxCore" }
 junit = { module = "junit:junit", version.ref = "junit" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
 [bundles]
 androidx-base = ["androidx-appcompat", "androidx-core"]

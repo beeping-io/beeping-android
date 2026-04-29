@@ -20,12 +20,27 @@ import android.util.Log
  * Java_..._stopBeepingListen  (J)I
  * Java_..._getDecodedString   ([CJ)I
  * ```
+ *
+ * BEE-56 refactor: the constructor no longer takes a `BeepingCore` ref (the
+ * legacy class was removed); the callback is now a settable lambda field that
+ * the [Encoder] strategy (LocalEncoder, BEE-57) wires up before starting a
+ * listen session.
  */
-class BeepingCoreJNI(private val mBeepingCore: BeepingCore) {
+class BeepingCoreJNI {
+
+    /**
+     * Receiver of native callbacks. Set by [Encoder] implementations (BEE-57
+     * `LocalEncoder`) before starting a listen session; cleared on stop.
+     *
+     * Receives one of [BC_TOKEN_START], [BC_TOKEN_END_OK], [BC_TOKEN_END_BAD],
+     * [BC_END_PLAY].
+     */
+    @Volatile
+    var callback: ((Int) -> Unit)? = null
 
     /**
      * Called from native via JNI (`(I)V`). DO NOT rename or change signature.
-     * Dispatches the token to the owning [BeepingCore] which posts to the main thread.
+     * Dispatches the token to the registered [callback] (if any).
      */
     fun BeepingCallback(value: Int) {
         when (value) {
@@ -33,7 +48,7 @@ class BeepingCoreJNI(private val mBeepingCore: BeepingCore) {
             BC_TOKEN_END_OK,
             BC_TOKEN_END_BAD,
             BC_END_PLAY,
-            -> mBeepingCore.beepingCallback(value)
+            -> callback?.invoke(value)
         }
     }
 
