@@ -14,12 +14,12 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-28 (trigger: `Closed BEE-53`)
-- **Story points totales**: 99 SP (Phase 8)
-- **Story points cerrados**: 25 SP (BEE-51, BEE-52, BEE-53, BEE-54)
-- **Story points remaining**: 74 SP (25.3% completado)
-- **Days esfuerzo (con margen)**: 15 días hábiles
-- **Fecha fin estimada actualizada**: 2026-05-15 (vie) — adelantada 3 días
+- **Última actualización**: 2026-04-29 (trigger: `Closed BEE-1793` + Scope change: +2 SP)
+- **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
+- **Story points cerrados**: 27 SP (BEE-51, BEE-52, BEE-53, BEE-54, BEE-1793)
+- **Story points remaining**: 74 SP (26.7% completado)
+- **Days esfuerzo (con margen)**: 15 días hábiles (sin cambio — BEE-1793 ejecutada en paralelo)
+- **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
@@ -28,6 +28,48 @@
 ---
 
 ## 📜 History
+
+### [2026-04-29] — Closed BEE-1793 (Scope change: +2 SP)
+
+**Trigger detallado**: BEE-1793 cerrada — task creada durante `/worktree-start` después del cierre de BEE-53 en respuesta al feedback "ok, pero no quiero riesgos". Resuelve los 3 caveats acumulados durante BEE-51..BEE-54: C1 (`kotlinOptions` deprecated → `compilerOptions { jvmTarget = JvmTarget.JVM_17 }`), C2 (sin toolchain resolver → Foojay + `jvmToolchain(17)`), pending-004 (AGP 8.5.2 → 8.7.3 + Gradle 8.7 → 8.10.2).
+
+Ejecución en 2 commits (`da252c3` + `c594b06`) por outage transitorio de Foojay durante el primer intento — ver comentario de la task en Linear.
+
+**Net delta global**: **+2 SP scope** / **0 días** en la fecha fin del milestone (Phase 8 ahora 101 SP / 17 tasks; BEE-1793 ejecutada concurrentemente con BEE-52+54+53 en una ventana de 2 días, no añade calendar time).
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio — R1, R2, R3 vigentes; **R7 eliminado** porque Foojay garantiza JDK 17 toolchain auto-download).
+
+#### Adelantados / Retrasados
+
+- (ninguno) — BEE-1793 fue una task adicional, no movió fechas existentes.
+
+#### Cambios de scope
+
+- **+1 task / +2 SP**: BEE-1793 creada bajo Phase 8 milestone, infra+android labels, priority 3.
+- Total Phase 8: 16 tasks / 99 SP → **17 tasks / 101 SP**.
+
+#### Cambios de estado
+
+- BEE-1793: nueva task creada en `In Progress` 2026-04-28T10:50Z → `Done` 2026-04-29T04:03Z.
+
+#### Cambios en pending list
+
+- `pending-004` eliminada (resuelta en BEE-1793).
+- `pending-005` creada y eliminada en la misma sesión (Foojay alternative deferred → Foojay re-añadido cuando volvió online).
+
+#### Cambios de estado de riesgo (PRODUCTO.md §19)
+
+- **R7** (JDK 17 mínimo en build excluye dev environments legacy) → **eliminado** ✅. Foojay descarga JDK 17 automáticamente; no requiere instalación manual.
+
+#### Notas
+
+- BEE-1793 fue housekeeping/risk-mitigation, no estaba en el scope original de 16 tasks. Se creó por feedback explícito del usuario tras observar caveats acumulados.
+- Foojay outage durante primer intento se resolvió en ~horas. La verificación manual (curl al Disco API) fue clave para no quedar bloqueado.
+- 5/17 tasks cerradas, 27/101 SP, en 2 sesiones efectivas.
+
+---
 
 ### [2026-04-28] — Closed BEE-53
 
