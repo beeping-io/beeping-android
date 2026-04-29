@@ -94,15 +94,6 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
   Node 24 nativo van llegando.
 - 🚦 **Estado**: 🆕 Nuevo
 
-### ⏳ pending-005 — Toolchain deterministic JDK 17 download (Foojay alternative)
-
-- 📅 **Fecha añadida**: 2026-04-28
-- 🏷️ **Tipo**: infra
-- 🧭 **Trigger**: durante BEE-1793 se intentó añadir Foojay toolchain resolver (`org.gradle.toolchains.foojay-resolver-convention`) + `kotlin { jvmToolchain(17) }` para garantizar descarga automática de JDK 17 en cualquier máquina/CI sin JDK 17 local. Foojay tuvo un outage transitorio ("There was an internal error and the pkg cache is currently being restored") que bloqueó el build verification. Como el feedback del usuario era "no riesgos", se eligió dropear Foojay+jvmToolchain y quedarse con `compilerOptions { jvmTarget = JvmTarget.JVM_17 }` solo (bytecode 17, JDK runtime = el del entorno). Desventaja: el build no es estrictamente determinista entre máquinas — usa el JDK que esté instalado.
-- ⚙️ **Acción requerida**: evaluar alternativas a Foojay para el toolchain auto-download (Adoptium resolver, custom `JavaToolchainResolverPlugin`, o documentar required JDK 17 + provisioning via brew/apt/sdkman). Cuando la elección esté clara, re-añadir `jvmToolchain(17)` en ambos `:AndroidBeepingCore` y `:app` build files. CI ya usa `actions/setup-java@v4` con `java-version: '17'` así que la determinismo en CI ya está cubierto — esto es para developers locales.
-- 🚧 **Bloqueado por**: nada — investigación + decisión.
-- 🚦 **Estado**: 🆕 Nuevo
-
 ### ⏳ pending-003 — Añadir `feat/**`, `fix/**`, etc. a triggers de CI (modo individual)
 
 - 📅 **Fecha añadida**: 2026-04-28

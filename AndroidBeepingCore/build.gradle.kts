@@ -52,6 +52,11 @@ android {
 }
 
 kotlin {
+    // Foojay (declared in settings.gradle.kts) downloads JDK 17 automatically
+    // when the local environment doesn't have one — guarantees deterministic
+    // toolchain across machines and CI without per-env JDK setup.
+    jvmToolchain(17)
+
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
     }
