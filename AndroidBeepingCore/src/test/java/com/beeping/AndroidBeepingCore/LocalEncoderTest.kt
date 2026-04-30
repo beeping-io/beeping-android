@@ -1,27 +1,67 @@
 package com.beeping.AndroidBeepingCore
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import app.cash.turbine.test
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocalEncoderTest {
 
-    private val context: Context = mockk(relaxed = true)
+    private lateinit var context: Context
+
+    @Before
+    fun setUp() {
+        context = mockk(relaxed = true)
+        // Default — RECORD_AUDIO granted. Individual tests override below.
+        every {
+            context.checkPermission(Manifest.permission.RECORD_AUDIO, any(), any())
+        } returns PackageManager.PERMISSION_GRANTED
+    }
 
     @Test
-    fun `decoded emits nothing when native lib not loaded`() = runTest {
-        // On the JVM unit test runtime, libbeepingcore.so cannot load — so
-        // LocalEncoder.decoded() must complete without emitting anything.
+    fun `decoded throws BeepingException MissingMicPermission when RECORD_AUDIO denied`() = runTest {
+        every {
+            context.checkPermission(Manifest.permission.RECORD_AUDIO, any(), any())
+        } returns PackageManager.PERMISSION_DENIED
+
         val encoder = LocalEncoder(context = context)
 
         encoder.decoded().test {
-            awaitComplete()
+            val error = awaitError()
+            assertTrue(
+                "expected BeepingException, got ${error::class.simpleName}",
+                error is BeepingException,
+            )
+            assertEquals(
+                BeepingError.MissingMicPermission,
+                (error as BeepingException).error,
+            )
+        }
+        encoder.close()
+    }
+
+    @Test
+    fun `decoded throws BeepingException NativeLibraryNotLoaded when native lib unavailable`() = runTest {
+        // Permission granted (default), JNI not loaded on JVM tests.
+        val encoder = LocalEncoder(context = context)
+
+        encoder.decoded().test {
+            val error = awaitError()
+            assertTrue(error is BeepingException)
+            assertEquals(
+                BeepingError.NativeLibraryNotLoaded,
+                (error as BeepingException).error,
+            )
         }
         encoder.close()
     }

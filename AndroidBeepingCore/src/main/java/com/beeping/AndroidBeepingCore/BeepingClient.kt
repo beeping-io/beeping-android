@@ -1,5 +1,6 @@
 package com.beeping.AndroidBeepingCore
 
+import android.content.Context
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,26 +21,20 @@ import kotlinx.coroutines.flow.map
  * - [send] — a `suspend` function that encodes and emits a [BeepingPayload].
  * - [close] — releases native resources and cancels in-flight work.
  *
- * Construction is via the public `BeepingClient.Builder` DSL added in BEE-58.
- * The constructor is `internal` to prevent direct instantiation outside the
- * module.
+ * Construction is via the public [Builder] DSL. The constructor is `internal`
+ * to prevent direct instantiation outside the module.
  *
- * **Status (BEE-57)**:
+ * **Status (BEE-58)**: Builder DSL added with `.mode/.logLevel/.telemetryEnabled`.
+ * `logLevel` and `telemetryEnabled` are storage-only here — the actual Timber
+ * wiring lands in BEE-60, the telemetry hook in BEE-61.
  *
- * - [listen] now collects from the configured [BeepingEncoder] (Local: JNI,
- *   Cloud: empty Flow stub — see `pending-006`). Failures are mapped to
- *   [BeepingEvent.Failed].
- * - [send] now encodes via [BeepingEncoder.encode] (Cloud: Ktor → WAV bytes
- *   from `beepbox-server`; Local: throws `NotImplementedError("BEE-65")`).
- *   Audio playback (`AudioTrack`) is **not yet implemented** — the encoded
- *   WAV bytes are discarded after the call. Playback lands with BEE-64
- *   (sample app + Compose debug console).
- *
- * Example (post-BEE-58):
+ * Example:
  *
  * ```kotlin
  * val client = BeepingClient.Builder(context)
  *     .mode(BeepingMode.Cloud(apiKey = "…", endpoint = "https://api.beeping.io"))
+ *     .logLevel(LogLevel.DEBUG)
+ *     .telemetryEnabled(false)
  *     .build()
  *
  * viewModelScope.launch {
@@ -56,10 +51,19 @@ import kotlinx.coroutines.flow.map
  * client.send(BeepingPayload(payload = "abc12"))
  * client.close()
  * ```
+ *
+ * **Permission requirement**: in [BeepingMode.Local], the consumer must request
+ * `RECORD_AUDIO` permission via `ActivityCompat.requestPermissions` BEFORE
+ * collecting [listen]. If permission is missing the flow emits
+ * [BeepingEvent.Failed] with [BeepingError.MissingMicPermission] and completes.
+ * The library deliberately does NOT trigger the permission UI flow itself —
+ * that belongs to the host Activity so the SDK doesn't couple to UI.
  */
 class BeepingClient internal constructor(
     private val mode: BeepingMode,
     private val encoder: BeepingEncoder,
+    @Suppress("unused") private val logLevel: LogLevel = LogLevel.INFO,
+    @Suppress("unused") private val telemetryEnabled: Boolean = false,
 ) {
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -70,11 +74,6 @@ class BeepingClient internal constructor(
 
     /**
      * Returns a cold [Flow] of [BeepingEvent]s for the active listening session.
-     *
-     * Emits [BeepingEvent.Started] on collect, then [BeepingEvent.Decoded] for
-     * each beep that the underlying [BeepingEncoder] decodes. On [close] (or
-     * scope cancellation), emits [BeepingEvent.Stopped] and completes.
-     * Encoder failures map to [BeepingEvent.Failed].
      */
     fun listen(): Flow<BeepingEvent> = flow {
         check(!closed) { "BeepingClient is closed" }
@@ -98,39 +97,88 @@ class BeepingClient internal constructor(
     /**
      * Encodes [payload] via the configured [BeepingMode] and (post-BEE-64)
      * plays it via `AudioTrack`.
-     *
-     * @return [Result.success] on successful encode (and, post-BEE-64,
-     *   successful playback). [Result.failure] with a [BeepingException]
-     *   on a typed failure ([BeepingError.AuthenticationFailed],
-     *   [BeepingError.RateLimited], [BeepingError.NetworkError],
-     *   [BeepingError.DecoderInternal]). [Result.failure] with
-     *   [IllegalArgumentException] if [BeepingPayload.payload] doesn't match
-     *   the 5-char base32 key pattern.
-     *
-     * **Note (BEE-57)**: in Local mode this still throws
-     * `NotImplementedError("BEE-65")` because the on-device encoder native
-     * function isn't available yet. In Cloud mode it works against the live
-     * `beepbox-server` (see `BEEPBOX_API_KEY` in `.env.local`).
      */
     suspend fun send(payload: BeepingPayload): Result<Unit> = runCatching {
         check(!closed) { "BeepingClient is closed" }
 
         @Suppress("UNUSED_VARIABLE")
         val wav = encoder.encode(payload.payload)
-        // BEE-64 will write `wav` to AudioTrack here. Until then the bytes
-        // are simply discarded after the encode round-trip — a deliberate
-        // gap to avoid coupling BEE-57 to the Compose sample app.
+        // BEE-64 will write `wav` to AudioTrack here.
         Unit
     }
 
-    /**
-     * Releases all resources and cancels any active listen session. Idempotent.
-     */
+    /** Releases all resources and cancels any active listen session. Idempotent. */
     fun close() {
         if (closed) return
         closed = true
         stopSignal.complete(Unit)
         scope.cancel()
         encoder.close()
+    }
+
+    /**
+     * Builder DSL for constructing a [BeepingClient].
+     *
+     * Defaults:
+     *
+     * - [mode] = [BeepingMode.Local]
+     * - [logLevel] = [LogLevel.INFO]
+     * - [telemetryEnabled] = `false`
+     *
+     * In [BeepingMode.Cloud]:
+     *
+     * - [BeepingMode.Cloud.apiKey] must be non-blank
+     * - [BeepingMode.Cloud.endpoint] must start with `http`
+     *
+     * Either condition violated → [build] throws [IllegalArgumentException].
+     *
+     * Example:
+     *
+     * ```kotlin
+     * BeepingClient.Builder(context)
+     *     .mode(BeepingMode.Cloud(apiKey = "…", endpoint = "https://api.beeping.io"))
+     *     .logLevel(LogLevel.DEBUG)
+     *     .telemetryEnabled(false)
+     *     .build()
+     * ```
+     */
+    class Builder(private val context: Context) {
+        private var mode: BeepingMode = BeepingMode.Local
+        private var logLevel: LogLevel = LogLevel.INFO
+        private var telemetryEnabled: Boolean = false
+
+        /** Selects the encode/decode strategy. Default: [BeepingMode.Local]. */
+        fun mode(value: BeepingMode): Builder = apply { this.mode = value }
+
+        /** Sets log verbosity. Wired to Timber by BEE-60. Default: [LogLevel.INFO]. */
+        fun logLevel(value: LogLevel): Builder = apply { this.logLevel = value }
+
+        /** Enables/disables telemetry emission. Wired by BEE-61. Default: `false`. */
+        fun telemetryEnabled(value: Boolean): Builder = apply { this.telemetryEnabled = value }
+
+        /**
+         * Validates the configuration and returns a fresh [BeepingClient].
+         *
+         * @throws IllegalArgumentException if [BeepingMode.Cloud] is selected
+         *   with a blank apiKey or a malformed endpoint.
+         */
+        fun build(): BeepingClient {
+            val mode = mode
+            if (mode is BeepingMode.Cloud) {
+                require(mode.apiKey.isNotBlank()) {
+                    "BeepingMode.Cloud requires a non-blank apiKey"
+                }
+                require(mode.endpoint.startsWith("http")) {
+                    "BeepingMode.Cloud.endpoint must start with http(s):// (got '${mode.endpoint}')"
+                }
+            }
+            val encoder = BeepingEncoderFactory.create(mode, context)
+            return BeepingClient(
+                mode = mode,
+                encoder = encoder,
+                logLevel = logLevel,
+                telemetryEnabled = telemetryEnabled,
+            )
+        }
     }
 }
