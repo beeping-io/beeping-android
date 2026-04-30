@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-04-30 (trigger: `Closed BEE-57`) |
-| **Tasks completadas** | 8 / 17 (BEE-51..57 + BEE-1793) · 45 SP cerrados de 101 (44.6%) |
-| **Velocidad observada** | 45 SP en 3 sesiones (8 closures); recalibración deferred — datos consistentes pero contra ejecutor Claude no representan velocidad humana |
+| **Última actualización** | 2026-04-30 (trigger: `Closed BEE-58`) |
+| **Tasks completadas** | 9 / 17 (BEE-51..58 + BEE-1793) · 48 SP cerrados de 101 (47.5%) |
+| **Velocidad observada** | 48 SP en 3 sesiones (9 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -61,7 +61,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 29 | 2026-04-29 (mié) | ✅ Done |
 | 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-04-29 (mié) | ✅ Done |
 | 7 | [BEE-57](https://linear.app/me8/issue/BEE-57) | 🎭 Strategy pattern: `LocalEncoder` (JNI) + `CloudEncoder` (Ktor) | 8 | 43 | 2026-04-30 (jue) | ✅ Done |
-| 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-05-06 (mié) | ⏳ Pending |
+| 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-04-30 (jue) | ✅ Done |
 | 9 | [BEE-59](https://linear.app/me8/issue/BEE-59) | 🔌 Cliente HTTP generado desde OpenAPI (Ktor + kotlinx.serialization) | 3 | 49 | 2026-05-07 (jue) | ⏳ Pending |
 | 10 | [BEE-60](https://linear.app/me8/issue/BEE-60) | 🪵 Logging Timber + JSON sink + trace-ID propagation | 3 | 52 | 2026-05-07 (jue) | ⏳ Pending |
 | 11 | [BEE-61](https://linear.app/me8/issue/BEE-61) | 📡 Telemetry hook con opt-out + tests de privacy | 5 | 57 | 2026-05-08 (vie) | ⏳ Pending |

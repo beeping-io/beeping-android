@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-30 (trigger: `Closed BEE-57`)
+- **Última actualización**: 2026-04-30 (trigger: `Closed BEE-58`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 45 SP (BEE-51..57 + BEE-1793)
-- **Story points remaining**: 56 SP (44.6% completado)
+- **Story points cerrados**: 48 SP (BEE-51..58 + BEE-1793)
+- **Story points remaining**: 53 SP (47.5% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,39 @@
 ---
 
 ## 📜 History
+
+### [2026-04-30] — Closed BEE-58
+
+**Trigger detallado**: BEE-58 cerrada — Builder DSL público + LogLevel enum + permission gate en LocalEncoder. 30 tests verdes (8 nuevos del Builder, 1 nuevo del permission). Drop justificado de `.apiKey()`/`.endpoint()` setters en favor de pasar `BeepingMode.Cloud(apiKey, endpoint)` directamente — type-safe, single-concept.
+
+**Net delta global**: 0 días en fin date. BEE-58 cerró **6 días antes** de su Fin estimado (2026-05-06 → 2026-04-30). Adelanto absorbido por velocidad acumulada.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-58: 2026-05-06 → 2026-04-30 (-6 días)
+
+#### Cambios de estado
+
+- BEE-58: `⏳ Pending` → `✅ Done` (3 SP)
+
+#### Detalle implementation
+
+- 2 ficheros main nuevos: `LogLevel.kt` enum public, `BeepingClient.Builder` inner class
+- 1 fichero test nuevo: `BeepingClientBuilderTest` (7 tests cubriendo defaults, validation, fluent chaining)
+- BeepingClient constructor extendido (logLevel + telemetryEnabled storage)
+- LocalEncoder permission gate: `MissingMicPermission` y `NativeLibraryNotLoaded` ahora se surfacean como `BeepingException` que se convierte en `BeepingEvent.Failed` en el listen() flow
+
+#### Notas
+
+- 9/17 tasks cerradas, 48/101 SP (47.5%), en 3 sesiones efectivas.
+- Cruzamos el ecuador del milestone — más de la mitad del trabajo cerrado.
+- Próximas tasks: BEE-59 (HTTP client OpenAPI generation, 3 SP), BEE-60 (Timber wiring, 3 SP), BEE-61 (Telemetry hook, 5 SP) — bloque cohesivo de "wiring inner concerns" antes de BEE-62 (test stack, 13 SP).
+
+---
 
 ### [2026-04-30] — Closed BEE-57
 
