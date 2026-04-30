@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-04-29 (trigger: `Closed BEE-56`) |
-| **Tasks completadas** | 7 / 17 (BEE-51..56 + BEE-1793) · 37 SP cerrados de 101 (36.6%) |
-| **Velocidad observada** | 37 SP en 2 sesiones (7 closures); recalibración deferred — esperar más data |
+| **Última actualización** | 2026-04-30 (trigger: `Closed BEE-57`) |
+| **Tasks completadas** | 8 / 17 (BEE-51..57 + BEE-1793) · 45 SP cerrados de 101 (44.6%) |
+| **Velocidad observada** | 45 SP en 3 sesiones (8 closures); recalibración deferred — datos consistentes pero contra ejecutor Claude no representan velocidad humana |
 
 ---
 

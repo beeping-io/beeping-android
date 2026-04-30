@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-29 (trigger: `Closed BEE-56`)
+- **Última actualización**: 2026-04-30 (trigger: `Closed BEE-57`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 37 SP (BEE-51..56 + BEE-1793)
-- **Story points remaining**: 64 SP (36.6% completado)
+- **Story points cerrados**: 45 SP (BEE-51..57 + BEE-1793)
+- **Story points remaining**: 56 SP (44.6% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,45 @@
 ---
 
 ## 📜 History
+
+### [2026-04-30] — Closed BEE-57
+
+**Trigger detallado**: BEE-57 cerrada — Strategy pattern Local/Cloud + Ktor 3.0.3 + 22 tests verdes incluido E2E real (4.96s) contra dev Cloud Run URL. CloudEncoder `encode()` totalmente funcional contra `https://beepbox-server-ai7n45q5lq-ew.a.run.app/v1/encode`. LocalEncoder con SHELL JNI wiring (encode pendiente BEE-65). Bug fixes en libs.versions.toml duplicate bundles + Mockk added.
+
+**Net delta global**: 0 días en fin date. BEE-57 cerró **6 días antes** de su Fin estimado (2026-05-06 → 2026-04-30). Adelanto absorbido por velocidad acumulada.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-57: 2026-05-06 → 2026-04-30 (-6 días)
+
+#### Cambios de scope
+
+- `pending-006` añadida en `docs/PENDING.md` (Cloud-mode live decoding via AudioRecord chunking) — out of scope BEE-57, deferred a futuro
+
+#### Cambios de estado
+
+- BEE-57: `⏳ Pending` → `✅ Done` (8 SP)
+
+#### Detalle implementation
+
+- 4 ficheros main nuevos: `BeepingEncoder` (rename), `LocalEncoder`, `CloudEncoder`, `BeepingEncoderFactory`
+- `BeepingException(error: BeepingError)` adapter en `BeepingError.kt`
+- 3 ficheros test nuevos: `LocalEncoderTest`, `CloudEncoderTest` (con MockEngine + opt-in E2E real), `BeepingEncoderFactoryTest`
+- BeepingClient refactorizado para wirear encoder (try/finally garantiza Stopped, BeepingException → Failed mapping)
+- Build chain: + Ktor 3.0.3 + kotlinx-serialization-json 1.7.3 + Mockk 1.13.13 + kotlin-serialization plugin
+- AAR 275 KB → 306 KB (+31 KB por Ktor + serialization)
+
+#### Notas
+
+- 8/17 tasks cerradas, 45/101 SP (44.6%), en 3 sesiones efectivas.
+- E2E real funciona contra dev — `api.beeping.io` PROD sigue sin DNS configurado.
+- LocalEncoder requiere Activity-aware Context para audio infrastructure → BEE-58 lo cierra.
+
+---
 
 ### [2026-04-29] — Closed BEE-56
 
