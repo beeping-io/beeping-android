@@ -6,13 +6,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 /**
  * Public entry point of the Beeping Android SDK.
  *
  * `BeepingClient` is the modern, instance-based replacement for the legacy
- * `BeepingCore(Context)` API (removed in BEE-53/BEE-56). It exposes:
+ * `BeepingCore(Context)` API. It exposes:
  *
  * - [listen] — a cold [Flow] of [BeepingEvent] for the active listening session.
  * - [send] — a `suspend` function that encodes and emits a [BeepingPayload].
@@ -22,16 +24,22 @@ import kotlinx.coroutines.flow.flow
  * The constructor is `internal` to prevent direct instantiation outside the
  * module.
  *
- * **Status (BEE-56 — API SHELL only)**: the encode/decode pipeline lands in
- * BEE-57 (strategy pattern + LocalEncoder/CloudEncoder). In this version
- * [send] throws [NotImplementedError] and [listen] only emits [BeepingEvent.Started]
- * and [BeepingEvent.Stopped] — no [BeepingEvent.Decoded] until BEE-57.
+ * **Status (BEE-57)**:
+ *
+ * - [listen] now collects from the configured [BeepingEncoder] (Local: JNI,
+ *   Cloud: empty Flow stub — see `pending-006`). Failures are mapped to
+ *   [BeepingEvent.Failed].
+ * - [send] now encodes via [BeepingEncoder.encode] (Cloud: Ktor → WAV bytes
+ *   from `beepbox-server`; Local: throws `NotImplementedError("BEE-65")`).
+ *   Audio playback (`AudioTrack`) is **not yet implemented** — the encoded
+ *   WAV bytes are discarded after the call. Playback lands with BEE-64
+ *   (sample app + Compose debug console).
  *
  * Example (post-BEE-58):
  *
  * ```kotlin
  * val client = BeepingClient.Builder(context)
- *     .mode(BeepingMode.Local)
+ *     .mode(BeepingMode.Cloud(apiKey = "…", endpoint = "https://api.beeping.io"))
  *     .build()
  *
  * viewModelScope.launch {
@@ -45,13 +53,13 @@ import kotlinx.coroutines.flow.flow
  *     }
  * }
  *
- * client.send(BeepingPayload(payload = "HOLA1"))
+ * client.send(BeepingPayload(payload = "abc12"))
  * client.close()
  * ```
  */
 class BeepingClient internal constructor(
     private val mode: BeepingMode,
-    private val encoder: Encoder,
+    private val encoder: BeepingEncoder,
 ) {
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -63,40 +71,56 @@ class BeepingClient internal constructor(
     /**
      * Returns a cold [Flow] of [BeepingEvent]s for the active listening session.
      *
-     * The flow emits [BeepingEvent.Started] on collect. On [close] (or scope
-     * cancellation) the flow emits [BeepingEvent.Stopped] and completes.
-     *
-     * **Status (BEE-56)**: only `Started` and `Stopped` are emitted — `Decoded`
-     * and `Failed` will be wired in BEE-57 by collecting [Encoder.decoded].
+     * Emits [BeepingEvent.Started] on collect, then [BeepingEvent.Decoded] for
+     * each beep that the underlying [BeepingEncoder] decodes. On [close] (or
+     * scope cancellation), emits [BeepingEvent.Stopped] and completes.
+     * Encoder failures map to [BeepingEvent.Failed].
      */
     fun listen(): Flow<BeepingEvent> = flow {
         check(!closed) { "BeepingClient is closed" }
 
         emit(BeepingEvent.Started)
 
-        // BEE-57 will replace this stopSignal.await() with:
-        //   encoder.decoded().collect { emit(BeepingEvent.Decoded(it)) }
-        // wrapping it in a try/catch that maps Encoder failures to
-        // BeepingEvent.Failed(BeepingError.…).
-        stopSignal.await()
-
-        emit(BeepingEvent.Stopped)
+        try {
+            encoder.decoded()
+                .map<BeepingPayload, BeepingEvent> { BeepingEvent.Decoded(it) }
+                .catch { cause ->
+                    val error = (cause as? BeepingException)?.error
+                        ?: BeepingError.DecoderInternal(cause)
+                    emit(BeepingEvent.Failed(error))
+                }
+                .collect { emit(it) }
+        } finally {
+            emit(BeepingEvent.Stopped)
+        }
     }
 
     /**
-     * Encodes [payload] and emits it via the configured [BeepingMode].
+     * Encodes [payload] via the configured [BeepingMode] and (post-BEE-64)
+     * plays it via `AudioTrack`.
      *
-     * Returns [Result.success] on successful emission, [Result.failure] with
-     * a [BeepingError] cause on a recoverable failure.
+     * @return [Result.success] on successful encode (and, post-BEE-64,
+     *   successful playback). [Result.failure] with a [BeepingException]
+     *   on a typed failure ([BeepingError.AuthenticationFailed],
+     *   [BeepingError.RateLimited], [BeepingError.NetworkError],
+     *   [BeepingError.DecoderInternal]). [Result.failure] with
+     *   [IllegalArgumentException] if [BeepingPayload.payload] doesn't match
+     *   the 5-char base32 key pattern.
      *
-     * **Status (BEE-56)**: throws [NotImplementedError] — the implementation
-     * lands in BEE-57 once the [Encoder] strategies are wired.
+     * **Note (BEE-57)**: in Local mode this still throws
+     * `NotImplementedError("BEE-65")` because the on-device encoder native
+     * function isn't available yet. In Cloud mode it works against the live
+     * `beepbox-server` (see `BEEPBOX_API_KEY` in `.env.local`).
      */
-    @Suppress("UNUSED_PARAMETER")
-    suspend fun send(payload: BeepingPayload): Result<Unit> {
+    suspend fun send(payload: BeepingPayload): Result<Unit> = runCatching {
         check(!closed) { "BeepingClient is closed" }
-        @Suppress("ImplicitNothingReturn")
-        TODO("BEE-57 — encoder.encode(payload.payload) and play the resulting PCM frames")
+
+        @Suppress("UNUSED_VARIABLE")
+        val wav = encoder.encode(payload.payload)
+        // BEE-64 will write `wav` to AudioTrack here. Until then the bytes
+        // are simply discarded after the encode round-trip — a deliberate
+        // gap to avoid coupling BEE-57 to the Compose sample app.
+        Unit
     }
 
     /**

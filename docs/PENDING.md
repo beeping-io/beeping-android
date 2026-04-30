@@ -94,6 +94,15 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
   Node 24 nativo van llegando.
 - 🚦 **Estado**: 🆕 Nuevo
 
+### ⏳ pending-006 — Cloud-mode live decoding (CloudEncoder.decoded() via AudioRecord chunking)
+
+- 📅 **Fecha añadida**: 2026-04-30
+- 🏷️ **Tipo**: feat
+- 🧭 **Trigger**: durante BEE-57 se implementó `CloudEncoder.encode()` (POST `/v1/encode` real, verificado contra dev Cloud Run URL) pero `CloudEncoder.decoded()` quedó como `emptyFlow()` stub. La razón: live decoding cloud requiere capturar mic vía `AudioRecord`, chunkear en ventanas de ~500ms, y cyclic-POST a `/v1/decode` con cada chunk hasta detectar un beep. Es un protocol no-trivial que justifica una task separada.
+- ⚙️ **Acción requerida**: diseñar el chunking strategy (window size, overlap, energy-based VAD para no enviar silencio), implementar `CloudEncoder.decoded()` con `AudioRecord` + `Flow` que postea chunks al endpoint, manejar errores (no audio, mala calidad, timeout). Tests con MockEngine que simula respuestas 200 con/sin decoded result. Considerar streaming bidirectional si beepbox-server lo soporta en el futuro (WebSocket para evitar cyclic POST overhead).
+- 🚧 **Bloqueado por**: nada — diseño interno. Considerar si los casos de uso reales (alta latencia, alto bandwidth) justifican el coste; muchos productos usan Cloud solo para encode y Local para decode (hybrid mode). Si decidimos que cloud-decode no se necesita, esta entry se descarta.
+- 🚦 **Estado**: 🆕 Nuevo
+
 ### ⏳ pending-003 — Añadir `feat/**`, `fix/**`, etc. a triggers de CI (modo individual)
 
 - 📅 **Fecha añadida**: 2026-04-28

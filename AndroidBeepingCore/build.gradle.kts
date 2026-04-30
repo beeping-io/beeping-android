@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -69,8 +70,19 @@ dependencies {
 
     implementation(libs.bundles.androidx.base)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.bundles.ktor.client)
 
     testImplementation(libs.junit)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.mockk)
+}
+
+// Pass through env vars used for opt-in real E2E tests against beepbox-server.
+// Only the (gitignored) `.env.local` value reaches CI/local test runs — never
+// committed. CI without these env vars falls back to MockEngine-only tests.
+android.testOptions.unitTests.all {
+    it.environment("BEEPBOX_API_KEY", System.getenv("BEEPBOX_API_KEY") ?: "")
+    it.environment("BEEPBOX_BASE_URL", System.getenv("BEEPBOX_BASE_URL") ?: "")
 }

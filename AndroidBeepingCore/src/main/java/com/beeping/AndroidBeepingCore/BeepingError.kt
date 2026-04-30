@@ -42,3 +42,9 @@ sealed class BeepingError {
      */
     data class DecoderInternal(val cause: Throwable) : BeepingError()
 }
+
+/**
+ * Throwable adapter for [BeepingError] — used by encoders to fail a `suspend`
+ * call. [BeepingClient.send] catches this and wraps it in `Result.failure(error)`.
+ */
+class BeepingException(val error: BeepingError) : Exception(error::class.simpleName)
