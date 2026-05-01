@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-05-01 (trigger: `Closed BEE-60`) |
-| **Tasks completadas** | 11 / 17 (BEE-51..60 + BEE-1793) · 54 SP cerrados de 101 (53.5%) |
-| **Velocidad observada** | 54 SP en 4 sesiones (11 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
+| **Última actualización** | 2026-05-01 (trigger: `Closed BEE-61`) |
+| **Tasks completadas** | 12 / 17 (BEE-51..61 + BEE-1793) · 59 SP cerrados de 101 (58.4%) |
+| **Velocidad observada** | 59 SP en 4 sesiones (12 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -64,7 +64,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-04-30 (jue) | ✅ Done |
 | 9 | [BEE-59](https://linear.app/me8/issue/BEE-59) | 🔌 Cliente HTTP generado desde OpenAPI (Ktor + kotlinx.serialization) | 3 | 49 | 2026-05-01 (vie) | ✅ Done |
 | 10 | [BEE-60](https://linear.app/me8/issue/BEE-60) | 🪵 Logging Timber + JSON sink + trace-ID propagation | 3 | 52 | 2026-05-01 (vie) | ✅ Done |
-| 11 | [BEE-61](https://linear.app/me8/issue/BEE-61) | 📡 Telemetry hook con opt-out + tests de privacy | 5 | 57 | 2026-05-08 (vie) | ⏳ Pending |
+| 11 | [BEE-61](https://linear.app/me8/issue/BEE-61) | 📡 Telemetry hook con opt-out + tests de privacy | 5 | 57 | 2026-05-01 (vie) | ✅ Done |
 | 12 | [BEE-62](https://linear.app/me8/issue/BEE-62) | 🧪 Tests: JUnit5 + MockK + Robolectric + Kotest property + Paparazzi snapshots + Pitest mutation | 13 | 70 | 2026-05-12 (mar) | ⏳ Pending |
 | 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-12 (mar) | ⏳ Pending |
 | 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 81 | 2026-05-14 (jue) | ⏳ Pending |

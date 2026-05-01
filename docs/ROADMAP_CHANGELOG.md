@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-60`)
+- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-61`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 54 SP (BEE-51..60 + BEE-1793)
-- **Story points remaining**: 47 SP (53.5% completado)
+- **Story points cerrados**: 59 SP (BEE-51..61 + BEE-1793)
+- **Story points remaining**: 42 SP (58.4% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,57 @@
 ---
 
 ## 📜 History
+
+### [2026-05-01] — Closed BEE-61
+
+**Trigger detallado**: BEE-61 cerrada — TelemetryHook + TelemetryEvent sealed class + TelemetryEmitter pipeline opt-IN funcional. 7 tests nuevos (4 de privacy con reflexión sobre forbidden substrings, 3 del emitter cubriendo disabled/enabled/exception-swallowed). Suite total 46/46 verde, CI verde 1m27s.
+
+**Net delta global**: 0 días en fin date. BEE-61 cerró **7 días antes** de su Fin estimado (2026-05-08 → 2026-05-01). Adelanto absorbido por velocidad acumulada.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-61: 2026-05-08 → 2026-05-01 (-7 días)
+
+#### Cambios de estado
+
+- BEE-61: `⏳ Pending` → `✅ Done` (5 SP)
+
+#### Detalle implementation
+
+- 3 ficheros main nuevos:
+  - `TelemetryEvent.kt` — sealed class con 5 variantes (`SdkInitialized`, `Closed`, `EncodeRequested`, `EncodeSucceeded`, `EncodeFailed`). Todas exponen sólo campos sanitizados (`mode`, `traceId`, `durationMs`, `byteCount`, `errorType` class name, `keyLength`).
+  - `TelemetryHook.kt` — `fun interface` consumer-pluggable + `NoOp` companion default sink.
+  - `TelemetryEmitter.kt` — internal forwarder que **traga excepciones del hook** (telemetry NUNCA debe romper el SDK).
+- 2 ficheros test nuevos:
+  - `TelemetryEventTest.kt` — 4 tests reflection-based: forbidden substrings (payload/apikey/endpoint/url/ip/token/auth/deviceid/userid/email/phone/secret/password) + whitelists por variante.
+  - `TelemetryEmitterTest.kt` — 3 tests: disabled = no-op, enabled = forwards, exception = swallowed.
+- `BeepingClient.kt` extendido:
+  - Constructor anade `telemetryHook: TelemetryHook = TelemetryHook.NoOp`.
+  - `init {}` → emite `SdkInitialized`. `send()` → `EncodeRequested` + (`EncodeSucceeded` | `EncodeFailed`). `close()` → `Closed(sessionDurationMs)`.
+  - Builder gana `.telemetryHook(value)` setter.
+- **Default `telemetryEnabled = false`** — opt-IN privacy-first per PRODUCTO.md DT-07.
+- AAR release 411 → 419 KB (+8 KB pipeline completo).
+
+#### Privacy guarantees verificadas
+
+- ✅ No payload (raw encoded/decoded bytes).
+- ✅ No apiKey, no endpoint, no URL.
+- ✅ No IP, no deviceId/userId, no email/phone, no token/auth/secret.
+- ✅ `errorType` es class name no message (que podría contener PII).
+- ✅ `keyLength` es Int no el valor del key.
+- ✅ Reflection guard rompe el build si alguien añade un campo PII-named.
+
+#### Notas
+
+- 12/17 tasks cerradas, 59/101 SP (58.4%), en 4 sesiones efectivas.
+- Próximas 5 tasks: BEE-62 (test stack, 13 SP) · BEE-63 (lint, 3 SP) · BEE-64 (sample app, 8 SP) · BEE-65 (consume beeping-core, 5 SP) · BEE-66 (Maven Central, 13 SP). Total restante: 42 SP.
+- R5 (telemetry opt-out filtra datos sin opt-in) → mitigación **completada**: opt-IN por default + reflection guard.
+
+---
 
 ### [2026-05-01] — Closed BEE-60
 
