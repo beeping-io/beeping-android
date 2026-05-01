@@ -94,6 +94,17 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
   Node 24 nativo van llegando.
 - 🚦 **Estado**: 🆕 Nuevo
 
+### ⏳ pending-007 — Cerrar HttpClient interno del ApiClient generado (resource cleanup)
+
+- 📅 **Fecha añadida**: 2026-05-01
+- 🏷️ **Tipo**: chore
+- 🧭 **Trigger**: durante BEE-59 se integró el cliente Ktor generado por openapi-generator. El template del generator declara `private val client: HttpClient by lazy { ... }` en el `ApiClient` parent — accesso privado, sin método público para cerrarlo. Como resultado `CloudEncoder.close()` queda como no-op respecto al HttpClient. En Android la GC + lifecycle del proceso reclama el cliente eventualmente, pero técnicamente es un leak menor.
+- ⚙️ **Acción requerida**: dos opciones:
+  - (a) Esperar a que openapi-generator exponga `client` como protected/public (tracker upstream) y entonces sobrescribir close() para llamarlo.
+  - (b) Usar un custom Mustache template para el `ApiClient.kt` que exponga el client. Más invasivo pero independiente del upstream.
+- 🚧 **Bloqueado por**: prioridad — leak es bounded por proceso lifecycle. Aplica si añadimos un usecase que cree/destruya muchas instancias de `BeepingClient` (e.g., test runner, multi-tenant).
+- 🚦 **Estado**: 🆕 Nuevo
+
 ### ⏳ pending-006 — Cloud-mode live decoding (CloudEncoder.decoded() via AudioRecord chunking)
 
 - 📅 **Fecha añadida**: 2026-04-30

@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-04-30 (trigger: `Closed BEE-58`)
+- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-59`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 48 SP (BEE-51..58 + BEE-1793)
-- **Story points remaining**: 53 SP (47.5% completado)
+- **Story points cerrados**: 51 SP (BEE-51..59 + BEE-1793)
+- **Story points remaining**: 50 SP (50.5% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,44 @@
 ---
 
 ## 📜 History
+
+### [2026-05-01] — Closed BEE-59
+
+**Trigger detallado**: BEE-59 cerrada — OpenAPI Ktor client generation funcional, CloudEncoder refactorizado para usar EncodingApi generated, 30 tests verdes incluido E2E real. 4 bugs encontrados y arreglados durante exec (globalProperties filter, file→ByteArray mapping, ContentNegotiation install, buildDir deprecation). 1 follow-up nuevo (`pending-007` — close internal HttpClient when exposed).
+
+**Net delta global**: 0 días en fin date. BEE-59 cerró **6 días antes** de su Fin estimado (2026-05-07 → 2026-05-01). Adelanto absorbido por velocidad acumulada.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-59: 2026-05-07 → 2026-05-01 (-6 días)
+
+#### Cambios de scope
+
+- `pending-007` añadida en `docs/PENDING.md` (close internal HttpClient when openapi-generator exposes it).
+
+#### Cambios de estado
+
+- BEE-59: `⏳ Pending` → `✅ Done` (3 SP)
+
+#### Detalle implementation
+
+- `api/openapi.yaml` vendoreado (12 773 bytes) desde `beepbox/docs/openapi.yaml`.
+- 20 ficheros Kotlin generados (3 APIs + 7 models + 5 infrastructure + 5 auth) en `build/generated/openapi/` (gitignored).
+- Plugin `org.openapi.generator` 7.10.0 + `kotlin-serialization` 2.0.21.
+- 4 workarounds documentados: typeMappings binary→ByteArray, ContentNegotiation re-install via httpClientConfig, modern `layout.buildDirectory.dir(...)` API, removed empty globalProperties filter.
+- AAR 303 → 396 KB (+93 KB) — generated infrastructure code. Reducirá con R8 minify en BEE-66 release builds.
+
+#### Notas
+
+- 10/17 tasks cerradas, 51/101 SP (50.5%), en 4 sesiones efectivas.
+- Cruzamos el ecuador SP también — más de la mitad cerrada.
+- Risk R4 (Ktor binary size impacta AAR) re-evaluado: 396 KB sigue muy por debajo del threshold de 1 MB. ✅ verde.
+
+---
 
 ### [2026-04-30] — Closed BEE-58
 
