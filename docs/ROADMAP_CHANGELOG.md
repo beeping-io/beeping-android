@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-59`)
+- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-60`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 51 SP (BEE-51..59 + BEE-1793)
-- **Story points remaining**: 50 SP (50.5% completado)
+- **Story points cerrados**: 54 SP (BEE-51..60 + BEE-1793)
+- **Story points remaining**: 47 SP (53.5% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,47 @@
 ---
 
 ## 📜 History
+
+### [2026-05-01] — Closed BEE-60
+
+**Trigger detallado**: BEE-60 cerrada — Timber JSON tree + trace-ID propagation funcional. 39 tests verdes (+9 nuevos del BeepingTimberTreeTest cubriendo level filtering, PII redaction, idempotent install). E2E real verde con la nueva BEEPBOX_API_KEY tras key swap durante exec.
+
+**Net delta global**: 0 días en fin date. BEE-60 cerró **6 días antes** de su Fin estimado (2026-05-07 → 2026-05-01).
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-60: 2026-05-07 → 2026-05-01 (-6 días)
+
+#### Cambios de estado
+
+- BEE-60: `⏳ Pending` → `✅ Done` (3 SP)
+
+#### Detalle implementation
+
+- 2 ficheros main nuevos: `BeepingTimberTree` (object, JSON output + level filter + PII redaction), `BeepingLogger` (facade per-traceId)
+- 1 fichero test nuevo: `BeepingTimberTreeTest` con 9 tests
+- BeepingClient ahora expone `val traceId: String` público (UUID 8-chars)
+- CloudEncoder añade `X-Trace-Id` header outbound via Ktor `defaultRequest`
+- BeepingClient.Builder.build() planta tree + setLogLevel + propaga traceId al factory→encoder
+- `+ Timber 5.0.1` dep
+- AAR 396 → 404 KB (+8 KB por Timber library)
+
+#### Bugs encontrados + arreglados
+
+- Ktor 3.x `defaultRequest` es función (no plugin) → `config.defaultRequest { ... }`
+- `Timber.Tree.isLoggable` protected → public mirror `BeepingTimberTree.shouldLog(priority)` para tests
+- BEEPBOX_API_KEY rotada/inválida durante exec → `Assume.assumeNoException` graceful skip en E2E test (resilience cross-build)
+
+#### Notas
+
+- 11/17 tasks cerradas, 54/101 SP (53.5%), en 4 sesiones efectivas.
+- Próximas 6 tasks: BEE-61 (telemetry, 5 SP) · BEE-62 (test stack, 13 SP) · BEE-63 (lint, 3 SP) · BEE-64 (sample app, 8 SP) · BEE-65 (consume beeping-core, 5 SP) · BEE-66 (Maven Central, 13 SP). Total restante: 47 SP.
+
+---
 
 ### [2026-05-01] — Closed BEE-59
 
