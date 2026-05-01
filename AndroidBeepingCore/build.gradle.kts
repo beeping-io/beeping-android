@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.openapi.generator)
 }
 
 android {
@@ -85,4 +86,63 @@ dependencies {
 android.testOptions.unitTests.all {
     it.environment("BEEPBOX_API_KEY", System.getenv("BEEPBOX_API_KEY") ?: "")
     it.environment("BEEPBOX_BASE_URL", System.getenv("BEEPBOX_BASE_URL") ?: "")
+}
+
+// ── BEE-59: generate the typed beepbox HTTP client from api/openapi.yaml ────
+// Uses openapi-generator with `kotlin` + `jvm-ktor` library + kotlinx-serialization.
+// The generated sources land in build/generated/openapi/ (gitignored) and are
+// added to the main source set so they compile alongside our hand-written code.
+//
+// Re-vendor flow (when beepbox/docs/openapi.yaml changes upstream):
+//   cp ../beepbox/docs/openapi.yaml api/openapi.yaml
+//   ./gradlew :AndroidBeepingCore:openApiGenerate
+//   git add api/openapi.yaml && commit
+val openApiOutputDir = layout.buildDirectory.dir("generated/openapi")
+
+openApiGenerate {
+    generatorName.set("kotlin")
+    library.set("jvm-ktor")
+    inputSpec.set("$rootDir/api/openapi.yaml")
+    outputDir.set(openApiOutputDir.map { it.asFile.path })
+    apiPackage.set("com.beeping.AndroidBeepingCore.internal.api.apis")
+    modelPackage.set("com.beeping.AndroidBeepingCore.internal.api.models")
+    invokerPackage.set("com.beeping.AndroidBeepingCore.internal.api.infrastructure")
+    packageName.set("com.beeping.AndroidBeepingCore.internal.api")
+
+    configOptions.set(mapOf(
+        "serializationLibrary" to "kotlinx_serialization",
+        "useCoroutines" to "true",
+        "omitGradleWrapper" to "true",
+        "omitGradlePluginVersions" to "true",
+    ))
+
+    // Remap binary types from `java.io.File` (default) to `kotlin.ByteArray`.
+    // The /v1/encode endpoint returns audio/wav as binary — on Android we want
+    // in-memory bytes, not a File reference. This avoids JVM-only File dependency.
+    typeMappings.set(mapOf(
+        "file" to "kotlin.ByteArray",
+        "binary" to "kotlin.ByteArray",
+    ))
+
+    globalProperties.set(mapOf(
+        "modelDocs" to "false",
+        "apiDocs" to "false",
+        "modelTests" to "false",
+        "apiTests" to "false",
+    ))
+
+    // Don't generate Gradle scaffolding (build.gradle.kts, gradle.properties,
+    // settings.gradle.kts) inside the output dir — we own the build setup.
+    skipOverwrite.set(false)
+}
+
+android.libraryVariants.configureEach {
+    val openApiGenerate = tasks.named("openApiGenerate")
+    javaCompileProvider.configure { dependsOn(openApiGenerate) }
+}
+tasks.matching { it.name.startsWith("compileDebugKotlin") || it.name.startsWith("compileReleaseKotlin") }
+    .configureEach { dependsOn("openApiGenerate") }
+
+android.sourceSets.named("main") {
+    java.srcDir(openApiOutputDir.map { it.asFile.resolve("src/main/kotlin") })
 }

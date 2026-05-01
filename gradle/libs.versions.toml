@@ -27,6 +27,9 @@ ktor = "3.0.3"
 # Kotlinx Serialization — JSON for Ktor request/response (BEE-57)
 kotlinxSerializationJson = "1.7.3"
 
+# OpenAPI Generator — generates the Ktor client from beepbox's openapi.yaml (BEE-59)
+openApiGenerator = "7.10.0"
+
 # AndroidX libraries (replaces deprecated com.android.support)
 androidxAppcompat = "1.7.0"
 androidxCore = "1.13.1"
@@ -61,3 +64,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openApiGenerator" }

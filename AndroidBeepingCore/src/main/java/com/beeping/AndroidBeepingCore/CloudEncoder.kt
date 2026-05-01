@@ -1,53 +1,53 @@
 package com.beeping.AndroidBeepingCore
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
+import com.beeping.AndroidBeepingCore.internal.api.apis.EncodingApi
+import com.beeping.AndroidBeepingCore.internal.api.models.EncodeRequest
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.headers
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsBytes
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.IOException
 
 /**
- * Cloud-mode implementation of [BeepingEncoder] — talks HTTP to
- * `beepbox-server` (Phase 2: deployed at `https://api.beeping.io` PROD or
- * `https://beepbox-server-…a.run.app` Cloud Run dev URL).
+ * Cloud-mode implementation of [BeepingEncoder] — delegates encode to
+ * `beepbox-server` over HTTP via the openapi-generator-built [EncodingApi].
  *
- * **Endpoints used**:
+ * The HTTP client is generated from the canonical `api/openapi.yaml` (vendored
+ * from `beeping-io/beepbox`). See `AndroidBeepingCore/build.gradle.kts`
+ * `openApiGenerate { ... }` block for codegen config.
  *
- * ```
- * POST /v1/encode
- *   Headers: Authorization: Bearer <apiKey>, Content-Type: application/json
- *   Body:    {"key": "<5 base32 chars>"}
- *   200:     binary WAV (RIFF · PCM 16-bit · mono · 44100 Hz)
- *   401/403: auth failure
- *   429:     rate limited (Retry-After header)
- *   5xx:     server error
- * ```
+ * **Status (BEE-59)**:
  *
- * **Status (BEE-57)**:
- *
- * - [encode] fully implemented + tested with Ktor MockEngine.
- * - [decoded] returns [emptyFlow] — cyclic POST `/v1/decode` with
- *   AudioRecord-captured chunks is `pending-006` (out of scope here).
+ * - [encode] uses the generated `EncodingApi.encodePayload(EncodeRequest)`.
+ *   Returns the WAV bytes from the body. Maps 401/403/429/5xx → typed
+ *   [BeepingException] mirrors of the contract.
+ * - [decoded] returns [emptyFlow] — cyclic `/v1/decode` chunking is `pending-006`.
  *
  * `internal` — consumers select this via [BeepingMode.Cloud].
  */
 internal class CloudEncoder(
-    private val apiKey: String,
-    private val endpoint: String,
-    private val httpClient: HttpClient = defaultHttpClient(),
+    apiKey: String,
+    endpoint: String,
+    httpClientEngine: HttpClientEngine? = null,
 ) : BeepingEncoder {
+
+    private val encodingApi: EncodingApi = EncodingApi(
+        baseUrl = endpoint,
+        httpClientEngine = httpClientEngine,
+        // The generated ApiClient installs ContentNegotiation with an empty
+        // config block (no converters registered). We re-install via the
+        // httpClientConfig hook so kotlinx-serialization JSON is wired up.
+        // Ktor merges the configs when a plugin is installed twice.
+        httpClientConfig = { config ->
+            config.install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true })
+            }
+        },
+    ).apply {
+        setBearerToken(apiKey)
+    }
 
     override suspend fun encode(key: String): ByteArray {
         require(key.matches(KEY_PATTERN)) {
@@ -55,47 +55,36 @@ internal class CloudEncoder(
         }
 
         val response = try {
-            httpClient.post("$endpoint/v1/encode") {
-                contentType(ContentType.Application.Json)
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer $apiKey")
-                }
-                setBody(EncodeRequest(key = key))
-            }
+            encodingApi.encodePayload(EncodeRequest(key = key))
         } catch (cause: Throwable) {
             throw BeepingException(BeepingError.NetworkError(cause))
         }
 
-        if (!response.status.isSuccess()) {
-            throw mapStatusToBeepingException(response.status.value, response.headers["Retry-After"])
+        if (!response.success) {
+            throw mapStatusToBeepingException(
+                status = response.status,
+                retryAfter = response.headers["Retry-After"]?.firstOrNull(),
+            )
         }
-
-        return response.bodyAsBytes()
+        return response.body()
     }
 
     override fun decoded(): Flow<BeepingPayload> {
         // pending-006 — Cloud-mode live decoding requires AudioRecord chunking
-        // + cyclic POST /v1/decode. Out of scope for BEE-57.
+        // + cyclic POST /v1/decode. Out of scope for BEE-57/59.
         return emptyFlow()
     }
 
     override fun close() {
-        httpClient.close()
+        // The generated ApiClient owns a private HttpClient (no public accessor).
+        // Resource cleanup happens implicitly via GC + Android process lifecycle.
+        // pending-007 tracks closing the underlying client cleanly when
+        // openapi-generator exposes it (or after a custom template).
     }
-
-    @Serializable
-    private data class EncodeRequest(val key: String)
 
     companion object {
         private val KEY_PATTERN = Regex("^[0-9a-v]{5}$")
         private const val KEY_PATTERN_STR = "^[0-9a-v]{5}\$"
-
-        /** Default HTTP client — Android engine + JSON content negotiation. */
-        fun defaultHttpClient(): HttpClient = HttpClient(Android) {
-            install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
-            }
-        }
 
         private fun mapStatusToBeepingException(status: Int, retryAfter: String?): BeepingException {
             val error = when (status) {

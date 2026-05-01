@@ -111,6 +111,34 @@ Hooks active after `npm install`:
 
 To bypass hooks (never without explicit authorization): `git commit --no-verify`.
 
+### OpenAPI client sync (BEE-59)
+
+The Ktor HTTP client used by `CloudEncoder` is generated from the canonical
+`beepbox-server` spec via [openapi-generator]. The spec is vendored at
+[`api/openapi.yaml`](api/openapi.yaml) and the source of truth lives upstream
+in [`beeping-io/beepbox`](https://github.com/beeping-io/beepbox).
+
+**Re-vendor flow** (when beepbox publishes a spec change):
+
+```bash
+# 1. Copy the latest spec from the sibling repo (or download from GitHub)
+cp ../beepbox/docs/openapi.yaml api/openapi.yaml
+
+# 2. Re-generate the client and verify everything compiles
+./gradlew :AndroidBeepingCore:openApiGenerate
+./gradlew :AndroidBeepingCore:test
+
+# 3. Commit the spec change (generated code lives in build/, gitignored)
+git add api/openapi.yaml && git commit -m "chore(api): bump openapi.yaml to <sha>"
+```
+
+The generated sources land in `AndroidBeepingCore/build/generated/openapi/`
+and are added to the main source set automatically. They live under the
+`com.beeping.AndroidBeepingCore.internal.api` package and are not part of
+the public SDK API surface.
+
+[openapi-generator]: https://github.com/OpenAPITools/openapi-generator
+
 ---
 
 ## 🔧 Building
