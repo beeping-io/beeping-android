@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-61`)
+- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-62`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 59 SP (BEE-51..61 + BEE-1793)
-- **Story points remaining**: 42 SP (58.4% completado)
+- **Story points cerrados**: 72 SP (BEE-51..62 + BEE-1793)
+- **Story points remaining**: 29 SP (71.3% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,57 @@
 ---
 
 ## 📜 History
+
+### [2026-05-01] — Closed BEE-62
+
+**Trigger detallado**: BEE-62 cerrada — test stack moderno wired (JUnit5 Jupiter + Vintage en paralelo, Robolectric 4.14.1 sdk=33, Kotest 5.9 property-based, Kover 0.9 coverage). 4 tests nuevos verdes (2 JUnit5 + 1 Robolectric + 1 property fuzzing 1000 iters). Coverage baseline 83.8% líneas. CI verde con nuevo Kover threshold gate.
+
+**Net delta global**: 0 días en fin date. BEE-62 cerró **11 días antes** de su Fin estimado (2026-05-12 → 2026-05-01) — task más grande del milestone (13 SP) cerrada en una sesión.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-62: 2026-05-12 → 2026-05-01 (-11 días)
+
+#### Cambios de estado
+
+- BEE-62: `⏳ Pending` → `✅ Done` (13 SP)
+
+#### Cambios de scope
+
+- 3 entries nuevas en `docs/PENDING.md`:
+  - `pending-008` — Pitest en módulo JVM separado.
+  - `pending-009` — Paparazzi snapshots (depende BEE-64).
+  - `pending-010` — Espresso/Compose UI + Codecov (depende BEE-64).
+- Justificación: `info.solidsoft.pitest` no compone con `com.android.library` (requiere `java`/`java-library`); Paparazzi y Espresso requieren UI sample que llega en BEE-64.
+
+#### Detalle implementation
+
+- 3 ficheros test nuevos:
+  - `JUnit5SmokeTest.kt` (2 tests Jupiter — `assertAll`, `assertThrows`).
+  - `RobolectricSmokeTest.kt` (1 test, `RuntimeEnvironment.getApplication()` con sdk=33 shadows).
+  - `KeyPatternPropertyTest.kt` (1 test, `Arb.string` × 1000 iters verificando `LocalEncoder.encode()` rechaza non-base32-5).
+- `gradle/libs.versions.toml` — versions de junitJupiter/Platform 5.11.3, androidJunit5 (Mannodermaus) 1.12.0.0, robolectric 4.14.1, kotest 5.9.1, kover 0.9.0. Plugin entries nuevas.
+- `AndroidBeepingCore/build.gradle.kts` — aplica plugins `de.mannodermaus.android-junit5` + `org.jetbrains.kotlinx.kover`. Habilita `unitTests.isIncludeAndroidResources = true` (Robolectric). Configura `kover { reports filters excludes packages internal.api.* + verify rule(\"Line coverage ≥ 70%\") }`.
+- `.github/workflows/ci.yml` — añade step `📊 Coverage report + threshold gate (Kover ≥ 70%)` post-tests + sube artifact `kover-report` (HTML + XML).
+- Suite total **50 tests verdes** (49 + 1 skipped E2E).
+
+#### Métricas coverage baseline (Kover)
+
+- **Líneas**: 233/278 = **83.8%** ✅ (gate ≥ 70%)
+- Instructions: 1327/1702 = 78.0%
+- Branches: 60/95 = 63.2%
+
+#### Notas
+
+- 13/17 tasks cerradas, **72/101 SP (71.3%)**, en 4 sesiones efectivas.
+- Próximas 4 tasks: BEE-63 (lint, 3 SP) · BEE-64 (sample app, 8 SP) · BEE-65 (consume beeping-core, 5 SP) · BEE-66 (Maven Central, 13 SP). Total restante: 29 SP.
+- Cruzado el umbral de 70% del milestone — recta final de Phase 8.
+
+---
 
 ### [2026-05-01] — Closed BEE-61
 
