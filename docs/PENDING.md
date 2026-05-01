@@ -114,6 +114,35 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 - 🚧 **Bloqueado por**: nada — diseño interno. Considerar si los casos de uso reales (alta latencia, alto bandwidth) justifican el coste; muchos productos usan Cloud solo para encode y Local para decode (hybrid mode). Si decidimos que cloud-decode no se necesita, esta entry se descarta.
 - 🚦 **Estado**: 🆕 Nuevo
 
+### ⏳ pending-008 — Pitest mutation testing en módulo JVM separado
+
+- 📅 **Fecha añadida**: 2026-05-01
+- 🏷️ **Tipo**: test
+- 🧭 **Trigger**: durante BEE-62 se intentó aplicar `info.solidsoft.pitest` plugin al módulo `:AndroidBeepingCore`. El plugin requiere el `java`/`java-library` Gradle plugin y no compone con `com.android.library` — la extension `pitest {}` no se registra y el build falla. Pitest sigue siendo valor alto (mutation score guard) pero requiere arquitectura diferente.
+- ⚙️ **Acción requerida**: crear un módulo JVM-only `:tests-mutation` con `java-library` + `info.solidsoft.pitest`, que dependa del AAR (vía `implementation(project(":AndroidBeepingCore"))`) y corra mutation contra los `.kt` de `main/`. Targets: ≥60% inicial, ≥70% en hardening. Job manual `./gradlew :tests-mutation:pitest` (no en CI critical path para no inflar tiempos). Alternativa: investigar `pitest-android` community plugin si llega a soportar AGP 8.7.
+- 🚧 **Bloqueado por**: prioridad — Kover ya da line/branch coverage. Mutation es valor incremental, no crítico de Phase 8.
+- 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-009 — Paparazzi snapshots tests sobre Composables del sample app
+
+- 📅 **Fecha añadida**: 2026-05-01
+- 🏷️ **Tipo**: test
+- 🧭 **Trigger**: BEE-62 deferred Paparazzi porque `:AndroidBeepingCore` no expone Composables (es un library SDK puro, sin UI). El sample app (`:app`) tiene un manifest vacío hoy y se reescribe en BEE-64 con Compose + debug console.
+- ⚙️ **Acción requerida**: durante BEE-64, añadir Paparazzi (`app.cash.paparazzi:paparazzi:1.3.5`) al sample `:app` y escribir snapshot tests para las pantallas principales (encode form, decode listener, debug console). Threshold inicial: 1 snapshot per main composable. Con Paparazzi NO necesitamos emulator — corre sobre LayoutLib.
+- 🚧 **Bloqueado por**: BEE-64 (sample app rewrite con Compose).
+- 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-010 — Espresso/Compose UI instrumented tests + Codecov integration
+
+- 📅 **Fecha añadida**: 2026-05-01
+- 🏷️ **Tipo**: test
+- 🧭 **Trigger**: BEE-62 deferred (a) Espresso/Compose-UI instrumented tests porque requieren un emulador o device farm — Robolectric cubre el 99% de casos sin esa complejidad — y (b) Codecov upload porque requiere `CODECOV_TOKEN` secret en GitHub Actions todavía no configurado. Coverage XML ya se genera y sube como artifact.
+- ⚙️ **Acción requerida**: cuando BEE-64 entregue el sample app, añadir:
+  - 1-2 instrumented tests críticos en `:app` con Compose UI Test + Espresso, corridos en GitHub Actions Android emulator (`reactivecircus/android-emulator-runner`).
+  - Configurar `CODECOV_TOKEN` repo secret + upload `kover/report.xml` con `codecov/codecov-action@v4` en CI workflow. Threshold gradual 70% → 80% → 90% líneas conforme suite crece.
+- 🚧 **Bloqueado por**: BEE-64 (sample app necesario para Espresso) + decisión sobre Codecov vs alternativas (sonarcloud, github-native).
+- 🚦 **Estado**: 🆕 Nuevo
+
 ### ⏳ pending-003 — Añadir `feat/**`, `fix/**`, etc. a triggers de CI (modo individual)
 
 - 📅 **Fecha añadida**: 2026-04-28

@@ -49,6 +49,9 @@ jobs:
       - name: 🧪 Run unit tests (`:AndroidBeepingCore:test`)
         run: ./gradlew --no-daemon :AndroidBeepingCore:test
 
+      - name: 📊 Coverage report + threshold gate (Kover ≥ 70%)
+        run: ./gradlew --no-daemon :AndroidBeepingCore:koverXmlReport :AndroidBeepingCore:koverHtmlReport :AndroidBeepingCore:koverVerify
+
       - name: 🏗️ Assemble debug APK (`:app:assembleDebug`)
         run: ./gradlew --no-daemon :app:assembleDebug
 
@@ -58,6 +61,17 @@ jobs:
         with:
           name: test-reports
           path: AndroidBeepingCore/build/reports/tests/test/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: 📤 Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kover-report
+          path: |
+            AndroidBeepingCore/build/reports/kover/html/
+            AndroidBeepingCore/build/reports/kover/report.xml
           if-no-files-found: ignore
           retention-days: 7
 

@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.openapi.generator)
+    alias(libs.plugins.android.junit5)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -50,6 +52,7 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -75,6 +78,11 @@ dependencies {
     implementation(libs.timber)
 
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotest.property)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.client.mock)
@@ -146,4 +154,33 @@ tasks.matching { it.name.startsWith("compileDebugKotlin") || it.name.startsWith(
 
 android.sourceSets.named("main") {
     java.srcDir(openApiOutputDir.map { it.asFile.resolve("src/main/kotlin") })
+}
+
+// ── BEE-62: Kover (coverage) ─────────────────────────────────────────────────
+// Kover replaces JaCoCo for Kotlin projects: native support for inline funcs,
+// coroutines, sealed classes. Threshold starts at 70% lines (target 90%).
+// Generated `internal/api/**` (OpenAPI client) is excluded — third-party code.
+//
+// Pitest (mutation testing) deferred to a follow-up task — info.solidsoft.pitest
+// requires a JVM module, doesn't compose with com.android.library directly.
+// Tracked in `docs/PENDING.md` (pending-008).
+kover {
+    reports {
+        filters {
+            excludes {
+                packages(
+                    "com.beeping.AndroidBeepingCore.internal.api",
+                    "com.beeping.AndroidBeepingCore.internal.api.apis",
+                    "com.beeping.AndroidBeepingCore.internal.api.models",
+                    "com.beeping.AndroidBeepingCore.internal.api.infrastructure",
+                    "com.beeping.AndroidBeepingCore.internal.api.auth",
+                )
+            }
+        }
+        verify {
+            rule("Line coverage ≥ 70%") {
+                minBound(70)
+            }
+        }
+    }
 }
