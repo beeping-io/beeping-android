@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-05-01 (trigger: `Closed BEE-62`) |
-| **Tasks completadas** | 13 / 17 (BEE-51..62 + BEE-1793) · 72 SP cerrados de 101 (71.3%) |
-| **Velocidad observada** | 72 SP en 4 sesiones (13 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
+| **Última actualización** | 2026-05-01 (trigger: `Closed BEE-63`) |
+| **Tasks completadas** | 14 / 17 (BEE-51..63 + BEE-1793) · 75 SP cerrados de 101 (74.3%) |
+| **Velocidad observada** | 75 SP en 4 sesiones (14 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -66,7 +66,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 10 | [BEE-60](https://linear.app/me8/issue/BEE-60) | 🪵 Logging Timber + JSON sink + trace-ID propagation | 3 | 52 | 2026-05-01 (vie) | ✅ Done |
 | 11 | [BEE-61](https://linear.app/me8/issue/BEE-61) | 📡 Telemetry hook con opt-out + tests de privacy | 5 | 57 | 2026-05-01 (vie) | ✅ Done |
 | 12 | [BEE-62](https://linear.app/me8/issue/BEE-62) | 🧪 Tests: JUnit5 + MockK + Robolectric + Kotest property + Paparazzi snapshots + Pitest mutation | 13 | 70 | 2026-05-01 (vie) | ✅ Done |
-| 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-12 (mar) | ⏳ Pending |
+| 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-01 (vie) | ✅ Done |
 | 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 81 | 2026-05-14 (jue) | ⏳ Pending |
 | 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) | 5 | 86 | 2026-05-14 (jue) | ⏳ Pending |
 | 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 101 | 2026-05-15 (vie) | ⏳ Pending |

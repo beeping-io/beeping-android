@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-62`)
+- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-63`)
 - **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 72 SP (BEE-51..62 + BEE-1793)
-- **Story points remaining**: 29 SP (71.3% completado)
+- **Story points cerrados**: 75 SP (BEE-51..63 + BEE-1793)
+- **Story points remaining**: 26 SP (74.3% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,56 @@
 ---
 
 ## 📜 History
+
+### [2026-05-01] — Closed BEE-63
+
+**Trigger detallado**: BEE-63 cerrada — ktlint 12.1.2 + detekt 1.23.7 + Android Lint strict wired como CI gate. Auto-format aplicado a 17 ficheros Kotlin. Cero violations en código propio. CI ahora corre 5 gates secuenciales (ktlint + detekt + lint + tests + Kover).
+
+**Net delta global**: 0 días en fin date. BEE-63 cerró **11 días antes** de su Fin estimado (2026-05-12 → 2026-05-01).
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Adelantados
+
+- BEE-63: 2026-05-12 → 2026-05-01 (-11 días)
+
+#### Cambios de estado
+
+- BEE-63: `⏳ Pending` → `✅ Done` (3 SP)
+
+#### Detalle implementation
+
+- 2 ficheros nuevos: `detekt.yml` (root, overrides sobre preset default), `AndroidBeepingCore/lint.xml` (ignora `GradleDependency` + `AndroidGradlePluginVersion` advisory checks).
+- `gradle/libs.versions.toml` — plugin entries `org.jlleitschuh.gradle.ktlint:12.1.2` + `io.gitlab.arturbosch.detekt:1.23.7`.
+- `AndroidBeepingCore/build.gradle.kts` — aplica plugins ktlint + detekt; configura `android.lint { warningsAsErrors abortOnError checkReleaseBuilds = true; lintConfig = lint.xml }`. Declara `dependsOn(openApiGenerate)` en ktlint runners + Detekt tasks (la generated dir está en main source set).
+- `.editorconfig` — `ktlint_standard_package-name = disabled` (legacy mixed-case namespace `com.beeping.AndroidBeepingCore` es API contract público) + `ktlint_standard_function-naming = disabled` (BeepingCoreJNI external functions matchean los entry points de `libbeepingcore.so`).
+- `.github/workflows/ci.yml` — step nuevo `🧼 Lint & static analysis` antes de los unit tests.
+- `.gitignore` — `.claude/` añadido.
+- 17 ficheros `src/main/**` + `src/test/**` auto-formateados (whitespace, trailing commas).
+
+#### Cleanups durante el scan
+
+- Dead `private val logger = BeepingLogger(traceId)` removido de `LocalEncoder` + `CloudEncoder` (UnusedPrivateProperty, unused desde BEE-60).
+- `BeepingCoreJNI.kt:90` migrado de `android.util.Log.e` → `Timber.tag(TAG).e` (`LogNotTimber` lint check + consistency con BEE-60).
+- 2 narrow `@Suppress("TooGenericExceptionCaught")` en `TelemetryEmitter.emit` y `CloudEncoder.encode` documentando los catches deliberados (telemetry must never break SDK; HTTP errors → typed BeepingException).
+
+#### Métricas tras BEE-63
+
+- ktlint: 8 source sets, 0 violations.
+- detekt: 0 issues sobre preset default + overrides.
+- Android Lint: 0 errors con `warningsAsErrors = true`.
+- Tests: 50/50 verde (49 + 1 skipped E2E).
+- Kover: 83.8% líneas (gate ≥ 70%).
+
+#### Notas
+
+- 14/17 tasks cerradas, **75/101 SP (74.3%)**, en 4 sesiones efectivas.
+- Próximas 3 tasks: BEE-64 (sample app, 8 SP, **internal testing only** — tutorial-grade examples irán a otro repo dedicado en el futuro) · BEE-65 (consume beeping-core, 5 SP) · BEE-66 (Maven Central, 13 SP). Total restante: 26 SP.
+- Recta final del milestone — cruzando 75% del trabajo completado.
+
+---
 
 ### [2026-05-01] — Closed BEE-62
 
