@@ -64,7 +64,8 @@ class BeepingClient internal constructor(
     private val mode: BeepingMode,
     private val encoder: BeepingEncoder,
     @Suppress("unused") private val logLevel: LogLevel = LogLevel.INFO,
-    @Suppress("unused") private val telemetryEnabled: Boolean = false,
+    private val telemetryEnabled: Boolean = false,
+    private val telemetryHook: TelemetryHook = TelemetryHook.NoOp,
     /**
      * Per-session trace ID, propagated as `X-Trace-Id` in cloud HTTP requests
      * and embedded in every log line via [BeepingLogger]. Useful for
@@ -74,14 +75,18 @@ class BeepingClient internal constructor(
 ) {
 
     private val logger = BeepingLogger(traceId)
+    private val emitter = TelemetryEmitter(telemetryHook, telemetryEnabled)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val stopSignal = CompletableDeferred<Unit>()
+    private val createdAtMillis = System.currentTimeMillis()
+    private val modeString = if (mode is BeepingMode.Cloud) "cloud" else "local"
 
     @Volatile
     private var closed = false
 
     init {
         logger.i("BeepingClient created (mode=${mode::class.simpleName}, logLevel=$logLevel)")
+        emitter.emit(TelemetryEvent.SdkInitialized(mode = modeString, traceId = traceId))
     }
 
     /**
@@ -110,13 +115,36 @@ class BeepingClient internal constructor(
      * Encodes [payload] via the configured [BeepingMode] and (post-BEE-64)
      * plays it via `AudioTrack`.
      */
-    suspend fun send(payload: BeepingPayload): Result<Unit> = runCatching {
+    suspend fun send(payload: BeepingPayload): Result<Unit> {
         check(!closed) { "BeepingClient is closed" }
 
-        @Suppress("UNUSED_VARIABLE")
-        val wav = encoder.encode(payload.payload)
-        // BEE-64 will write `wav` to AudioTrack here.
-        Unit
+        emitter.emit(
+            TelemetryEvent.EncodeRequested(
+                mode = modeString,
+                keyLength = payload.payload.length,
+                traceId = traceId,
+            ),
+        )
+        val started = System.currentTimeMillis()
+
+        return runCatching {
+            val wav = encoder.encode(payload.payload)
+            emitter.emit(
+                TelemetryEvent.EncodeSucceeded(
+                    traceId = traceId,
+                    durationMs = System.currentTimeMillis() - started,
+                    byteCount = wav.size,
+                ),
+            )
+            // BEE-64 will write `wav` to AudioTrack here.
+        }.onFailure { e ->
+            emitter.emit(
+                TelemetryEvent.EncodeFailed(
+                    traceId = traceId,
+                    errorType = e::class.simpleName ?: "Unknown",
+                ),
+            )
+        }
     }
 
     /** Releases all resources and cancels any active listen session. Idempotent. */
@@ -124,6 +152,12 @@ class BeepingClient internal constructor(
         if (closed) return
         closed = true
         logger.i("BeepingClient closing")
+        emitter.emit(
+            TelemetryEvent.Closed(
+                traceId = traceId,
+                sessionDurationMs = System.currentTimeMillis() - createdAtMillis,
+            ),
+        )
         stopSignal.complete(Unit)
         scope.cancel()
         encoder.close()
@@ -163,6 +197,7 @@ class BeepingClient internal constructor(
         private var mode: BeepingMode = BeepingMode.Local
         private var logLevel: LogLevel = LogLevel.INFO
         private var telemetryEnabled: Boolean = false
+        private var telemetryHook: TelemetryHook = TelemetryHook.NoOp
 
         /** Selects the encode/decode strategy. Default: [BeepingMode.Local]. */
         fun mode(value: BeepingMode): Builder = apply { this.mode = value }
@@ -170,8 +205,17 @@ class BeepingClient internal constructor(
         /** Sets log verbosity. Wired to Timber by BEE-60. Default: [LogLevel.INFO]. */
         fun logLevel(value: LogLevel): Builder = apply { this.logLevel = value }
 
-        /** Enables/disables telemetry emission. Wired by BEE-61. Default: `false`. */
+        /**
+         * Enables/disables telemetry emission. **Default: `false` (opt-IN)** —
+         * privacy-first per the SDK product principles.
+         */
         fun telemetryEnabled(value: Boolean): Builder = apply { this.telemetryEnabled = value }
+
+        /**
+         * Sets the [TelemetryHook] sink. Default: [TelemetryHook.NoOp].
+         * Has no effect if [telemetryEnabled] stays `false`.
+         */
+        fun telemetryHook(value: TelemetryHook): Builder = apply { this.telemetryHook = value }
 
         /**
          * Validates the configuration and returns a fresh [BeepingClient].
@@ -201,6 +245,7 @@ class BeepingClient internal constructor(
                 encoder = encoder,
                 logLevel = logLevel,
                 telemetryEnabled = telemetryEnabled,
+                telemetryHook = telemetryHook,
                 traceId = traceId,
             )
         }
