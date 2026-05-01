@@ -1,6 +1,7 @@
 package com.beeping.AndroidBeepingCore
 
 import android.content.Context
+import java.util.UUID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,13 +65,24 @@ class BeepingClient internal constructor(
     private val encoder: BeepingEncoder,
     @Suppress("unused") private val logLevel: LogLevel = LogLevel.INFO,
     @Suppress("unused") private val telemetryEnabled: Boolean = false,
+    /**
+     * Per-session trace ID, propagated as `X-Trace-Id` in cloud HTTP requests
+     * and embedded in every log line via [BeepingLogger]. Useful for
+     * correlating client logs with server-side traces.
+     */
+    val traceId: String = UUID.randomUUID().toString().take(TRACE_ID_LEN),
 ) {
 
+    private val logger = BeepingLogger(traceId)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val stopSignal = CompletableDeferred<Unit>()
 
     @Volatile
     private var closed = false
+
+    init {
+        logger.i("BeepingClient created (mode=${mode::class.simpleName}, logLevel=$logLevel)")
+    }
 
     /**
      * Returns a cold [Flow] of [BeepingEvent]s for the active listening session.
@@ -111,9 +123,14 @@ class BeepingClient internal constructor(
     fun close() {
         if (closed) return
         closed = true
+        logger.i("BeepingClient closing")
         stopSignal.complete(Unit)
         scope.cancel()
         encoder.close()
+    }
+
+    private companion object {
+        private const val TRACE_ID_LEN = 8
     }
 
     /**
@@ -172,12 +189,19 @@ class BeepingClient internal constructor(
                     "BeepingMode.Cloud.endpoint must start with http(s):// (got '${mode.endpoint}')"
                 }
             }
-            val encoder = BeepingEncoderFactory.create(mode, context)
+
+            // Wire BEE-60 logging: install the tree once + apply the requested level.
+            BeepingTimberTree.installOnce()
+            BeepingTimberTree.setLogLevel(logLevel)
+
+            val traceId = UUID.randomUUID().toString().take(TRACE_ID_LEN)
+            val encoder = BeepingEncoderFactory.create(mode, context, traceId)
             return BeepingClient(
                 mode = mode,
                 encoder = encoder,
                 logLevel = logLevel,
                 telemetryEnabled = telemetryEnabled,
+                traceId = traceId,
             )
         }
     }

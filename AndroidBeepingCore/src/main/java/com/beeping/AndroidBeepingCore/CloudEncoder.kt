@@ -4,6 +4,8 @@ import com.beeping.AndroidBeepingCore.internal.api.apis.EncodingApi
 import com.beeping.AndroidBeepingCore.internal.api.models.EncodeRequest
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -31,7 +33,10 @@ internal class CloudEncoder(
     apiKey: String,
     endpoint: String,
     httpClientEngine: HttpClientEngine? = null,
+    traceId: String = "anon",
 ) : BeepingEncoder {
+
+    private val logger = BeepingLogger(traceId)
 
     private val encodingApi: EncodingApi = EncodingApi(
         baseUrl = endpoint,
@@ -40,9 +45,13 @@ internal class CloudEncoder(
         // config block (no converters registered). We re-install via the
         // httpClientConfig hook so kotlinx-serialization JSON is wired up.
         // Ktor merges the configs when a plugin is installed twice.
+        // BEE-60: also installs defaultRequest with X-Trace-Id header.
         httpClientConfig = { config ->
             config.install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
+            }
+            config.defaultRequest {
+                header("X-Trace-Id", traceId)
             }
         },
     ).apply {

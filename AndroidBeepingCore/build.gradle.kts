@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.bundles.androidx.base)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.bundles.ktor.client)
+    implementation(libs.timber)
 
     testImplementation(libs.junit)
     testImplementation(libs.turbine)

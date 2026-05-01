@@ -35,7 +35,10 @@ import kotlinx.coroutines.flow.emptyFlow
 internal class LocalEncoder(
     private val context: Context,
     private val jni: BeepingCoreJNI = BeepingCoreJNI(),
+    traceId: String = "anon",
 ) : BeepingEncoder {
+
+    private val logger = BeepingLogger(traceId)
 
     override suspend fun encode(key: String): ByteArray {
         require(key.matches(KEY_PATTERN)) {

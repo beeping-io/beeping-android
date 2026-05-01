@@ -34,6 +34,9 @@ openApiGenerator = "7.10.0"
 androidxAppcompat = "1.7.0"
 androidxCore = "1.13.1"
 
+# Logging — Timber JSON sink + trace-ID (BEE-60)
+timber = "5.0.1"
+
 # Test libraries
 junit = "4.13.2"
 turbine = "1.1.0"
@@ -50,6 +53,7 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 junit = { module = "junit:junit", version.ref = "junit" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
