@@ -38,7 +38,6 @@ package com.beeping.AndroidBeepingCore
  * ```
  */
 fun interface TelemetryHook {
-
     /** Called by the SDK on every operational event. Must not throw. */
     fun onEvent(event: TelemetryEvent)
 

@@ -35,39 +35,40 @@ internal class CloudEncoder(
     httpClientEngine: HttpClientEngine? = null,
     traceId: String = "anon",
 ) : BeepingEncoder {
-
-    private val logger = BeepingLogger(traceId)
-
-    private val encodingApi: EncodingApi = EncodingApi(
-        baseUrl = endpoint,
-        httpClientEngine = httpClientEngine,
-        // The generated ApiClient installs ContentNegotiation with an empty
-        // config block (no converters registered). We re-install via the
-        // httpClientConfig hook so kotlinx-serialization JSON is wired up.
-        // Ktor merges the configs when a plugin is installed twice.
-        // BEE-60: also installs defaultRequest with X-Trace-Id header.
-        httpClientConfig = { config ->
-            config.install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
-            }
-            config.defaultRequest {
-                header("X-Trace-Id", traceId)
-            }
-        },
-    ).apply {
-        setBearerToken(apiKey)
-    }
+    private val encodingApi: EncodingApi =
+        EncodingApi(
+            baseUrl = endpoint,
+            httpClientEngine = httpClientEngine,
+            // The generated ApiClient installs ContentNegotiation with an empty
+            // config block (no converters registered). We re-install via the
+            // httpClientConfig hook so kotlinx-serialization JSON is wired up.
+            // Ktor merges the configs when a plugin is installed twice.
+            // BEE-60: also installs defaultRequest with X-Trace-Id header.
+            httpClientConfig = { config ->
+                config.install(ContentNegotiation) {
+                    json(Json { ignoreUnknownKeys = true })
+                }
+                config.defaultRequest {
+                    header("X-Trace-Id", traceId)
+                }
+            },
+        ).apply {
+            setBearerToken(apiKey)
+        }
 
     override suspend fun encode(key: String): ByteArray {
         require(key.matches(KEY_PATTERN)) {
             "Key must match the 5-char base32 pattern $KEY_PATTERN_STR (got '$key')"
         }
 
-        val response = try {
-            encodingApi.encodePayload(EncodeRequest(key = key))
-        } catch (cause: Throwable) {
-            throw BeepingException(BeepingError.NetworkError(cause))
-        }
+        val response =
+            try {
+                encodingApi.encodePayload(EncodeRequest(key = key))
+            } catch (
+                @Suppress("TooGenericExceptionCaught") cause: Throwable,
+            ) {
+                throw BeepingException(BeepingError.NetworkError(cause))
+            }
 
         if (!response.success) {
             throw mapStatusToBeepingException(
@@ -95,15 +96,19 @@ internal class CloudEncoder(
         private val KEY_PATTERN = Regex("^[0-9a-v]{5}$")
         private const val KEY_PATTERN_STR = "^[0-9a-v]{5}\$"
 
-        private fun mapStatusToBeepingException(status: Int, retryAfter: String?): BeepingException {
-            val error = when (status) {
-                401, 403 -> BeepingError.AuthenticationFailed
-                429 -> {
-                    val seconds = retryAfter?.toLongOrNull() ?: DEFAULT_RETRY_AFTER_SECONDS
-                    BeepingError.RateLimited(retryAfterMs = seconds * MILLIS_PER_SECOND)
+        private fun mapStatusToBeepingException(
+            status: Int,
+            retryAfter: String?,
+        ): BeepingException {
+            val error =
+                when (status) {
+                    401, 403 -> BeepingError.AuthenticationFailed
+                    429 -> {
+                        val seconds = retryAfter?.toLongOrNull() ?: DEFAULT_RETRY_AFTER_SECONDS
+                        BeepingError.RateLimited(retryAfterMs = seconds * MILLIS_PER_SECOND)
+                    }
+                    else -> BeepingError.NetworkError(IOException("HTTP $status"))
                 }
-                else -> BeepingError.NetworkError(IOException("HTTP $status"))
-            }
             return BeepingException(error)
         }
 

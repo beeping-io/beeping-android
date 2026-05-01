@@ -52,6 +52,10 @@ kover = "0.9.0"
 pitest = "1.16.1"
 pitestPlugin = "1.15.0"
 
+# Static analysis (BEE-63)
+ktlintPlugin = "12.1.2"
+detekt = "1.23.7"
+
 [libraries]
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlinBom" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
@@ -86,4 +90,6 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 openapi-generator = { id = "org.openapi.generator", version.ref = "openApiGenerator" }
 android-junit5 = { id = "de.mannodermaus.android-junit5", version.ref = "androidJunit5" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 pitest = { id = "info.solidsoft.pitest", version.ref = "pitestPlugin" }

@@ -11,30 +11,31 @@ import org.junit.Test
  * `endpoint` will fail this test until renamed or refactored.
  */
 class TelemetryEventTest {
+    private val forbiddenSubstrings =
+        listOf(
+            "payload", // raw decoded/encoded data
+            "apikey", // auth secret
+            "endpoint", // network destination
+            "url", // any URL is suspect
+            "ip", // IP address — but `ip` could match harmless prefixes; use word boundaries below
+            "token", // auth tokens
+            "auth", // authentication-related fields
+            "deviceid",
+            "userid",
+            "email",
+            "phone",
+            "secret",
+            "password",
+        )
 
-    private val forbiddenSubstrings = listOf(
-        "payload",   // raw decoded/encoded data
-        "apikey",    // auth secret
-        "endpoint",  // network destination
-        "url",       // any URL is suspect
-        "ip",        // IP address — but `ip` could match harmless prefixes; use word boundaries below
-        "token",     // auth tokens
-        "auth",      // authentication-related fields
-        "deviceid",
-        "userid",
-        "email",
-        "phone",
-        "secret",
-        "password",
-    )
-
-    private val variants = listOf(
-        TelemetryEvent.SdkInitialized::class.java,
-        TelemetryEvent.Closed::class.java,
-        TelemetryEvent.EncodeRequested::class.java,
-        TelemetryEvent.EncodeSucceeded::class.java,
-        TelemetryEvent.EncodeFailed::class.java,
-    )
+    private val variants =
+        listOf(
+            TelemetryEvent.SdkInitialized::class.java,
+            TelemetryEvent.Closed::class.java,
+            TelemetryEvent.EncodeRequested::class.java,
+            TelemetryEvent.EncodeSucceeded::class.java,
+            TelemetryEvent.EncodeFailed::class.java,
+        )
 
     @Test
     fun `no TelemetryEvent variant exposes a PII-named field`() {
@@ -60,7 +61,10 @@ class TelemetryEventTest {
      * For multi-letter forbidden words: substring match.
      * For 2-char patterns like "ip": only match as full word or with separators.
      */
-    private fun matches(fieldName: String, forbidden: String): Boolean =
+    private fun matches(
+        fieldName: String,
+        forbidden: String,
+    ): Boolean =
         if (forbidden.length <= 2) {
             // Word-boundary match for short patterns to avoid false positives like "duration".
             fieldName == forbidden ||
@@ -73,10 +77,11 @@ class TelemetryEventTest {
 
     @Test
     fun `EncodeRequested exposes only sanitized fields`() {
-        val fields = TelemetryEvent.EncodeRequested::class.java.declaredFields
-            .filterNot { it.isSynthetic }
-            .map { it.name }
-            .toSet()
+        val fields =
+            TelemetryEvent.EncodeRequested::class.java.declaredFields
+                .filterNot { it.isSynthetic }
+                .map { it.name }
+                .toSet()
         // Whitelist of fields that ARE allowed in this variant.
         val whitelist = setOf("mode", "keyLength", "traceId")
         assertTrue(
@@ -87,10 +92,11 @@ class TelemetryEventTest {
 
     @Test
     fun `EncodeSucceeded exposes only sanitized fields`() {
-        val fields = TelemetryEvent.EncodeSucceeded::class.java.declaredFields
-            .filterNot { it.isSynthetic }
-            .map { it.name }
-            .toSet()
+        val fields =
+            TelemetryEvent.EncodeSucceeded::class.java.declaredFields
+                .filterNot { it.isSynthetic }
+                .map { it.name }
+                .toSet()
         val whitelist = setOf("traceId", "durationMs", "byteCount")
         assertTrue(
             "Unexpected field(s) in EncodeSucceeded: ${fields - whitelist}",
@@ -100,10 +106,11 @@ class TelemetryEventTest {
 
     @Test
     fun `EncodeFailed exposes only sanitized fields (errorType is class name not message)`() {
-        val fields = TelemetryEvent.EncodeFailed::class.java.declaredFields
-            .filterNot { it.isSynthetic }
-            .map { it.name }
-            .toSet()
+        val fields =
+            TelemetryEvent.EncodeFailed::class.java.declaredFields
+                .filterNot { it.isSynthetic }
+                .map { it.name }
+                .toSet()
         val whitelist = setOf("traceId", "errorType")
         assertTrue(
             "Unexpected field(s) in EncodeFailed: ${fields - whitelist}",

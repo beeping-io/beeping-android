@@ -30,5 +30,8 @@ sealed class BeepingMode {
      * @property apiKey The customer-provisioned API key for `beepbox-server`.
      * @property endpoint Base URL of the API (e.g. `https://api.beeping.io`).
      */
-    data class Cloud(val apiKey: String, val endpoint: String) : BeepingMode()
+    data class Cloud(
+        val apiKey: String,
+        val endpoint: String,
+    ) : BeepingMode()
 }

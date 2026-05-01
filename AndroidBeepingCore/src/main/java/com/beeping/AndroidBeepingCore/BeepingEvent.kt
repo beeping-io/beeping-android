@@ -18,7 +18,6 @@ package com.beeping.AndroidBeepingCore
  * ```
  */
 sealed class BeepingEvent {
-
     /** The listening session is up and ready to receive beeps. */
     data object Started : BeepingEvent()
 
@@ -27,7 +26,9 @@ sealed class BeepingEvent {
      *
      * @property payload The decoded payload — see [BeepingPayload].
      */
-    data class Decoded(val payload: BeepingPayload) : BeepingEvent()
+    data class Decoded(
+        val payload: BeepingPayload,
+    ) : BeepingEvent()
 
     /**
      * A failure occurred. Some [BeepingError] variants are recoverable and
@@ -36,7 +37,9 @@ sealed class BeepingEvent {
      *
      * @property reason The typed [BeepingError].
      */
-    data class Failed(val reason: BeepingError) : BeepingEvent()
+    data class Failed(
+        val reason: BeepingError,
+    ) : BeepingEvent()
 
     /** The session is closed. No more events will be emitted. */
     data object Stopped : BeepingEvent()

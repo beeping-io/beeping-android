@@ -15,7 +15,9 @@ internal class TelemetryEmitter(
         if (!enabled) return
         try {
             hook.onEvent(event)
-        } catch (t: Throwable) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") t: Throwable,
+        ) {
             // Telemetry MUST NOT break the SDK. Swallow + (silently) log
             // — Timber is wired in BEE-60 but using it here would risk
             // recursive failures if logging itself throws.

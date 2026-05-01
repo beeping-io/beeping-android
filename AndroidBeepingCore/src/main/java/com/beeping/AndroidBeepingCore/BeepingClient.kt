@@ -1,7 +1,6 @@
 package com.beeping.AndroidBeepingCore
 
 import android.content.Context
-import java.util.UUID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 /**
  * Public entry point of the Beeping Android SDK.
@@ -73,7 +73,6 @@ class BeepingClient internal constructor(
      */
     val traceId: String = UUID.randomUUID().toString().take(TRACE_ID_LEN),
 ) {
-
     private val logger = BeepingLogger(traceId)
     private val emitter = TelemetryEmitter(telemetryHook, telemetryEnabled)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -92,24 +91,26 @@ class BeepingClient internal constructor(
     /**
      * Returns a cold [Flow] of [BeepingEvent]s for the active listening session.
      */
-    fun listen(): Flow<BeepingEvent> = flow {
-        check(!closed) { "BeepingClient is closed" }
+    fun listen(): Flow<BeepingEvent> =
+        flow {
+            check(!closed) { "BeepingClient is closed" }
 
-        emit(BeepingEvent.Started)
+            emit(BeepingEvent.Started)
 
-        try {
-            encoder.decoded()
-                .map<BeepingPayload, BeepingEvent> { BeepingEvent.Decoded(it) }
-                .catch { cause ->
-                    val error = (cause as? BeepingException)?.error
-                        ?: BeepingError.DecoderInternal(cause)
-                    emit(BeepingEvent.Failed(error))
-                }
-                .collect { emit(it) }
-        } finally {
-            emit(BeepingEvent.Stopped)
+            try {
+                encoder
+                    .decoded()
+                    .map<BeepingPayload, BeepingEvent> { BeepingEvent.Decoded(it) }
+                    .catch { cause ->
+                        val error =
+                            (cause as? BeepingException)?.error
+                                ?: BeepingError.DecoderInternal(cause)
+                        emit(BeepingEvent.Failed(error))
+                    }.collect { emit(it) }
+            } finally {
+                emit(BeepingEvent.Stopped)
+            }
         }
-    }
 
     /**
      * Encodes [payload] via the configured [BeepingMode] and (post-BEE-64)
@@ -193,7 +194,9 @@ class BeepingClient internal constructor(
      *     .build()
      * ```
      */
-    class Builder(private val context: Context) {
+    class Builder(
+        private val context: Context,
+    ) {
         private var mode: BeepingMode = BeepingMode.Local
         private var logLevel: LogLevel = LogLevel.INFO
         private var telemetryEnabled: Boolean = false

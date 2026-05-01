@@ -16,7 +16,6 @@ package com.beeping.AndroidBeepingCore
  * privacy patterns — the reflection-based privacy test enforces this.
  */
 sealed class TelemetryEvent {
-
     /** Fired once when [BeepingClient] is constructed. */
     data class SdkInitialized(
         val mode: String,

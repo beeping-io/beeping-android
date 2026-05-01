@@ -8,7 +8,6 @@ import org.junit.Before
 import org.junit.Test
 
 class BeepingTimberTreeTest {
-
     @Before
     fun resetLevel() {
         BeepingTimberTree.setLogLevel(LogLevel.INFO)

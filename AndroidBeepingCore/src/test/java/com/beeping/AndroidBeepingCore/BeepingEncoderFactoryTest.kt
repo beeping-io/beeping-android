@@ -6,7 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BeepingEncoderFactoryTest {
-
     private val context: Context = mockk(relaxed = true)
 
     @Test
@@ -21,10 +20,11 @@ class BeepingEncoderFactoryTest {
 
     @Test
     fun `Cloud mode produces CloudEncoder with apiKey and endpoint`() {
-        val encoder = BeepingEncoderFactory.create(
-            BeepingMode.Cloud(apiKey = "k", endpoint = "https://e"),
-            context,
-        )
+        val encoder =
+            BeepingEncoderFactory.create(
+                BeepingMode.Cloud(apiKey = "k", endpoint = "https://e"),
+                context,
+            )
         assertTrue(
             "expected CloudEncoder, got ${encoder::class.simpleName}",
             encoder is CloudEncoder,

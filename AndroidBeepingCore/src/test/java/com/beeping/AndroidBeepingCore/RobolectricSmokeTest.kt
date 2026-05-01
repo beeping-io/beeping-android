@@ -22,7 +22,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class RobolectricSmokeTest {
-
     @Test
     fun `application context is resolvable`() {
         val ctx: Context = RuntimeEnvironment.getApplication()

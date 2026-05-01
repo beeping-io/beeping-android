@@ -4,7 +4,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class BeepingCoreJNITest {
-
     @Test
     fun isNativeLoaded_isCallableWithoutException() {
         val loaded = BeepingCoreJNI.isNativeLoaded()

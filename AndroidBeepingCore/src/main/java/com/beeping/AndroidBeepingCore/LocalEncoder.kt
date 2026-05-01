@@ -35,11 +35,8 @@ import kotlinx.coroutines.flow.emptyFlow
 internal class LocalEncoder(
     private val context: Context,
     private val jni: BeepingCoreJNI = BeepingCoreJNI(),
-    traceId: String = "anon",
+    @Suppress("unused") traceId: String = "anon",
 ) : BeepingEncoder {
-
-    private val logger = BeepingLogger(traceId)
-
     override suspend fun encode(key: String): ByteArray {
         require(key.matches(KEY_PATTERN)) {
             "Key must match the 5-char base32 pattern $KEY_PATTERN_STR (got '$key')"
@@ -48,51 +45,53 @@ internal class LocalEncoder(
         TODO("BEE-65 — LocalEncoder.encode() requires the encoder native function from beeping-core")
     }
 
-    override fun decoded(): Flow<BeepingPayload> = callbackFlow {
-        // Permission must be granted by the host Activity BEFORE collecting
-        // listen(). Failing fast lets BeepingClient.listen() surface a
-        // typed BeepingEvent.Failed(MissingMicPermission) via its catch{}.
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            throw BeepingException(BeepingError.MissingMicPermission)
-        }
+    override fun decoded(): Flow<BeepingPayload> =
+        callbackFlow {
+            // Permission must be granted by the host Activity BEFORE collecting
+            // listen(). Failing fast lets BeepingClient.listen() surface a
+            // typed BeepingEvent.Failed(MissingMicPermission) via its catch{}.
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                throw BeepingException(BeepingError.MissingMicPermission)
+            }
 
-        if (!BeepingCoreJNI.isNativeLoaded()) {
-            // Native lib unavailable — surface via the same BeepingException
-            // path so BeepingClient.listen() emits a typed Failed event.
-            throw BeepingException(BeepingError.NativeLibraryNotLoaded)
-        }
+            if (!BeepingCoreJNI.isNativeLoaded()) {
+                // Native lib unavailable — surface via the same BeepingException
+                // path so BeepingClient.listen() emits a typed Failed event.
+                throw BeepingException(BeepingError.NativeLibraryNotLoaded)
+            }
 
-        val beepingObject = jni.init()
-        val nativeThread = Thread {
-            Thread.currentThread().priority = Thread.MAX_PRIORITY
-            jni.start(beepingObject)
-        }.also { it.start() }
+            val beepingObject = jni.init()
+            val nativeThread =
+                Thread {
+                    Thread.currentThread().priority = Thread.MAX_PRIORITY
+                    jni.start(beepingObject)
+                }.also { it.start() }
 
-        jni.callback = { value ->
-            if (value == BeepingCoreJNI.BC_TOKEN_END_OK) {
-                val buf = CharArray(BEEP_BUFFER_SIZE)
-                jni.getDecodedString(buf, beepingObject)
-                val decoded = String(buf).trimEnd(' ')
-                trySend(BeepingPayload(payload = decoded))
+            jni.callback = { value ->
+                if (value == BeepingCoreJNI.BC_TOKEN_END_OK) {
+                    val buf = CharArray(BEEP_BUFFER_SIZE)
+                    jni.getDecodedString(buf, beepingObject)
+                    val decoded = String(buf).trimEnd(' ')
+                    trySend(BeepingPayload(payload = decoded))
+                }
+            }
+
+            jni.configure(MODE_NONAUDIBLE_JNI, beepingObject)
+            jni.startBeepingListen(beepingObject)
+
+            awaitClose {
+                jni.stopBeepingListen(beepingObject)
+                jni.callback = null
+                jni.dealloc(beepingObject)
+                try {
+                    nativeThread.join(JOIN_TIMEOUT_MS)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
             }
         }
-
-        jni.configure(MODE_NONAUDIBLE_JNI, beepingObject)
-        jni.startBeepingListen(beepingObject)
-
-        awaitClose {
-            jni.stopBeepingListen(beepingObject)
-            jni.callback = null
-            jni.dealloc(beepingObject)
-            try {
-                nativeThread.join(JOIN_TIMEOUT_MS)
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
-            }
-        }
-    }
 
     override fun close() {
         jni.callback = null

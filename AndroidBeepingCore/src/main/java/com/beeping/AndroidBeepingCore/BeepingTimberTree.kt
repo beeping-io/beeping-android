@@ -28,7 +28,6 @@ import timber.log.Timber
  * when present.
  */
 internal object BeepingTimberTree : Timber.Tree() {
-
     @Volatile
     private var minLevel: LogLevel = LogLevel.INFO
 
@@ -48,7 +47,10 @@ internal object BeepingTimberTree : Timber.Tree() {
         }
     }
 
-    override fun isLoggable(tag: String?, priority: Int): Boolean = shouldLog(priority)
+    override fun isLoggable(
+        tag: String?,
+        priority: Int,
+    ): Boolean = shouldLog(priority)
 
     /** Public test-friendly mirror of the protected [isLoggable]. */
     @JvmStatic
@@ -58,21 +60,27 @@ internal object BeepingTimberTree : Timber.Tree() {
         return incoming.ordinal >= minLevel.ordinal
     }
 
-    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+    override fun log(
+        priority: Int,
+        tag: String?,
+        message: String,
+        t: Throwable?,
+    ) {
         val level = priority.toLogLevel() ?: return
         val redactedMessage = redact(message)
         val json = buildJsonLog(level, tag, redactedMessage, t)
         Log.println(priority, BEEPING_LOGCAT_TAG, json)
     }
 
-    private fun Int.toLogLevel(): LogLevel? = when (this) {
-        Log.VERBOSE -> LogLevel.VERBOSE
-        Log.DEBUG -> LogLevel.DEBUG
-        Log.INFO -> LogLevel.INFO
-        Log.WARN -> LogLevel.WARN
-        Log.ERROR, Log.ASSERT -> LogLevel.ERROR
-        else -> null
-    }
+    private fun Int.toLogLevel(): LogLevel? =
+        when (this) {
+            Log.VERBOSE -> LogLevel.VERBOSE
+            Log.DEBUG -> LogLevel.DEBUG
+            Log.INFO -> LogLevel.INFO
+            Log.WARN -> LogLevel.WARN
+            Log.ERROR, Log.ASSERT -> LogLevel.ERROR
+            else -> null
+        }
 
     /** Redacts known PII patterns. Visible-for-tests. */
     @JvmStatic
@@ -99,7 +107,8 @@ internal object BeepingTimberTree : Timber.Tree() {
     }
 
     private fun escape(s: String): String =
-        s.replace("\\", "\\\\")
+        s
+            .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
             .replace("\r", "\\r")

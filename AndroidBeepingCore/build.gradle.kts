@@ -7,15 +7,23 @@ plugins {
     alias(libs.plugins.openapi.generator)
     alias(libs.plugins.android.junit5)
     alias(libs.plugins.kover)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
 }
 
 android {
     namespace = "com.beeping.AndroidBeepingCore"
-    compileSdk = libs.versions.compileSdk.get().toInt()
+    compileSdk =
+        libs.versions.compileSdk
+            .get()
+            .toInt()
     ndkVersion = libs.versions.ndk.get()
 
     defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
+        minSdk =
+            libs.versions.minSdk
+                .get()
+                .toInt()
         // No targetSdk on library modules — only applications carry that.
 
         ndk {
@@ -118,27 +126,33 @@ openApiGenerate {
     invokerPackage.set("com.beeping.AndroidBeepingCore.internal.api.infrastructure")
     packageName.set("com.beeping.AndroidBeepingCore.internal.api")
 
-    configOptions.set(mapOf(
-        "serializationLibrary" to "kotlinx_serialization",
-        "useCoroutines" to "true",
-        "omitGradleWrapper" to "true",
-        "omitGradlePluginVersions" to "true",
-    ))
+    configOptions.set(
+        mapOf(
+            "serializationLibrary" to "kotlinx_serialization",
+            "useCoroutines" to "true",
+            "omitGradleWrapper" to "true",
+            "omitGradlePluginVersions" to "true",
+        ),
+    )
 
     // Remap binary types from `java.io.File` (default) to `kotlin.ByteArray`.
     // The /v1/encode endpoint returns audio/wav as binary — on Android we want
     // in-memory bytes, not a File reference. This avoids JVM-only File dependency.
-    typeMappings.set(mapOf(
-        "file" to "kotlin.ByteArray",
-        "binary" to "kotlin.ByteArray",
-    ))
+    typeMappings.set(
+        mapOf(
+            "file" to "kotlin.ByteArray",
+            "binary" to "kotlin.ByteArray",
+        ),
+    )
 
-    globalProperties.set(mapOf(
-        "modelDocs" to "false",
-        "apiDocs" to "false",
-        "modelTests" to "false",
-        "apiTests" to "false",
-    ))
+    globalProperties.set(
+        mapOf(
+            "modelDocs" to "false",
+            "apiDocs" to "false",
+            "modelTests" to "false",
+            "apiTests" to "false",
+        ),
+    )
 
     // Don't generate Gradle scaffolding (build.gradle.kts, gradle.properties,
     // settings.gradle.kts) inside the output dir — we own the build setup.
@@ -149,11 +163,27 @@ android.libraryVariants.configureEach {
     val openApiGenerate = tasks.named("openApiGenerate")
     javaCompileProvider.configure { dependsOn(openApiGenerate) }
 }
-tasks.matching { it.name.startsWith("compileDebugKotlin") || it.name.startsWith("compileReleaseKotlin") }
+tasks
+    .matching { it.name.startsWith("compileDebugKotlin") || it.name.startsWith("compileReleaseKotlin") }
     .configureEach { dependsOn("openApiGenerate") }
 
 android.sourceSets.named("main") {
     java.srcDir(openApiOutputDir.map { it.asFile.resolve("src/main/kotlin") })
+}
+
+// ── BEE-63: Android Lint strict ──────────────────────────────────────────────
+// `warningsAsErrors` + `abortOnError` make ANY new lint warning fail the build.
+// We exclude the OpenAPI generated client (third-party code) and target the
+// release variant for the strictest checks.
+android {
+    lint {
+        warningsAsErrors = true
+        abortOnError = true
+        checkReleaseBuilds = true
+        checkDependencies = false
+        lintConfig = file("lint.xml")
+        // Lint already skips `build/` paths; the OpenAPI sources land there.
+    }
 }
 
 // ── BEE-62: Kover (coverage) ─────────────────────────────────────────────────
@@ -184,3 +214,54 @@ kover {
         }
     }
 }
+
+// ── BEE-63: ktlint (formatting) + detekt (code smells) ───────────────────────
+// ktlint enforces the Kotlin coding style. Generated OpenAPI code lives in
+// `build/generated/**` which is already filtered by the plugin.
+ktlint {
+    version.set("1.4.1")
+    android.set(true)
+    ignoreFailures.set(false)
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+    }
+    filter {
+        exclude("**/generated/**")
+        exclude { it.file.path.contains("/build/generated/") }
+    }
+}
+
+// detekt analyses Kotlin sources for code smells, complexity, naming, etc.
+// Excludes the generated OpenAPI client (third-party code).
+detekt {
+    config.setFrom(rootProject.layout.projectDirectory.file("detekt.yml"))
+    buildUponDefaultConfig = true
+    autoCorrect = false
+    parallel = true
+    source.setFrom(files("src/main/java", "src/test/java"))
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    dependsOn("openApiGenerate")
+    exclude("**/generated/**")
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        txt.required.set(false)
+        sarif.required.set(false)
+        md.required.set(false)
+    }
+}
+
+// ktlint scans the main source set, which includes the generated OpenAPI dir.
+// Declare the implicit dependency so Gradle's task graph stays correct when
+// ktlint runs in parallel with `openApiGenerate`. The actual generated files
+// are excluded from the lint via the ktlint `filter` block above.
+tasks
+    .matching {
+        it.name.startsWith("runKtlintCheckOver") ||
+            it.name.startsWith("runKtlintFormatOver")
+    }.configureEach {
+        dependsOn("openApiGenerate")
+    }

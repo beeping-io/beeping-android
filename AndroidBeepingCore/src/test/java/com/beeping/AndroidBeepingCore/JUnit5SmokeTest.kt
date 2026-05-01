@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
  */
 @DisplayName("JUnit 5 Jupiter engine smoke")
 class JUnit5SmokeTest {
-
     @Test
     @DisplayName("assertAll groups multiple assertions in a single failure")
     fun `assertAll groups assertions`() {
@@ -27,9 +26,10 @@ class JUnit5SmokeTest {
     @Test
     @DisplayName("assertThrows captures expected exception type")
     fun `assertThrows captures expected exception`() {
-        val ex = assertThrows(IllegalArgumentException::class.java) {
-            require(false) { "boom" }
-        }
+        val ex =
+            assertThrows(IllegalArgumentException::class.java) {
+                require(false) { "boom" }
+            }
         assertEquals("boom", ex.message)
     }
 }

@@ -1,0 +1,76 @@
+# Detekt config — overrides on top of the default ruleset.
+# Only DEVIATIONS from the default config live here, per Detekt convention.
+# See https://detekt.dev/docs/introduction/configurations
+build:
+  maxIssues: 0
+
+# Naming rules — relax test method names (we use ` ` backticks).
+naming:
+  PackageNaming:
+    # Public namespace `com.beeping.AndroidBeepingCore` is mixed-case for
+    # legacy reasons (published API, breaking change to rename). See same
+    # override in `.editorconfig` for ktlint.
+    active: false
+  FunctionNaming:
+    # Disabled globally because BeepingCoreJNI exposes external functions whose
+    # names must match the C entry points exported by `libbeepingcore.so`.
+    # We also use backticked test names which detekt's pattern doesn't accept.
+    active: false
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*'
+
+# Style — sane defaults, allow longer parameter lists in DSL builders + suspend funs.
+style:
+  MaxLineLength:
+    maxLineLength: 120
+    excludes: ['**/test/**', '**/generated/**']
+  WildcardImport:
+    active: true
+    excludeImports:
+      - 'java.util.*'
+      - 'kotlinx.android.synthetic.*'
+  MagicNumber:
+    excludes: ['**/test/**', '**/generated/**']
+    # Allow common HTTP status codes (401/403/429), enum ordinals up to 4,
+    # millisecond/second factors, and the usual algebraic constants.
+    ignoreNumbers: ['-1', '0', '1', '2', '3', '4', '8', '10', '100', '401', '403', '429', '1000']
+    ignoreEnums: true
+  UnusedPrivateMember:
+    active: true
+  ReturnCount:
+    max: 4
+  ForbiddenComment:
+    active: false  # we use TODO("BEE-NN") deliberately as forward markers
+
+# Complexity — relax for builder DSL methods.
+complexity:
+  LongParameterList:
+    constructorThreshold: 8
+    functionThreshold: 8
+  TooManyFunctions:
+    thresholdInClasses: 20
+    thresholdInInterfaces: 12
+    thresholdInObjects: 12
+    thresholdInEnums: 12
+  NestedBlockDepth:
+    excludes: ['**/test/**']
+
+# Empty blocks — keep defaults except in tests where empty stubs are common.
+empty-blocks:
+  EmptyFunctionBlock:
+    excludes: ['**/test/**']
+
+# Performance — keep defaults.
+# Empty blocks — keep defaults.
+# Exceptions — allow generic throws in tests.
+exceptions:
+  TooGenericExceptionCaught:
+    excludes: ['**/test/**']
+  TooGenericExceptionThrown:
+    excludes: ['**/test/**']
+  SwallowedException:
+    excludes: ['**/test/**']
+  ThrowingExceptionInMain:
+    active: true
+  ReturnFromFinally:
+    active: true

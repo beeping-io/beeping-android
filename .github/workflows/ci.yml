@@ -46,6 +46,9 @@ jobs:
       - name: 🔧 Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: 🧼 Lint & static analysis (ktlint + detekt + Android Lint)
+        run: ./gradlew --no-daemon :AndroidBeepingCore:ktlintCheck :AndroidBeepingCore:detekt :AndroidBeepingCore:lint
+
       - name: 🧪 Run unit tests (`:AndroidBeepingCore:test`)
         run: ./gradlew --no-daemon :AndroidBeepingCore:test
 

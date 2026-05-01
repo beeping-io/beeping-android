@@ -20,21 +20,21 @@ import org.junit.Test
  * is exercised on all inputs — `kotest-property` keeps the test clean.
  */
 class KeyPatternPropertyTest {
-
     private val pattern = Regex("^[0-9a-v]{5}$")
 
     @Test
-    fun `LocalEncoder rejects every string that does not match base32-5 pattern`() = runTest {
-        val encoder = LocalEncoder(mockk(relaxed = true))
+    fun `LocalEncoder rejects every string that does not match base32-5 pattern`() =
+        runTest {
+            val encoder = LocalEncoder(mockk(relaxed = true))
 
-        checkAll(Arb.string(minSize = 0, maxSize = 12)) { random ->
-            if (pattern.matches(random)) return@checkAll
+            checkAll(Arb.string(minSize = 0, maxSize = 12)) { random ->
+                if (pattern.matches(random)) return@checkAll
 
-            val thrown = runCatching { encoder.encode(random) }.exceptionOrNull()
-            assertTrue(
-                "encode('$random') should reject with IllegalArgumentException, got $thrown",
-                thrown is IllegalArgumentException,
-            )
+                val thrown = runCatching { encoder.encode(random) }.exceptionOrNull()
+                assertTrue(
+                    "encode('$random') should reject with IllegalArgumentException, got $thrown",
+                    thrown is IllegalArgumentException,
+                )
+            }
         }
-    }
 }

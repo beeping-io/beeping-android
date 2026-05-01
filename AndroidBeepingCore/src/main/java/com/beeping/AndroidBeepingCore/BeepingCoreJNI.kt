@@ -1,6 +1,6 @@
 package com.beeping.AndroidBeepingCore
 
-import android.util.Log
+import timber.log.Timber
 
 /**
  * JNI bridge to `libbeepingcore.so`.
@@ -27,7 +27,6 @@ import android.util.Log
  * listen session.
  */
 class BeepingCoreJNI {
-
     /**
      * Receiver of native callbacks. Set by [Encoder] implementations (BEE-57
      * `LocalEncoder`) before starting a listen session; cleared on stop.
@@ -53,12 +52,24 @@ class BeepingCoreJNI {
     }
 
     external fun start(beepingObject: Long)
+
     external fun init(): Long
+
     external fun dealloc(beepingObject: Long): Int
-    external fun configure(mode: Int, beepingObject: Long): Int
+
+    external fun configure(
+        mode: Int,
+        beepingObject: Long,
+    ): Int
+
     external fun startBeepingListen(beepingObject: Long): Int
+
     external fun stopBeepingListen(beepingObject: Long): Int
-    external fun getDecodedString(code: CharArray, beepingObject: Long): Int
+
+    external fun getDecodedString(
+        code: CharArray,
+        beepingObject: Long,
+    ): Int
 
     companion object {
         const val BC_TOKEN_START: Int = 0
@@ -76,7 +87,7 @@ class BeepingCoreJNI {
                 System.loadLibrary("beepingcore")
                 sNativeLoaded = true
             } catch (e: UnsatisfiedLinkError) {
-                Log.e(TAG, "native code library failed to load.", e)
+                Timber.tag(TAG).e(e, "native code library failed to load.")
                 sNativeLoaded = false
             }
         }

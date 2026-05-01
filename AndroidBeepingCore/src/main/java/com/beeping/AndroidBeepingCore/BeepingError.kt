@@ -8,7 +8,6 @@ package com.beeping.AndroidBeepingCore
  * a `when` block without an `else` branch.
  */
 sealed class BeepingError {
-
     /** RECORD_AUDIO permission was denied or revoked at runtime. Recoverable. */
     data object MissingMicPermission : BeepingError()
 
@@ -23,7 +22,9 @@ sealed class BeepingError {
      *
      * @property cause The underlying [Throwable].
      */
-    data class NetworkError(val cause: Throwable) : BeepingError()
+    data class NetworkError(
+        val cause: Throwable,
+    ) : BeepingError()
 
     /** API key invalid or revoked. Non-recoverable in [BeepingMode.Cloud]. */
     data object AuthenticationFailed : BeepingError()
@@ -33,18 +34,24 @@ sealed class BeepingError {
      *
      * @property retryAfterMs Server-suggested retry delay (millis).
      */
-    data class RateLimited(val retryAfterMs: Long) : BeepingError()
+    data class RateLimited(
+        val retryAfterMs: Long,
+    ) : BeepingError()
 
     /**
      * Internal decoder/encoder bug. Non-recoverable; report as a GitHub issue.
      *
      * @property cause The underlying [Throwable].
      */
-    data class DecoderInternal(val cause: Throwable) : BeepingError()
+    data class DecoderInternal(
+        val cause: Throwable,
+    ) : BeepingError()
 }
 
 /**
  * Throwable adapter for [BeepingError] — used by encoders to fail a `suspend`
  * call. [BeepingClient.send] catches this and wraps it in `Result.failure(error)`.
  */
-class BeepingException(val error: BeepingError) : Exception(error::class.simpleName)
+class BeepingException(
+    val error: BeepingError,
+) : Exception(error::class.simpleName)

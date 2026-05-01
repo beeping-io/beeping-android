@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
  * directly.
  */
 internal interface BeepingEncoder {
-
     /**
      * Encode [key] (5 base32 chars `[0-9a-v]`) to PCM frames ready for playback.
      *
