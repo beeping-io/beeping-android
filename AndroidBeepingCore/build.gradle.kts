@@ -98,11 +98,35 @@ dependencies {
 }
 
 // Pass through env vars used for opt-in real E2E tests against beepbox-server.
-// Only the (gitignored) `.env.local` value reaches CI/local test runs — never
-// committed. CI without these env vars falls back to MockEngine-only tests.
-android.testOptions.unitTests.all {
-    it.environment("BEEPBOX_API_KEY", System.getenv("BEEPBOX_API_KEY") ?: "")
-    it.environment("BEEPBOX_BASE_URL", System.getenv("BEEPBOX_BASE_URL") ?: "")
+// Reads from the gitignored `.env.local` at the repo root if present, falls
+// back to the process env (CI / shells that already exported them).
+// CI without any of these falls back to MockEngine-only tests.
+val dotenvLocal: Map<String, String> =
+    rootProject
+        .file(".env.local")
+        .takeIf { it.exists() }
+        ?.let { file ->
+            file
+                .readLines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains('=') }
+                .associate { line ->
+                    val (k, v) = line.split('=', limit = 2)
+                    k.trim() to v.trim().trim('"').trim('\'')
+                }
+        }.orEmpty()
+
+fun beepboxEnv(name: String): String = dotenvLocal[name] ?: System.getenv(name) ?: ""
+
+android.testOptions.unitTests.all { test ->
+    listOf(
+        "BEEPBOX_DEV_BASE_URL",
+        "BEEPBOX_DEV_API_KEY",
+        "BEEPBOX_PROD_BASE_URL",
+        "BEEPBOX_PROD_API_KEY",
+        "BEEPBOX_BASE_URL",
+        "BEEPBOX_API_KEY",
+    ).forEach { test.environment(it, beepboxEnv(it)) }
 }
 
 // ── BEE-59: generate the typed beepbox HTTP client from api/openapi.yaml ────

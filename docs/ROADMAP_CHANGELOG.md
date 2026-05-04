@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-05-01 (trigger: `Closed BEE-63`)
-- **Story points totales**: 101 SP (Phase 8 — 99 originales + 2 BEE-1793)
-- **Story points cerrados**: 75 SP (BEE-51..63 + BEE-1793)
-- **Story points remaining**: 26 SP (74.3% completado)
+- **Última actualización**: 2026-05-04 (trigger: `Closed BEE-1815 (scope addition)`)
+- **Story points totales**: 102 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815)
+- **Story points cerrados**: 76 SP (BEE-51..63 + BEE-1793 + BEE-1815)
+- **Story points remaining**: 26 SP (74.5% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
@@ -28,6 +28,46 @@
 ---
 
 ## 📜 History
+
+### [2026-05-04] — Scope change + Closed BEE-1815
+
+**Trigger detallado**: scope addition descubierto durante validación E2E manual contra los 3 entornos (LOCAL/DEV/PROD). El test opt-in original (introducido en BEE-57, extendido en BEE-59) leía un único par `BEEPBOX_API_KEY`/`BEEPBOX_BASE_URL` y tenía `DEV_BASE_URL` hardcodeado a la Cloud Run dev URL — no permitía ejercitar PROD sin swap manual de env vars. Además, `./gradlew test` no auto-cargaba `.env.local`. Abierto BEE-1815 (1 SP, chore/test) para split + auto-load. Implementado y verificado en la misma sesión.
+
+**Net delta global**: +1 SP totales (+1 al total Phase 8). 0 días en fin date — el SP cierra en la misma sesión.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio).
+
+#### Scope changes
+
+- **BEE-1815 añadida** (1 SP): `🧪 Split CloudEncoder E2E into DEV/PROD opt-in + auto-load .env.local`. Total Phase 8: 101 → 102 SP.
+
+#### Cambios de estado
+
+- BEE-1815: `⏳ Pending` (creada) → `✅ Done` (cerrada en la misma sesión, 1 SP).
+
+#### Detalle implementation
+
+- `.env.example` — split del par único `BEEPBOX_BASE_URL`/`BEEPBOX_API_KEY` en cuatro vars (`BEEPBOX_DEV_BASE_URL`, `BEEPBOX_DEV_API_KEY`, `BEEPBOX_PROD_BASE_URL`, `BEEPBOX_PROD_API_KEY`). Documenta los dos consumers (library E2E tests + sample app `BuildConfig` de BEE-64). El par legacy se mantiene como fallback declarado en código.
+- `AndroidBeepingCore/build.gradle.kts` — parser KISS de `.env.local` en root (10 LOC, ignora comentarios/blanks, trim de quotes), expuesto como `Map<String,String>`. Helper `beepboxEnv(name)` con prioridad `.env.local` → `System.getenv` → `""`. Forwarding de las 6 vars (4 DEV/PROD + 2 legacy) al test JVM via `android.testOptions.unitTests.all { test.environment(...) }`.
+- `AndroidBeepingCore/src/test/.../CloudEncoderTest.kt` — eliminada la const `DEV_BASE_URL` hardcodeada y el único E2E. Añadidos dos `@Test` (`e2e DEV` + `e2e PROD`) que delegan a un helper `e2eAgainstEnvironment(label, envPrefix)` con `Assume.assumeFalse` cuando faltan vars + `Assume.assumeNoException` para skipear ante errores transitorios del server o keys rotadas.
+
+#### Validación
+
+- `curl POST /v1/encode` smoke contra DEV (`beepbox-dev.beeping.io`) y PROD (`beepbox.beeping.io`): HTTP 200 + 203 052 bytes + magic `RIFF` en ambos, ~3 s cada uno.
+- `./gradlew :AndroidBeepingCore:check` end-to-end verde: 8/8 CloudEncoderTest (6 mock + 2 E2E reales — DEV ~1.0 s, PROD ~0.25 s), ktlint + detekt + Android Lint strict + Kover gate.
+
+#### QA
+
+- 🧑‍🔬 Human QA Checkpoint: **Skipped** — pure test infrastructure, no UI/UX/copy/flow change observable por end user.
+
+#### Métricas tras BEE-1815
+
+- 15/18 tasks cerradas (BEE-51..63 + BEE-1793 + BEE-1815), **76/102 SP (74.5%)**.
+- 3 tasks pending: BEE-64 (sample app, 8 SP, In Progress), BEE-65 (5 SP), BEE-66 (13 SP). Restante: 26 SP.
+
+---
 
 ### [2026-05-01] — Closed BEE-63
 

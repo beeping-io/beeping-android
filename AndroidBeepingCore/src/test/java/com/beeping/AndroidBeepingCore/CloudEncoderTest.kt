@@ -119,39 +119,54 @@ class CloudEncoderTest {
         }
 
     /**
-     * Opt-in real E2E: only runs when `BEEPBOX_API_KEY` env var is set in
-     * `.env.local`. Hits the dev Cloud Run URL directly — never PROD.
+     * Opt-in real E2E against the **DEV** beepbox-server. Skipped unless
+     * both `BEEPBOX_DEV_BASE_URL` and `BEEPBOX_DEV_API_KEY` are set in
+     * `.env.local` (or in the process env on CI).
      */
     @Test
-    fun `e2e encode against real beepbox-server dev URL (opt-in via env var)`() =
-        runTest {
-            val apiKey = System.getenv("BEEPBOX_API_KEY").orEmpty()
-            Assume.assumeFalse(
-                "Skipped — BEEPBOX_API_KEY not set in env. " +
-                    "Set it in .env.local to opt into this real E2E test.",
-                apiKey.isBlank(),
-            )
+    fun `e2e encode against DEV beepbox-server (opt-in)`() =
+        runTest { e2eAgainstEnvironment(label = "DEV", envPrefix = "BEEPBOX_DEV") }
 
-            // Note: httpClientEngine = null → uses the generated default (CIO/Android).
-            val encoder = CloudEncoder(apiKey = apiKey, endpoint = DEV_BASE_URL)
-            try {
-                val wav = encoder.encode("abc12")
-                assertTrue("response too small (got ${wav.size} bytes)", wav.size > 1000)
-                val magic = wav.copyOf(4).toString(Charsets.US_ASCII)
-                assertEquals("RIFF", magic)
-            } catch (e: BeepingException) {
-                // Don't fail the build if the dev server rejects the key — keys
-                // rotate, may be for PROD-only, or the server may be down. Skip
-                // gracefully so CI / local builds remain green.
-                Assume.assumeNoException(
-                    "Skipped — beepbox-server returned ${e.error::class.simpleName} " +
-                        "(check BEEPBOX_API_KEY validity in .env.local).",
-                    e,
-                )
-            } finally {
-                encoder.close()
-            }
+    /**
+     * Opt-in real E2E against the **PROD** beepbox-server. Skipped unless
+     * both `BEEPBOX_PROD_BASE_URL` and `BEEPBOX_PROD_API_KEY` are set.
+     * Hits real production — keep `abc12` payload (low cardinality, no PII).
+     */
+    @Test
+    fun `e2e encode against PROD beepbox-server (opt-in)`() =
+        runTest { e2eAgainstEnvironment(label = "PROD", envPrefix = "BEEPBOX_PROD") }
+
+    private suspend fun e2eAgainstEnvironment(
+        label: String,
+        envPrefix: String,
+    ) {
+        val baseUrl = System.getenv("${envPrefix}_BASE_URL").orEmpty()
+        val apiKey = System.getenv("${envPrefix}_API_KEY").orEmpty()
+        Assume.assumeFalse(
+            "Skipped $label E2E — ${envPrefix}_BASE_URL / ${envPrefix}_API_KEY not set. " +
+                "Add them to .env.local to opt in.",
+            baseUrl.isBlank() || apiKey.isBlank(),
+        )
+
+        // httpClientEngine = null → uses the generated default (CIO/Android).
+        val encoder = CloudEncoder(apiKey = apiKey, endpoint = baseUrl)
+        try {
+            val wav = encoder.encode("abc12")
+            assertTrue("$label response too small (got ${wav.size} bytes)", wav.size > 1000)
+            val magic = wav.copyOf(4).toString(Charsets.US_ASCII)
+            assertEquals("$label magic", "RIFF", magic)
+        } catch (e: BeepingException) {
+            // Don't fail the build on transient server errors / rotated keys —
+            // skip gracefully so CI / local builds remain green.
+            Assume.assumeNoException(
+                "Skipped $label E2E — server returned ${e.error::class.simpleName} " +
+                    "(check ${envPrefix}_API_KEY validity).",
+                e,
+            )
+        } finally {
+            encoder.close()
         }
+    }
 
     // -- helpers ------------------------------------------------------------
 
@@ -178,10 +193,5 @@ class CloudEncoderTest {
             endpoint = "https://example.com",
             httpClientEngine = engine,
         )
-    }
-
-    companion object {
-        /** Cloud Run dev URL — used for opt-in real E2E (api.beeping.io DNS not yet active). */
-        private const val DEV_BASE_URL = "https://beepbox-server-ai7n45q5lq-ew.a.run.app"
     }
 }
