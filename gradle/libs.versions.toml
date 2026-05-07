@@ -56,6 +56,11 @@ pitestPlugin = "1.15.0"
 ktlintPlugin = "12.1.2"
 detekt = "1.23.7"
 
+# Jetpack Compose (BEE-64 sample app)
+composeBom = "2024.12.01"
+androidxActivityCompose = "1.9.3"
+androidxLifecycle = "2.8.7"
+
 [libraries]
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlinBom" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
@@ -78,14 +83,28 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
+# Jetpack Compose (BEE-64) — versions resolved by the BOM
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
+
 [bundles]
 androidx-base = ["androidx-appcompat", "androidx-core"]
 ktor-client = ["ktor-client-core", "ktor-client-android", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json", "kotlinx-serialization-json"]
+compose-ui-bundle = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview", "compose-material3", "compose-material-icons-extended"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 openapi-generator = { id = "org.openapi.generator", version.ref = "openApiGenerator" }
 android-junit5 = { id = "de.mannodermaus.android-junit5", version.ref = "androidJunit5" }

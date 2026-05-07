@@ -63,6 +63,7 @@ import java.util.UUID
 class BeepingClient internal constructor(
     private val mode: BeepingMode,
     private val encoder: BeepingEncoder,
+    private val player: WavPlayer? = null,
     @Suppress("unused") private val logLevel: LogLevel = LogLevel.INFO,
     private val telemetryEnabled: Boolean = false,
     private val telemetryHook: TelemetryHook = TelemetryHook.NoOp,
@@ -137,7 +138,11 @@ class BeepingClient internal constructor(
                     byteCount = wav.size,
                 ),
             )
-            // BEE-64 will write `wav` to AudioTrack here.
+            // BEE-64: play the encoded WAV via MediaPlayer when a player was
+            // wired by the Builder (always, except in unit tests that stub
+            // it out for headless environments).
+            player?.play(wav)
+            Unit
         }.onFailure { e ->
             emitter.emit(
                 TelemetryEvent.EncodeFailed(
@@ -162,6 +167,7 @@ class BeepingClient internal constructor(
         stopSignal.complete(Unit)
         scope.cancel()
         encoder.close()
+        player?.close()
     }
 
     private companion object {
@@ -246,6 +252,7 @@ class BeepingClient internal constructor(
             return BeepingClient(
                 mode = mode,
                 encoder = encoder,
+                player = WavPlayer(context.applicationContext),
                 logLevel = logLevel,
                 telemetryEnabled = telemetryEnabled,
                 telemetryHook = telemetryHook,

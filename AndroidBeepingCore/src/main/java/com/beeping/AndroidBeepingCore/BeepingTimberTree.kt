@@ -1,6 +1,9 @@
 package com.beeping.AndroidBeepingCore
 
 import android.util.Log
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import timber.log.Timber
 
 /**
@@ -27,9 +30,23 @@ import timber.log.Timber
  * is parsed out at write time and emitted as a top-level `traceId` field
  * when present.
  */
-internal object BeepingTimberTree : Timber.Tree() {
+object BeepingTimberTree : Timber.Tree() {
     @Volatile
     private var minLevel: LogLevel = LogLevel.INFO
+
+    private val _logs =
+        MutableSharedFlow<String>(
+            replay = LOG_REPLAY_CACHE,
+            extraBufferCapacity = 0,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+
+    /**
+     * Hot stream of recent JSON log lines, capped at [LOG_REPLAY_CACHE]. New
+     * subscribers immediately receive the buffered backlog. Used by the
+     * sample app's debug console (BEE-64) to render live log output.
+     */
+    val logs: SharedFlow<String> = _logs
 
     /** Updates the minimum log level. Thread-safe. */
     fun setLogLevel(level: LogLevel) {
@@ -70,6 +87,7 @@ internal object BeepingTimberTree : Timber.Tree() {
         val redactedMessage = redact(message)
         val json = buildJsonLog(level, tag, redactedMessage, t)
         Log.println(priority, BEEPING_LOGCAT_TAG, json)
+        _logs.tryEmit(json)
     }
 
     private fun Int.toLogLevel(): LogLevel? =
@@ -115,6 +133,7 @@ internal object BeepingTimberTree : Timber.Tree() {
             .replace("\t", "\\t")
 
     private const val BEEPING_LOGCAT_TAG = "Beeping"
+    private const val LOG_REPLAY_CACHE = 200
     private val BEARER_PATTERN = Regex("""Bearer\s+[^\s"',]+""")
     private val API_KEY_PATTERN = Regex("""apiKey=[^\s"&,]+""")
     private val TRACE_TAG_PATTERN = Regex("""Beeping\[trace=([^]]+)]""")
