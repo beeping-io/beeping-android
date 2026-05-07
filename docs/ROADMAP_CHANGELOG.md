@@ -13,21 +13,83 @@
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
 - **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: ⚠️ Riesgo medio — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2)
-- **Última actualización**: 2026-05-04 (trigger: `Closed BEE-1815 (scope addition)`)
+- **Estado global**: 🔴 **Riesgo alto** — R2 (16 KB pages) escalado a alto el 2026-05-07 tras verificar que `beeping-core v0.6.0` no publica Android NDK builds. BEE-65 bloqueada hasta task previa en `beeping-core` repo
+- **Última actualización**: 2026-05-07 (trigger: `Closed BEE-64 + R2 risk escalated`)
 - **Story points totales**: 102 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815)
-- **Story points cerrados**: 76 SP (BEE-51..63 + BEE-1793 + BEE-1815)
-- **Story points remaining**: 26 SP (74.5% completado)
+- **Story points cerrados**: 84 SP (BEE-51..64 + BEE-1793 + BEE-1815)
+- **Story points remaining**: 18 SP (82.4% completado)
 - **Days esfuerzo (con margen)**: 15 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 99 | 2026-04-28 | 2026-05-18 | ⚠️ Riesgo medio |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 99 | 2026-04-28 | 2026-05-18 | 🔴 Riesgo alto |
 
 ---
 
 ## 📜 History
+
+### [2026-05-07] — Closed BEE-64 + R2 risk escalated to Alto + Pivot announced for BEE-67
+
+**Trigger detallado**: BEE-64 cerrada (Sample app rewrite con Jetpack Compose + debug console, 8 SP, feat). Compose Material 3, MainScreen single-pane (LogoTapTarget 5-tap → DebugConsole, EnvSelector LOCAL/DEV/PROD, Key field, Send + Listen, StatusPanel con error chip dismissable), DebugConsole overlay (bottom sheet 70%, Share via ACTION_SEND, Close), Theme M3 con dynamic color condicional Android 12+ (`@RequiresApi` helper para evitar lint NewApi), BuildConfig fields seeded desde `.env.local` (parser shared con BEE-1815), ktlint + detekt + lint strict (`warningsAsErrors=true`) verde. WavPlayer (MediaPlayer-backed) integrado en `BeepingClient.send()` para reproducir el WAV devuelto por Cloud mode. BeepingTimberTree público con `MutableSharedFlow<String>` replay 200 para live tail de la console. QA emulator API 37 vía adb tap/screenshot loop: 7 checks (5 done — App abre, Permission flow Listen deny, 5-tap console, Share button, Dark mode toggle; 2 deferred — Send audio assertion + Dynamic color saltados por pivot acordado a BEE-67 listener-only).
+
+**Net delta global**: 0 días en fin date. BEE-64 cerró 7 días antes de su slot planificado (`Fin est.` 2026-05-14, cerrada 2026-05-07) — adelanto absorbido pero no cascadeado a BEE-65/66 porque ambas siguen bloqueadas por dependencias externas.
+
+**Nueva fecha fin estimada**: 2026-05-15 (vie) — sin cambio.
+
+**Nuevo estado global**: 🔴 **Riesgo alto** (escalado desde ⚠️ medio).
+
+#### Cambios de estado
+
+- BEE-64: `🚧 In Progress` → `✅ Done` (8 SP).
+- R2 (16 KB pages support): ⚠️ Medio → 🔴 **Alto**. Verificado durante QA BEE-64 que `beeping-core v0.6.0` (latest) no publica Android NDK builds — solo linux/macos/wasm/windows targets. BEE-65 (Consumir `beeping-core` via GH Releases) **bloqueada** hasta abrir + cerrar task previa en `beeping-core` repo: "Publish Android NDK `.so` artifacts (arm64-v8a + armeabi-v7a + x86_64) with `-Wl,-z,max-page-size=16384` linker flag". Mientras tanto, sample app legacy + `.so` vendoreados solo funcionan en API <31 (4KB pages) o emulator opted-in 16KB pages.
+
+#### Pivot acordado para BEE-67 (post-BEE-64)
+
+User confirmó pivot 2026-05-07 durante QA: el sample app pasa a ser **listener-puro** demostrando solo el path de decode del SDK. Cambios para BEE-67:
+
+- Quitar Send button + EnvSelector + cloud config + payload encoding helpers del sample.
+- Auto-start del listener en `LaunchedEffect`.
+- 3 secciones verticales: Header (logo + 5-tap console preserved) / Listener panel (status circle verde/gris + last decoded payload) / Activity log (últimas N events del SDK + botón "Open console").
+- Branding rojo Beeping en lugar de lavender M3 default.
+- `BeepingMode.Local` único — sin cloud config en sample.
+
+Beeps audibles los emite un script Mac-side externo `scripts/send-beep` (Python o bash, en este repo) que lee `.env.local`, hace 9 reps con vol 0.1→0.9 step 0.1 gap 1s, POST `/v1/encode` a beepbox-server, save WAV temp, `afplay -v <vol>`. Logs estructurados por iteración. El `--target` (emulator/device) es etiqueta para quien monitoriza, no afecta al script.
+
+BEE-67 **depende de BEE-65** (necesita `.so` listener funcional en API 35+/emulator moderno).
+
+#### Secuencia revisada
+
+1. ✅ BEE-64 cerrada (esta entrada).
+2. ⏸️ Abrir task en `beeping-core` repo: "Publish Android NDK builds with 16KB-pages flag" (no en este ROADMAP — es upstream).
+3. ⏸️ BEE-65 cuando cierre la task de `beeping-core`.
+4. ⏸️ BEE-67 (nueva, sample pivot listener-only + `scripts/send-beep`) cuando BEE-65 cierre.
+5. ⏸️ BEE-66 (Maven Central) al final, post-pruebas.
+
+#### Detalle implementation BEE-64
+
+- **Ficheros nuevos** (10): `WavPlayer.kt`, `BeepingSampleApp.kt`, `MainActivity.kt`, `MainScreen.kt`, `DebugConsole.kt`, `SampleAppViewModel.kt`, `SampleUiState.kt`, `ui/theme/Theme.kt`, `res/xml/data_extraction_rules.xml`, `res/xml/backup_rules.xml`.
+- **Ficheros modificados** (7): `BeepingClient.kt`, `BeepingTimberTree.kt`, `app/build.gradle.kts`, `AndroidManifest.xml`, `strings.xml`, `styles.xml`, `gradle/libs.versions.toml`.
+- **Tests** (`./gradlew check :app:assembleDebug`):
+  - `:AndroidBeepingCore:check` — 50/50 tests + ktlint + detekt + lint verde tras los cambios SDK.
+  - `:app:lintDebug` — 6 issues iniciales fixeados (NewApi en dynamic color via @RequiresApi helper, RedundantLabel, DataExtractionRules + backup_rules.xml, MissingApplicationIcon, UnusedResources). 0 warnings con `warningsAsErrors=true`.
+  - `:app:detekt` — 24 issues iniciales fixeados via config + suppressions justificados (LongMethod / MagicNumber para Composables + hex colors).
+  - `:app:ktlintMainSourceSetCheck` — verde tras ktlintFormat + manual fix del KDoc-EOL ordering.
+  - `:app:assembleDebug` — APK 19 MB.
+- **QA emulator API 37** (los 7 checks de Linear):
+  1. ✅ App abre · main screen render correcto.
+  2. ⏭️ Send audio chirp — saltado por pivot a BEE-67.
+  3. ✅ Permission flow Listen deny → chip rojo `RECORD_AUDIO permission not granted...`.
+  4. ✅ 5-tap → debug console (bottom sheet 70%, logs JSON con trace-IDs).
+  5. ✅ Share button → ACTION_SEND chooser con preview de logs.
+  6. ✅ Dark mode toggle → paleta M3 dark instantánea.
+  7. ⏭️ Dynamic color — saltado per acuerdo con user.
+- **Observaciones documentadas**:
+  - DebugConsole UX flaw: clicks fuera de los IconButtons cierran el overlay (Box.clickable parent + Surface sin pointer interceptor) → anotar para BEE-67.
+  - API 37 LOCAL mode falla con `UnsatisfiedLinkError` → exactly lo que BEE-65 ataca.
+  - Cloud mode listen emite Started→Stopped inmediato porque `CloudEncoder.decoded()` devuelve `emptyFlow()` (pending-006 SDK).
+
+---
 
 ### [2026-05-04] — Scope change + Closed BEE-1815
 

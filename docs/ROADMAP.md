@@ -20,9 +20,9 @@
 | **Esfuerzo bruto** | 12.4 días hábiles |
 | **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
 | **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-05-04 (trigger: `Closed BEE-1815 (scope addition)`) |
-| **Tasks completadas** | 15 / 18 (BEE-51..63 + BEE-1793 + BEE-1815) · 76 SP cerrados de 102 (74.5%) |
-| **Velocidad observada** | 76 SP en 5 sesiones (15 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
+| **Última actualización** | 2026-05-07 (trigger: `Closed BEE-64`) |
+| **Tasks completadas** | 16 / 18 (BEE-51..64 + BEE-1793 + BEE-1815) · 84 SP cerrados de 102 (82.4%) |
+| **Velocidad observada** | 84 SP en 6 sesiones (16 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -68,7 +68,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 12 | [BEE-62](https://linear.app/me8/issue/BEE-62) | 🧪 Tests: JUnit5 + MockK + Robolectric + Kotest property + Paparazzi snapshots + Pitest mutation | 13 | 70 | 2026-05-01 (vie) | ✅ Done |
 | 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-01 (vie) | ✅ Done |
 | 13b | [BEE-1815](https://linear.app/me8/issue/BEE-1815) | 🧪 Split CloudEncoder E2E into DEV/PROD opt-in + auto-load `.env.local` — **scope addition durante execution** | 1 | 74 | 2026-05-04 (lun) | ✅ Done |
-| 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 82 | 2026-05-14 (jue) | 🚧 In Progress |
+| 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 82 | 2026-05-14 (jue) | ✅ Done |
 | 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) | 5 | 87 | 2026-05-14 (jue) | ⏳ Pending |
 | 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 102 | 2026-05-15 (vie) | ⏳ Pending |
 | | **Totales** | | **102** | **102** | **2026-05-15** | |
@@ -91,7 +91,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | ID | Riesgo | Estado actual | Mitigación activa |
 |---|---|---|---|
 | R1 | `beeping-core` no libera releases firmadas a tiempo (afecta BEE-65) | ⚠️ medio — Phase 1 está "next" en Linear, sin start date | Fallback temporal: usar los `.so` vendoreados que ya están en el repo hasta que Phase 1 cierre |
-| R2 | 16 KB page size no soportado en `beeping-core` (afecta BEE-54 + BEE-66) | ⚠️ medio — depende de Phase 1 | Coordinar con Phase 1; si bloquea, acelerar Phase 1 antes de Phase 8 BEE-66 |
+| R2 | 16 KB page size no soportado en `beeping-core` (afecta BEE-54 + BEE-65 + BEE-66) | 🔴 **alto** — `beeping-core v0.6.0` (latest) **no publica Android NDK builds** (solo linux/macos/wasm/windows). Verificado 2026-05-07 durante QA BEE-64: emulator API 37 falla con `program alignment (8192) cannot be smaller than system page size (16384)`. BEE-65 bloqueada hasta abrir + cerrar task previa en `beeping-core` repo: "Publish Android NDK `.so` artifacts (arm64-v8a + armeabi-v7a + x86_64) with `-Wl,-z,max-page-size=16384`" | Abrir issue en `beeping-core` antes de empezar BEE-65. Mientras tanto, sample app legacy queda usable solo en CLOUD mode |
 | R3 | Sonatype OSSRH staging delay (review humano 2-4 semanas) | 🟡 bajo-medio — proceso conocido | Iniciar trámite OSSRH en BEE-51 (no esperar a BEE-66). GitHub Releases firmadas como fallback siempre disponibles |
 | R4 | Ktor binary size impacta tamaño AAR | 🟢 bajo | Si AAR > 1 MB tras BEE-59, evaluar OkHttp + manual JSON |
 | R5 | Telemetry opt-out filtra datos sin opt-in | 🟢 bajo (pero high impact si ocurre) | BEE-61 incluye tests automáticos de privacy + audit |
