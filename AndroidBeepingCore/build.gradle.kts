@@ -41,6 +41,9 @@ android {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
 
+        // BEE-2226: instrumented tests on emulator (round-trip codec proof).
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         // BEE-2226: JNI shim CMake build args. The paths point to the outputs
         // of `downloadBeepingCore`; CMake reads them via -D variables.
         externalNativeBuild {
@@ -145,6 +148,10 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.mockk)
+
+    // BEE-2226 — instrumented tests run on the emulator with the real .so loaded.
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
 }
 
 // Pass through env vars used for opt-in real E2E tests against beepbox-server.

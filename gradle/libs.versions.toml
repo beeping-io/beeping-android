@@ -61,6 +61,10 @@ composeBom = "2024.12.01"
 androidxActivityCompose = "1.9.3"
 androidxLifecycle = "2.8.7"
 
+# Instrumented test (BEE-2226 round-trip on emulator)
+androidxTestRunner = "1.6.2"
+androidxTestJunit = "1.2.1"
+
 # beeping-core consumed from GitHub Releases (BEE-65). Bumping requires updating
 # SHA256SUMS check the next time `:AndroidBeepingCore:downloadBeepingCore` runs —
 # the SHA256SUMS.txt is fetched from the same release tag, so no extra config.
@@ -99,6 +103,10 @@ compose-material-icons-extended = { module = "androidx.compose.material:material
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
+
+# Instrumented (androidTest) — BEE-2226 round-trip
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
 
 [bundles]
 androidx-base = ["androidx-appcompat", "androidx-core"]

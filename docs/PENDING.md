@@ -183,7 +183,16 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 
 - 📅 **Fecha añadida**: 2026-05-11
 - 🏷️ **Tipo**: test
-- 🧭 **Trigger**: BEE-2226 entregó el JNI shim + wire encode/decode; el plan original incluía `androidTest/` instrumented suite (`LocalEncoderInstrumentedTest`, `RoundTripInstrumentedTest`, `JniShimLoadTest`). Software-side el path está validado por emulator QA (Send genera WAV 184 KB, Listen abre AudioRecord, no crashes). Pero CI todavía no corre instrumented tests — necesitamos `connectedCheck` en GitHub Actions con emulator headless API 35+ para gatear este nivel de confianza en cada push.
-- ⚙️ **Acción requerida**: crear branch + task `feat(test): instrumented tests for LocalEncoder + JNI shim` con (1) deps `androidx.test.ext:junit` + `androidx.test:runner` en `:AndroidBeepingCore`, (2) 3 tests bajo `src/androidTest/`, (3) workflow `.github/workflows/instrumented.yml` usando `reactivecircus/android-emulator-runner@v2` con `api-level: 35`, (4) gate en branch protection rules.
-- 🚧 **Bloqueado por**: capacity (no urgente; emulator QA manual cubre la validación).
+- 🧭 **Trigger**: BEE-2226 entregó el JNI shim + wire encode/decode; el plan original incluía `androidTest/` instrumented suite (`LocalEncoderInstrumentedTest`, `RoundTripInstrumentedTest`, `JniShimLoadTest`). Software-side el path está validado por emulator QA (Send genera WAV 184 KB, Listen abre AudioRecord, no crashes) + el nuevo `SdkPlumbingTest` instrumented añadido en BEE-2226. Pero CI todavía no corre instrumented tests automáticamente — necesitamos `connectedCheck` en GitHub Actions con emulator headless API 35+ para gatear este nivel de confianza en cada push.
+- ⚙️ **Acción requerida**: añadir workflow `.github/workflows/instrumented.yml` usando `reactivecircus/android-emulator-runner@v2` con `api-level: 35`, ejecutando `./gradlew :AndroidBeepingCore:connectedDebugAndroidTest`. Añadir gate en branch protection rules. La infra de tests (deps + `SdkPlumbingTest`) ya quedó en BEE-2226.
+- 🚧 **Bloqueado por**: capacity (no urgente; emulator QA manual + ejecución local cubren la validación).
+- 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-014 — Restaurar strict round-trip assertion en SdkPlumbingTest cuando BEE-2228 cierre upstream
+
+- 📅 **Fecha añadida**: 2026-05-11
+- 🏷️ **Tipo**: test
+- 🧭 **Trigger**: durante BEE-2226 el test `SdkPlumbingTest` se diseñó para asertar "SDK plumbing alive" (start token detected + DECODE_COMPLETE reached + getDecodedData callable sin crash) pero NO el exact char round-trip. Razón: `BEEPING_EncodeDataToAudioBuffer` + `BEEPING_DecodeAudioBuffer` no producen un round-trip limpio en in-process feed (el decoder depende de la "función de transferencia" del micrófono físico — AGC, anti-aliasing, ruido térmico — para alinear correctamente el spectral grid). Encoder produce "abc12" → decoder devuelve `null` (integrity fail) o `"faic00cll"` determinista. Tracked upstream en [BEE-2228](https://linear.app/me8/issue/BEE-2228).
+- ⚙️ **Acción requerida**: cuando BEE-2228 cierre y publique nueva release de `beeping-core` con in-process round-trip funcional, (1) bumpear `beepingCore` en `gradle/libs.versions.toml`, (2) reactivar la assertion strict en `SdkPlumbingTest.kt`: `assertEquals("abc12", decoded?.trimEnd(' '))`, (3) confirmar verde en emulator.
+- 🚧 **Bloqueado por**: [BEE-2228](https://linear.app/me8/issue/BEE-2228) upstream en `beeping-core`.
 - 🚦 **Estado**: 🆕 Nuevo

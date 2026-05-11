@@ -145,7 +145,11 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_decodeBuffer(JNIEnv* env, job
 // Pull the last decoded string. Returns null when:
 //   - no data available (C API returns 0)
 //   - integrity check failed (C API returns negative)
-// Returns a Java String for valid payloads (positive return).
+// Production callers should never see a corrupted payload — silently dropping
+// failed-integrity decodes is the safest UX (users would otherwise take
+// actions on the wrong code). Diagnostics that need to inspect the raw bytes
+// even on integrity failure should call this in a context where they cross-
+// check via getConfidence / getConfidenceError.
 JNIEXPORT jstring JNICALL
 Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedData(JNIEnv* env, jobject /*thiz*/,
                                                                     jlong handle) {
@@ -153,7 +157,6 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedData(JNIEnv* env, j
     char buf[kDecodedBufferSize] = {0};
     const int32_t res = BEEPING_GetDecodedData(buf, asPtr(handle));
     if (res <= 0) return nullptr;
-    // res holds the length on valid data; NUL-terminate defensively.
     const int32_t safeLen = (res < kDecodedBufferSize) ? res : kDecodedBufferSize - 1;
     buf[safeLen] = '\0';
     return env->NewStringUTF(buf);
