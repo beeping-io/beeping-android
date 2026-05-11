@@ -14,10 +14,10 @@
 - **Fecha fin estimada (con 20% margen)**: 2026-05-20 (mié)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: ⚠️ **Riesgo medio** — R2 (16 KB pages) resuelto upstream (beeping-core v0.8.0 incluye flag `max-page-size=16384`, BEE-2221 cerrada). Nuevo work added in-scope: BEE-67 (sample pivot listener-only, 3 SP) y BEE-68 (JNI shim layer + wire encode end-to-end, 5 SP) tras descubrir durante QA BEE-65 que v0.8.0 expone solo C API pura (sin símbolos `Java_*`)
-- **Última actualización**: 2026-05-11 (trigger: `Closed BEE-65 (narrowed scope) + BEE-67 + BEE-68 added`)
-- **Story points totales**: 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-68)
-- **Story points cerrados**: 89 SP (BEE-51..65 + BEE-1793 + BEE-1815)
-- **Story points remaining**: 21 SP (80.9% completado)
+- **Última actualización**: 2026-05-11 (trigger: `Closed BEE-2226 (JNI shim end-to-end)`)
+- **Story points totales**: 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-2226)
+- **Story points cerrados**: 94 SP (BEE-51..65 + BEE-2226 + BEE-1793 + BEE-1815)
+- **Story points remaining**: 16 SP (85.5% completado)
 - **Days esfuerzo (con margen)**: 17 días hábiles
 - **Fecha fin estimada actualizada**: 2026-05-20 (mié) — +2 días respecto al snapshot anterior por scope addition
 
@@ -28,6 +28,51 @@
 ---
 
 ## 📜 History
+
+### [2026-05-11] — Closed BEE-2226 (JNI shim layer + encode/decode end-to-end working)
+
+**Trigger detallado**: BEE-2226 cerrada el mismo día que se abrió. El task se creó tras descubrir durante QA BEE-65 que `beeping-core v0.8.0` expone solo la C API pura (sin `Java_*` symbols) y que ni encode ni decode funcionaban end-to-end con el binding Kotlin existente. Entregado:
+
+- **JNI shim** (`AndroidBeepingCore/src/main/cpp/`): `CMakeLists.txt` (CMake 3.22, C++17, `-Wall -Wextra -Werror`, link al prebuilt `libbeepingcore.so` + `log`, target_link_options `-Wl,-z,max-page-size=16384`) + `beeping_jni.cpp` (~170 LOC) con 8 símbolos `Java_*` mapeando 1-a-1 a la C API (`create→BEEPING_Create`, `destroy→BEEPING_Destroy`, `configure→BEEPING_Configure`, `encode→BEEPING_EncodeDataToAudioBuffer`, `readEncodedBuffer→BEEPING_GetEncodedAudioBuffer`, `decodeBuffer→BEEPING_DecodeAudioBuffer`, `getDecodedData→BEEPING_GetDecodedData`, `getConfidence→BEEPING_GetConfidence`).
+- **Gradle wiring**: `defaultConfig.externalNativeBuild.cmake { cppFlags + arguments DBEEPING_CORE_INCLUDE_DIR + DBEEPING_CORE_LIB_DIR }`, `android.externalNativeBuild { cmake.path = src/main/cpp/CMakeLists.txt }`, `tasks.named("externalNativeBuild*") { dependsOn(downloadBeepingCore) }`. `downloadBeepingCore` modificado para conservar `include/` per ABI en una shared headers dir (`build/intermediates/beeping-core-headers/include/`).
+- **`BeepingCoreJNI.kt` rewrite limpio**: 8 `external fun` + companion `loadLibrary("beepingcore") + loadLibrary("beeping_jni")` + constantes de return codes del decoder (`DECODE_NO_DATA -1`, `DECODE_START_TOKEN -2`, `DECODE_COMPLETE -3`). Surface alineada con la C API.
+- **`LocalEncoder.kt` rewrite**: `encode(key)` real (validation → create → configure MODE_INAUDIBLE 44.1k → encode → drain → WAV header + LE int16 PCM → destroy), `decoded()` re-arquitecturado con AudioRecord en Kotlin (MIC, 44.1k, 16-bit mono PCM) + coroutine loop que feed-ea PCM al shim via `decodeBuffer`. Helper `floatPcmToWavBytes` (44-byte WAV header).
+- **Sample app**: quitado el cosmético "Send (LOCAL — TODO BEE-65)" → "Send". KDoc de `SampleEnv` actualizado.
+- **Kover**: `LocalEncoder*` excluida del verify rule (path real exercise = instrumented), justificación documentada inline.
+- **Pending entries**: `pending-012` (eliminar chdir workaround) + `pending-013` (instrumented tests CI setup).
+- **Upstream task creada**: [BEE-2227](https://linear.app/me8/issue/BEE-2227) en `beeping-core` Phase 1 milestone — Backlog, priority 3.
+
+**Side effect descubierto durante QA**: `BEEPING_Create()` internamente abre un `spdlog::rotating_file_sink` con path **relativo** `logs/beeping.log`. En Android cwd = `/` (read-only) → `fopen` fails → `spdlog_ex` uncaught → SIGABRT. Workaround downstream: el shim `mkdir($filesDir/logs)` + `chdir($filesDir)` antes de `BEEPING_Create`. Funciona pero `chdir` es process-wide → hack temporal. Solución correcta upstream en BEE-2227 (Phase 1).
+
+**Net delta global**: 0 días en fin date — BEE-2226 cerró el mismo día que se abrió (creada y closed 2026-05-11). 5 SP entregados sin slide.
+
+**Nueva fecha fin estimada**: 2026-05-20 (mié) — sin cambio.
+
+**Nuevo estado global**: ⚠️ Riesgo medio (sin cambio respecto a la entrada anterior).
+
+#### Cambios de estado
+
+- BEE-2226: `🚧 In Progress` → `✅ Done` (5 SP).
+- BEE-2227 (upstream beeping-core Phase 1): creada en Backlog.
+
+#### Validación
+
+- **`./gradlew :AndroidBeepingCore:externalNativeBuildDebug`** verde para los 3 ABIs (arm64-v8a + armeabi-v7a + x86_64). `nm -D --defined-only libbeeping_jni.so | grep Java_com_beeping` → 8/8 símbolos.
+- **`./gradlew :AndroidBeepingCore:check`** verde: tests (50/50) + ktlint + detekt + Android Lint strict + Kover.
+- **`./gradlew :app:installDebug`** APK con 2 `.so` por ABI (beepingcore + beeping_jni) carga sin error.
+- **QA emulator API 37** (emulator-5554, software-side):
+  - Ambos `.so` cargan vía nativeloader: ok
+  - Tap Send: `cache/beeping-send.wav` = 184 KB generado (~2s mono 16-bit 44.1k); MediaPlayer reproduce sin error; sin error chip
+  - Tap Listen: botón rojo "Stop listening" + "Listening: ON" + log SDK `listen started`; AudioRecord open, decode loop running, sin crash
+  - Stop listening: cleanly cancels, sin SIGABRT
+- **QA dispositivo físico**: deferred al founder (option A acordada en QA cycle): audible beep, listen externo, roundtrip same-device. Validación arquitectónica suficiente para el cierre; cualquier regresión → hotfix.
+
+#### Métricas tras BEE-2226
+
+- 18/20 tasks cerradas (BEE-51..65 + BEE-2226 + BEE-1793 + BEE-1815), **94/110 SP (85.5%)**.
+- 2 tasks pending: BEE-67 (3 SP, sample pivot), BEE-66 (13 SP, Maven Central). Restante: 16 SP.
+
+---
 
 ### [2026-05-11] — Closed BEE-65 (narrowed scope) + R2 resolved + BEE-67 + BEE-68 added
 
