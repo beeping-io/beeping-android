@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.net.URI
+import java.security.MessageDigest
 
 plugins {
     alias(libs.plugins.android.library)
@@ -50,12 +52,20 @@ android {
 
     packaging {
         // Required for 16 KB page size compliance (Android 15+ Play Store policy).
-        // Vendored .so files do NOT comply yet — that's deferred to BEE-65 when
-        // we consume signed releases from beeping-core. The Gradle config is
-        // however ready.
+        // BEE-65: the .so files now come from `beeping-core` GH Releases v0.8.0+,
+        // built with `-Wl,-z,max-page-size=16384` (per BEE-2221). Verified via
+        // `readelf -l libbeepingcore.so | grep LOAD` → align 0x4000.
         jniLibs {
             useLegacyPackaging = false
         }
+    }
+
+    // BEE-65: native libraries come from the downloadBeepingCore task output,
+    // not from a `src/main/jniLibs/` checked-in directory. The download task
+    // populates `build/intermediates/beeping-core/<abi>/libbeepingcore.so`
+    // and Android picks them up at packaging time.
+    sourceSets.named("main") {
+        jniLibs.srcDirs(layout.buildDirectory.dir("intermediates/beeping-core"))
     }
 
     testOptions {
@@ -127,6 +137,114 @@ android.testOptions.unitTests.all { test ->
         "BEEPBOX_BASE_URL",
         "BEEPBOX_API_KEY",
     ).forEach { test.environment(it, beepboxEnv(it)) }
+}
+
+// ── BEE-65: download beeping-core .so artifacts from GitHub Releases ────────
+// The legacy 2020 .so files were vendored under src/main/jniLibs/ and did not
+// satisfy the 16 KB page size requirement for Android 15+. Now we fetch the
+// freshly built artifacts from beeping-core GH Releases (BEE-2221 emits them
+// per-ABI with -Wl,-z,max-page-size=16384) and verify SHA256 against the
+// release-published SHA256SUMS.txt.
+//
+// Cosign verify is intentionally skipped here. The upstream release workflow
+// emits only `.sig` (no `.bundle` / no `--output-certificate`) — keyless
+// verification needs the certificate too. Tracked in pending-011 and upstream
+// BEE-2225 (Phase 1, beeping-core).
+
+val beepingCoreVersion = libs.versions.beepingCore.get()
+val beepingCoreAbis = listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+val beepingCoreOutDir = layout.buildDirectory.dir("intermediates/beeping-core")
+
+val downloadBeepingCore =
+    tasks.register("downloadBeepingCore") {
+        group = "beeping"
+        description = "Download + SHA256-verify + extract beeping-core .so artifacts."
+
+        inputs.property("version", beepingCoreVersion)
+        inputs.property("abis", beepingCoreAbis)
+        outputs.dir(beepingCoreOutDir)
+
+        doLast {
+            val out = beepingCoreOutDir.get().asFile
+            val cache = out.resolve(".cache").apply { mkdirs() }
+            val baseUrl = "https://github.com/beeping-io/beeping-core/releases/download/v$beepingCoreVersion"
+
+            // 1. SHA256SUMS.txt
+            val sumsFile = cache.resolve("SHA256SUMS.txt")
+            URI("$baseUrl/SHA256SUMS.txt").toURL().openStream().use { input ->
+                sumsFile.outputStream().use { input.copyTo(it) }
+            }
+            val sums =
+                sumsFile
+                    .readLines()
+                    .filter { it.isNotBlank() }
+                    .associate { line ->
+                        val parts = line.trim().split(Regex("\\s+"), limit = 2)
+                        require(parts.size == 2) { "Malformed SHA256SUMS entry: '$line'" }
+                        parts[1] to parts[0]
+                    }
+
+            // 2. per-ABI download + SHA256 verify + extract
+            beepingCoreAbis.forEach { abi ->
+                val tarball = "beeping-core-android-$abi.tar.zst"
+                val expectedSha =
+                    sums[tarball]
+                        ?: error("$tarball missing from SHA256SUMS.txt for v$beepingCoreVersion")
+
+                val tarballFile = cache.resolve(tarball)
+                if (!tarballFile.exists() || sha256(tarballFile) != expectedSha) {
+                    URI("$baseUrl/$tarball").toURL().openStream().use { input ->
+                        tarballFile.outputStream().use { input.copyTo(it) }
+                    }
+                }
+
+                val actualSha = sha256(tarballFile)
+                require(actualSha == expectedSha) {
+                    "SHA256 mismatch for $tarball: expected=$expectedSha actual=$actualSha"
+                }
+
+                val abiDir =
+                    out.resolve(abi).apply {
+                        deleteRecursively()
+                        mkdirs()
+                    }
+
+                // bsdtar 3.5+ and GNU tar 1.31+ auto-detect zstd compression
+                exec {
+                    workingDir = abiDir
+                    commandLine("tar", "-xf", tarballFile.absolutePath)
+                }
+
+                val extractedSo = abiDir.resolve("lib/libbeepingcore.so")
+                val targetSo = abiDir.resolve("libbeepingcore.so")
+                require(extractedSo.exists()) { "$extractedSo missing after extract of $tarball" }
+                extractedSo.renameTo(targetSo)
+
+                // Discard headers + cmake — Android only needs the .so
+                abiDir.resolve("lib").deleteRecursively()
+                abiDir.resolve("include").deleteRecursively()
+            }
+        }
+    }
+
+fun sha256(file: java.io.File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().use { stream ->
+        val buf = ByteArray(8192)
+        while (true) {
+            val n = stream.read(buf)
+            if (n < 0) break
+            digest.update(buf, 0, n)
+        }
+    }
+    return digest.digest().joinToString("") { "%02x".format(it) }
+}
+
+// Wire as preBuild dependency so any downstream task (assemble, test, lint)
+// triggers it transitively. The task is up-to-date when the version is
+// unchanged and the output dir already has the expected .so files.
+tasks.named("preBuild") {
+    dependsOn(downloadBeepingCore)
 }
 
 // ── BEE-59: generate the typed beepbox HTTP client from api/openapi.yaml ────

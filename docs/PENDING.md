@@ -160,3 +160,12 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
   frecuentes en ramas locales experimentales).
 - 🚧 **Bloqueado por**: que decidamos cambiar a modo individual para alguna task.
 - 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-011 — Añadir cosign verify-blob al downloadBeepingCore task (cuando BEE-2225 cierre upstream)
+
+- 📅 **Fecha añadida**: 2026-05-09
+- 🏷️ **Tipo**: security
+- 🧭 **Trigger**: BEE-65 implementa SHA256-only verify del download de `beeping-core` releases porque el workflow upstream solo emite `.sig` sin `.bundle` ni cert. La verificación cosign keyless local es imposible sin uno de los dos. Detectado durante BEE-65 al intentar `cosign verify-blob` contra `beeping-core v0.8.0`.
+- ⚙️ **Acción requerida**: cuando [BEE-2225](https://linear.app/me8/issue/BEE-2225) (Phase 1, `beeping-core`) cierre y emita `.cosign-bundle` por artifact, abrir task en `beeping-android` para añadir `cosign verify-blob --bundle <file>.cosign-bundle --certificate-identity-regexp '...beeping-core...' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'` a `DownloadBeepingCoreTask`. Bumpear versión `beepingCore` en `libs.versions.toml` a la primera release con bundles.
+- 🚧 **Bloqueado por**: BEE-2225 upstream en `beeping-core`.
+- 🚦 **Estado**: 🆕 Nuevo
