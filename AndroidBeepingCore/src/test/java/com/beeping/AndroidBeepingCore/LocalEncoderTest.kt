@@ -82,14 +82,22 @@ class LocalEncoderTest {
         }
 
     @Test
-    fun `encode throws NotImplementedError for valid key (BEE-65)`() =
+    fun `encode throws BeepingException NativeLibraryNotLoaded on JVM tests without native libs`() =
         runTest {
+            // BEE-2226: encode now reaches the JNI shim instead of throwing TODO.
+            // The native libs (libbeepingcore.so + libbeeping_jni.so) only load
+            // on Android runtime; on the JVM unit test runtime BeepingCoreJNI
+            // surfaces the failure via a typed BeepingException.
             val encoder = LocalEncoder(context = context)
             val ex = runCatching { encoder.encode("abc12") }.exceptionOrNull()
-            assertNotNull("encode() should throw — TODO BEE-65", ex)
+            assertNotNull("encode() should throw on JVM (no native libs)", ex)
             assertTrue(
-                "expected NotImplementedError, got ${ex?.javaClass?.simpleName}",
-                ex is NotImplementedError,
+                "expected BeepingException, got ${ex?.javaClass?.simpleName}",
+                ex is BeepingException,
+            )
+            assertEquals(
+                BeepingError.NativeLibraryNotLoaded,
+                (ex as BeepingException).error,
             )
             encoder.close()
         }

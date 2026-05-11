@@ -3,79 +3,91 @@ package com.beeping.AndroidBeepingCore
 import timber.log.Timber
 
 /**
- * JNI bridge to `libbeepingcore.so`.
+ * JNI bridge from Kotlin to `libbeeping_jni.so` (the BEE-2226 shim), which
+ * forwards calls to the beeping-core C API in `libbeepingcore.so`.
  *
- * **Critical**: the JVM signatures of the native methods + the [BeepingCallback]
- * method MUST stay binary-compatible with the C symbols in the native library.
- * The native lib looks up methods by name + JVM signature; renaming or changing
- * parameter types will break the load at runtime.
+ * **Critical**: the JVM signatures of the `external fun`s MUST stay binary-
+ * compatible with the `extern "C"` symbols emitted by `beeping_jni.cpp` —
+ * the JVM looks methods up by name + JNI signature. Renaming or changing
+ * parameter types breaks load at runtime with `UnsatisfiedLinkError`.
  *
- * The corresponding native symbols (descriptive — see the C source):
- * ```
- * Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_init        ()J
- * Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_start       (J)V
- * Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_dealloc     (J)I
- * Java_..._configure          (IJ)I
- * Java_..._startBeepingListen (J)I
- * Java_..._stopBeepingListen  (J)I
- * Java_..._getDecodedString   ([CJ)I
- * ```
+ * Threading: this class is **not** internally synchronized. Callers must
+ * serialize encode/decode calls on the same handle (LocalEncoder does this
+ * by owning a single handle per coroutine context).
  *
- * BEE-56 refactor: the constructor no longer takes a `BeepingCore` ref (the
- * legacy class was removed); the callback is now a settable lambda field that
- * the [Encoder] strategy (LocalEncoder, BEE-57) wires up before starting a
- * listen session.
+ * Decoder return codes (from `BEEPING_DecodeAudioBuffer`):
+ * - [DECODE_NO_DATA] (-1): no recognizable signal yet
+ * - [DECODE_START_TOKEN] (-2): start token detected
+ * - [DECODE_COMPLETE] (-3): a complete word decoded — call [getDecodedData]
+ * - any value ≥ 0: a single token index
  */
 class BeepingCoreJNI {
     /**
-     * Receiver of native callbacks. Set by [Encoder] implementations (BEE-57
-     * `LocalEncoder`) before starting a listen session; cleared on stop.
-     *
-     * Receives one of [BC_TOKEN_START], [BC_TOKEN_END_OK], [BC_TOKEN_END_BAD],
-     * [BC_END_PLAY].
+     * Create a beeping-core handle. [workDir] is an absolute path to a
+     * writeable directory; the shim chdirs there and creates a `logs/`
+     * subdir before invoking `BEEPING_Create`. Workaround for the upstream
+     * spdlog-relative-path crash; typically pass `context.filesDir.absolutePath`.
      */
-    @Volatile
-    var callback: ((Int) -> Unit)? = null
+    external fun create(workDir: String): Long
 
-    /**
-     * Called from native via JNI (`(I)V`). DO NOT rename or change signature.
-     * Dispatches the token to the registered [callback] (if any).
-     */
-    fun BeepingCallback(value: Int) {
-        when (value) {
-            BC_TOKEN_START,
-            BC_TOKEN_END_OK,
-            BC_TOKEN_END_BAD,
-            BC_END_PLAY,
-            -> callback?.invoke(value)
-        }
-    }
-
-    external fun start(beepingObject: Long)
-
-    external fun init(): Long
-
-    external fun dealloc(beepingObject: Long): Int
+    external fun destroy(handle: Long)
 
     external fun configure(
+        handle: Long,
         mode: Int,
-        beepingObject: Long,
+        samplingRate: Float,
+        bufferSize: Int,
     ): Int
 
-    external fun startBeepingListen(beepingObject: Long): Int
-
-    external fun stopBeepingListen(beepingObject: Long): Int
-
-    external fun getDecodedString(
-        code: CharArray,
-        beepingObject: Long,
+    /**
+     * Encode [payload] into the internal audio buffer of [handle].
+     *
+     * @param type 0 = pure tones (default), 1 = tones + R2D2 ornament,
+     *             2 = melody mode (melody string not exposed in this binding).
+     * @return total number of float32 samples generated, or -1 on bad handle.
+     */
+    external fun encode(
+        handle: Long,
+        payload: String,
+        type: Int,
     ): Int
+
+    /**
+     * Drain a chunk of encoded samples into [out]. Call repeatedly until the
+     * return value is less than `out.size` — that signals end of the buffer.
+     *
+     * @return number of samples written to [out].
+     */
+    external fun readEncodedBuffer(
+        handle: Long,
+        out: FloatArray,
+    ): Int
+
+    /**
+     * Feed PCM samples to the decoder.
+     *
+     * @param size number of valid samples in [pcm] (allows reusing a larger array).
+     * @return decode state (see class KDoc).
+     */
+    external fun decodeBuffer(
+        handle: Long,
+        pcm: FloatArray,
+        size: Int,
+    ): Int
+
+    /**
+     * Pull the last decoded string. Returns `null` when no data is available
+     * **or** when the decoded payload failed integrity checks. A non-null
+     * return is always a successfully-decoded payload.
+     */
+    external fun getDecodedData(handle: Long): String?
+
+    external fun getConfidence(handle: Long): Float
 
     companion object {
-        const val BC_TOKEN_START: Int = 0
-        const val BC_TOKEN_END_OK: Int = 1
-        const val BC_TOKEN_END_BAD: Int = 2
-        const val BC_END_PLAY: Int = 3
+        const val DECODE_NO_DATA: Int = -1
+        const val DECODE_START_TOKEN: Int = -2
+        const val DECODE_COMPLETE: Int = -3
 
         private const val TAG = "BEEPING:JNI"
 
@@ -84,7 +96,9 @@ class BeepingCoreJNI {
 
         init {
             try {
+                // beepingcore must be loaded first — beeping_jni links against it.
                 System.loadLibrary("beepingcore")
+                System.loadLibrary("beeping_jni")
                 sNativeLoaded = true
             } catch (e: UnsatisfiedLinkError) {
                 Timber.tag(TAG).e(e, "native code library failed to load.")

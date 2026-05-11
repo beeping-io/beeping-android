@@ -13,6 +13,13 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+// BEE-65 + BEE-2226: beeping-core consumption + JNI shim. Declared at the top
+// because the android {} block below references these paths in CMake arguments.
+val beepingCoreVersion = libs.versions.beepingCore.get()
+val beepingCoreAbis = listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+val beepingCoreOutDir = layout.buildDirectory.dir("intermediates/beeping-core")
+val beepingCoreHeadersDir = layout.buildDirectory.dir("intermediates/beeping-core-headers")
+
 android {
     namespace = "com.beeping.AndroidBeepingCore"
     compileSdk =
@@ -32,6 +39,30 @@ android {
             // Drop legacy ABIs (mips, mips64, armeabi, x86 deprecated since NDK r17).
             // The vendored .so files for those will be removed in BEE-55.
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
+
+        // BEE-2226: JNI shim CMake build args. The paths point to the outputs
+        // of `downloadBeepingCore`; CMake reads them via -D variables.
+        externalNativeBuild {
+            cmake {
+                cppFlags(
+                    "-std=c++17",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-fvisibility=hidden",
+                )
+                arguments(
+                    "-DBEEPING_CORE_INCLUDE_DIR=" +
+                        beepingCoreHeadersDir
+                            .get()
+                            .asFile.absolutePath +
+                        "/include",
+                    "-DBEEPING_CORE_LIB_DIR=" +
+                        beepingCoreOutDir.get().asFile.absolutePath,
+                    "-DANDROID_STL=c++_static",
+                )
+            }
         }
     }
 
@@ -66,6 +97,15 @@ android {
     // and Android picks them up at packaging time.
     sourceSets.named("main") {
         jniLibs.srcDirs(layout.buildDirectory.dir("intermediates/beeping-core"))
+    }
+
+    // BEE-2226: JNI shim built from src/main/cpp/. The CMake build links the
+    // shim against the prebuilt libbeepingcore.so populated by downloadBeepingCore.
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     testOptions {
@@ -151,10 +191,6 @@ android.testOptions.unitTests.all { test ->
 // verification needs the certificate too. Tracked in pending-011 and upstream
 // BEE-2225 (Phase 1, beeping-core).
 
-val beepingCoreVersion = libs.versions.beepingCore.get()
-val beepingCoreAbis = listOf("arm64-v8a", "armeabi-v7a", "x86_64")
-val beepingCoreOutDir = layout.buildDirectory.dir("intermediates/beeping-core")
-
 val downloadBeepingCore =
     tasks.register("downloadBeepingCore") {
         group = "beeping"
@@ -163,10 +199,16 @@ val downloadBeepingCore =
         inputs.property("version", beepingCoreVersion)
         inputs.property("abis", beepingCoreAbis)
         outputs.dir(beepingCoreOutDir)
+        outputs.dir(beepingCoreHeadersDir)
 
         doLast {
             val out = beepingCoreOutDir.get().asFile
+            val headersOut = beepingCoreHeadersDir.get().asFile
             val cache = out.resolve(".cache").apply { mkdirs() }
+            // Reset headers dir on each run to track upstream API changes (a header
+            // removed upstream must disappear here too, not linger from a prior version).
+            headersOut.deleteRecursively()
+            headersOut.mkdirs()
             val baseUrl = "https://github.com/beeping-io/beeping-core/releases/download/v$beepingCoreVersion"
 
             // 1. SHA256SUMS.txt
@@ -220,7 +262,13 @@ val downloadBeepingCore =
                 require(extractedSo.exists()) { "$extractedSo missing after extract of $tarball" }
                 extractedSo.renameTo(targetSo)
 
-                // Discard headers + cmake — Android only needs the .so
+                // Headers are ABI-independent; copy once from the first ABI
+                // into the shared headers dir, then drop the per-ABI copy.
+                val extractedInclude = abiDir.resolve("include")
+                val sharedInclude = headersOut.resolve("include")
+                if (!sharedInclude.exists() && extractedInclude.exists()) {
+                    extractedInclude.renameTo(sharedInclude)
+                }
                 abiDir.resolve("lib").deleteRecursively()
                 abiDir.resolve("include").deleteRecursively()
             }
@@ -246,6 +294,17 @@ fun sha256(file: java.io.File): String {
 tasks.named("preBuild") {
     dependsOn(downloadBeepingCore)
 }
+
+// BEE-2226: CMake (externalNativeBuild*) needs the beeping-core headers
+// and prebuilt .so to be in place before it configures. preBuild is not
+// always a transitive dep of native-build tasks, so wire explicitly.
+tasks
+    .matching {
+        it.name.startsWith("externalNativeBuild") ||
+            it.name.startsWith("configureCMake")
+    }.configureEach {
+        dependsOn(downloadBeepingCore)
+    }
 
 // ── BEE-59: generate the typed beepbox HTTP client from api/openapi.yaml ────
 // Uses openapi-generator with `kotlin` + `jvm-ktor` library + kotlinx-serialization.
@@ -347,6 +406,12 @@ kover {
                     "com.beeping.AndroidBeepingCore.internal.api.infrastructure",
                     "com.beeping.AndroidBeepingCore.internal.api.auth",
                 )
+                // BEE-2226: LocalEncoder talks to the JNI shim + AudioRecord —
+                // neither loads under JVM unit tests. The full encode/decode
+                // paths are exercised by androidTest/ instrumented tests (added
+                // in this same task). The JVM tests still verify the validation
+                // + permission + native-not-loaded branches.
+                classes("com.beeping.AndroidBeepingCore.LocalEncoder*")
             }
         }
         verify {

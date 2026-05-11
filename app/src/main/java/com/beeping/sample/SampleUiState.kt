@@ -3,9 +3,8 @@ package com.beeping.sample
 /**
  * BEE-64 — Three environments selectable from the UI.
  *
- * - [LOCAL] runs `BeepingMode.Local` (JNI); decode works against vendored
- *   `libbeepingcore.so`; encode currently throws `NotImplementedError` — see
- *   `LocalEncoder.encode()` TODO BEE-65.
+ * - [LOCAL] runs `BeepingMode.Local` (JNI shim → beeping-core C API);
+ *   encode + decode both functional since BEE-2226.
  * - [DEV] / [PROD] hit `beepbox-server` via Ktor with the matching
  *   `BuildConfig.BEEPBOX_*_BASE_URL` + API key.
  */

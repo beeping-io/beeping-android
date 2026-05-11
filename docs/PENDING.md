@@ -169,3 +169,21 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 - ⚙️ **Acción requerida**: cuando [BEE-2225](https://linear.app/me8/issue/BEE-2225) (Phase 1, `beeping-core`) cierre y emita `.cosign-bundle` por artifact, abrir task en `beeping-android` para añadir `cosign verify-blob --bundle <file>.cosign-bundle --certificate-identity-regexp '...beeping-core...' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'` a `DownloadBeepingCoreTask`. Bumpear versión `beepingCore` en `libs.versions.toml` a la primera release con bundles.
 - 🚧 **Bloqueado por**: BEE-2225 upstream en `beeping-core`.
 - 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-012 — Quitar el chdir() workaround del JNI shim cuando beeping-core inicialice spdlog de forma Android-aware
+
+- 📅 **Fecha añadida**: 2026-05-11
+- 🏷️ **Tipo**: infra
+- 🧭 **Trigger**: BEE-2226 implementa el JNI shim y descubre que `BEEPING_Create()` llama a `BEEPING::initBeepingLogger()` que abre un `spdlog::rotating_file_sink` en path **relativo** `logs/beeping.log`. En Android el cwd del proceso es `/` (read-only), spdlog lanza `spdlog_ex: Failed opening file logs/beeping.log` y como es uncaught → SIGABRT. Workaround actual: el shim llama `mkdir($filesDir/logs)` + `chdir($filesDir)` antes de `BEEPING_Create`. Funcionalmente OK pero `chdir` es process-wide y huele a hack — la solución correcta vive upstream.
+- ⚙️ **Acción requerida**: cuando upstream `beeping-core` cambie `initBeepingLogger()` a aceptar un path absoluto del logger (por ej. via `BEEPING_SetLogPath(const char*)` o env var `BEEPING_LOG_PATH`) o decida que en Android el sink debe ser android-log en vez de file, eliminar el bloque `mkdir + chdir` del `Java_..._create` en `beeping_jni.cpp` y pasar el path absoluto via la nueva API. Mantener el parámetro `workDir` por si la transición no es atómica.
+- 🚧 **Bloqueado por**: [BEE-2227](https://linear.app/me8/issue/BEE-2227) upstream en `beeping-core` — "spdlog Android-aware: stop using relative path 'logs/beeping.log' (SIGABRT on Android)".
+- 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-013 — Instrumented tests para LocalEncoder + JNI shim (encode/decode round-trip)
+
+- 📅 **Fecha añadida**: 2026-05-11
+- 🏷️ **Tipo**: test
+- 🧭 **Trigger**: BEE-2226 entregó el JNI shim + wire encode/decode; el plan original incluía `androidTest/` instrumented suite (`LocalEncoderInstrumentedTest`, `RoundTripInstrumentedTest`, `JniShimLoadTest`). Software-side el path está validado por emulator QA (Send genera WAV 184 KB, Listen abre AudioRecord, no crashes). Pero CI todavía no corre instrumented tests — necesitamos `connectedCheck` en GitHub Actions con emulator headless API 35+ para gatear este nivel de confianza en cada push.
+- ⚙️ **Acción requerida**: crear branch + task `feat(test): instrumented tests for LocalEncoder + JNI shim` con (1) deps `androidx.test.ext:junit` + `androidx.test:runner` en `:AndroidBeepingCore`, (2) 3 tests bajo `src/androidTest/`, (3) workflow `.github/workflows/instrumented.yml` usando `reactivecircus/android-emulator-runner@v2` con `api-level: 35`, (4) gate en branch protection rules.
+- 🚧 **Bloqueado por**: capacity (no urgente; emulator QA manual cubre la validación).
+- 🚦 **Estado**: 🆕 Nuevo

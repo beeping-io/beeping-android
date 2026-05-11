@@ -136,7 +136,7 @@ fun MainScreen(viewModel: SampleAppViewModel) {
                         )
                         Spacer(Modifier.size(8.dp))
                     }
-                    Text(if (state.env == SampleEnv.LOCAL) "Send (LOCAL — TODO BEE-65)" else "Send")
+                    Text("Send")
                 }
 
                 Button(
