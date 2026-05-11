@@ -7,6 +7,7 @@
 ![Kotlin target](https://img.shields.io/badge/Kotlin_target-2.0+-7F52FF)
 ![Gradle target](https://img.shields.io/badge/Gradle_target-8.7+-02303A)
 ![Android SDK](https://img.shields.io/badge/Android_SDK-24--35-3DDC84)
+[![Maven Central](https://img.shields.io/maven-central/v/io.beeping/beeping-android.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.beeping/beeping-android)
 
 > 🔊 Kotlin SDK for **data over sound** (audible + ultrasonic) on Android.
 > Decode and emit short payloads via the device speaker/microphone, locally
@@ -34,10 +35,46 @@ implemented** — track Phase 8 progress for availability.
 
 ---
 
+## 📦 Installation
+
+> ⚠️ **Maven Central onboarding pending** (Sonatype Central Portal review, 2-4 weeks
+> typical). Until the first release lands, consume the AAR directly from
+> [GitHub Releases](https://github.com/beeping-io/beeping-android/releases).
+> See [`docs/maven-central-publishing.md`](docs/maven-central-publishing.md).
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+dependencies {
+    implementation("io.beeping:beeping-android:0.0.0")
+}
+```
+
+### Gradle (Groovy)
+
+```groovy
+dependencies {
+    implementation 'io.beeping:beeping-android:0.0.0'
+}
+```
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>io.beeping</groupId>
+    <artifactId>beeping-android</artifactId>
+    <version>0.0.0</version>
+    <type>aar</type>
+</dependency>
+```
+
+---
+
 ## 🎯 Target API (post-Phase 8)
 
 ```kotlin
-// Gradle dependency (target — not yet published)
+// Gradle dependency (target — published as of v0.0.0)
 // implementation("io.beeping:beeping-android:0.0.0")
 
 import io.beeping.android.BeepingClient

@@ -78,6 +78,71 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  maven-publish-smoke:
+    name: 📦 Maven publish smoke (publishToMavenLocal + POM validation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # BEE-66: catches POM regressions, missing artifacts, broken Dokka, etc.
+    # No signing — credentials only land in the release workflow.
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 📦 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: 🔧 Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: 📤 publishToMavenLocal
+        run: ./gradlew --no-daemon :AndroidBeepingCore:publishToMavenLocal
+
+      - name: ✅ Verify artifacts + POM mandatory fields
+        run: |
+          DIR=~/.m2/repository/io/beeping/beeping-android/0.0.0
+          echo "── Artifacts produced ──"
+          ls -la "$DIR"
+
+          for f in beeping-android-0.0.0.aar beeping-android-0.0.0-sources.jar beeping-android-0.0.0-javadoc.jar beeping-android-0.0.0.pom beeping-android-0.0.0.module; do
+            if [ ! -f "$DIR/$f" ]; then
+              echo "❌ Missing artifact: $f"
+              exit 1
+            fi
+            echo "✅ $f ($(stat -c%s "$DIR/$f" 2>/dev/null || stat -f%z "$DIR/$f") bytes)"
+          done
+
+          echo "── POM mandatory fields (Sonatype Central Portal) ──"
+          POM="$DIR/beeping-android-0.0.0.pom"
+          for tag in "<name>" "<description>" "<url>" "<licenses>" "<developers>" "<scm>"; do
+            if ! grep -q "$tag" "$POM"; then
+              echo "❌ POM missing required tag: $tag"
+              exit 1
+            fi
+            echo "✅ $tag"
+          done
+
+      - name: 📤 Upload published artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-local
+          path: ~/.m2/repository/io/beeping/beeping-android/
+          if-no-files-found: error
+          retention-days: 7
+
   commitlint:
     name: 📝 Commitlint
     runs-on: ubuntu-latest

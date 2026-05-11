@@ -11,6 +11,8 @@ plugins {
     alias(libs.plugins.kover)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.vanniktech.maven.publish)
 }
 
 // BEE-65 + BEE-2226: beeping-core consumption + JNI shim. Declared at the top
@@ -475,7 +477,83 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
 tasks
     .matching {
         it.name.startsWith("runKtlintCheckOver") ||
-            it.name.startsWith("runKtlintFormatOver")
+            it.name.startsWith("runKtlintFormatOver") ||
+            it.name == "sourceReleaseJar" ||
+            it.name.startsWith("dokka")
     }.configureEach {
         dependsOn("openApiGenerate")
     }
+
+// ── BEE-66: Maven Central publishing ─────────────────────────────────────────
+// vanniktech.mavenPublish handles maven-publish + signing + sources.jar
+// + javadoc.jar (via Dokka) + Central Portal upload in one block. Coordinates,
+// POM metadata, and signing strategy are configured here; credentials live in
+// ~/.gradle/gradle.properties (local) or env vars (CI). See
+// docs/maven-central-publishing.md for the full onboarding flow.
+mavenPublishing {
+    coordinates(
+        groupId = "io.beeping",
+        artifactId = "beeping-android",
+        version = "0.0.0", // 0.x ecosystem rule — see ~/.claude/CLAUDE.md §SemVer
+    )
+
+    pom {
+        name.set("Beeping Android SDK")
+        description.set(
+            "Kotlin SDK for data over sound (audible + ultrasonic) on Android. " +
+                "Encode + decode short payloads via the device speaker / microphone " +
+                "locally (JNI to beeping-core) or via the Beeping Platform cloud.",
+        )
+        url.set("https://github.com/beeping-io/beeping-android")
+        inceptionYear.set("2026")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("repo")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("alfredrivas")
+                name.set("Alfred Rivas")
+                email.set("alfred@beeping.io")
+                organization.set("Beeping")
+                organizationUrl.set("https://beeping.io")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:git://github.com/beeping-io/beeping-android.git")
+            developerConnection.set("scm:git:ssh://git@github.com/beeping-io/beeping-android.git")
+            url.set("https://github.com/beeping-io/beeping-android")
+        }
+
+        issueManagement {
+            system.set("GitHub")
+            url.set("https://github.com/beeping-io/beeping-android/issues")
+        }
+    }
+
+    // Publish to the new Sonatype Central Portal (replaces legacy OSS Repository
+    // Hosting). automaticRelease=false → artifacts land in a staging repo first
+    // and require explicit "Publish" click in the Portal UI for safety.
+    publishToMavenCentral(
+        com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL,
+        automaticRelease = false,
+    )
+
+    // GPG-sign every artifact (AAR, sources, javadoc, POM) — required by Central.
+    // Key + password come from `signingInMemoryKey` / `signingInMemoryKeyPassword`
+    // gradle properties (or env vars `ORG_GRADLE_PROJECT_signingInMemoryKey` etc).
+    // Signing is conditional so local dev (publishToMavenLocal without keys) works
+    // out-of-the-box; CI always has the secrets and signs. The release workflow
+    // explicitly asserts that signing keys are present before publishing.
+    if (project.findProperty("signingInMemoryKey") != null ||
+        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null
+    ) {
+        signAllPublications()
+    }
+}
