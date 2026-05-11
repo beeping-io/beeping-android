@@ -11,23 +11,87 @@
 ## 🎯 Snapshot actual
 
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
-- **Fecha fin estimada (con 20% margen)**: 2026-05-18 (lun)
+- **Fecha fin estimada (con 20% margen)**: 2026-05-20 (mié)
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: 🔴 **Riesgo alto** — R2 (16 KB pages) escalado a alto el 2026-05-07 tras verificar que `beeping-core v0.6.0` no publica Android NDK builds. BEE-65 bloqueada hasta task previa en `beeping-core` repo
-- **Última actualización**: 2026-05-07 (trigger: `Closed BEE-64 + R2 risk escalated`)
-- **Story points totales**: 102 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815)
-- **Story points cerrados**: 84 SP (BEE-51..64 + BEE-1793 + BEE-1815)
-- **Story points remaining**: 18 SP (82.4% completado)
-- **Days esfuerzo (con margen)**: 15 días hábiles
-- **Fecha fin estimada actualizada**: 2026-05-15 (vie) — sin cambio
+- **Estado global**: ⚠️ **Riesgo medio** — R2 (16 KB pages) resuelto upstream (beeping-core v0.8.0 incluye flag `max-page-size=16384`, BEE-2221 cerrada). Nuevo work added in-scope: BEE-67 (sample pivot listener-only, 3 SP) y BEE-68 (JNI shim layer + wire encode end-to-end, 5 SP) tras descubrir durante QA BEE-65 que v0.8.0 expone solo C API pura (sin símbolos `Java_*`)
+- **Última actualización**: 2026-05-11 (trigger: `Closed BEE-65 (narrowed scope) + BEE-67 + BEE-68 added`)
+- **Story points totales**: 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-68)
+- **Story points cerrados**: 89 SP (BEE-51..65 + BEE-1793 + BEE-1815)
+- **Story points remaining**: 21 SP (80.9% completado)
+- **Days esfuerzo (con margen)**: 17 días hábiles
+- **Fecha fin estimada actualizada**: 2026-05-20 (mié) — +2 días respecto al snapshot anterior por scope addition
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 99 | 2026-04-28 | 2026-05-18 | 🔴 Riesgo alto |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 110 | 2026-04-28 | 2026-05-20 | ⚠️ Riesgo medio |
 
 ---
 
 ## 📜 History
+
+### [2026-05-11] — Closed BEE-65 (narrowed scope) + R2 resolved + BEE-67 + BEE-68 added
+
+**Trigger detallado**: BEE-65 cerrada con scope corregido tras descubrimiento durante QA. Lo entregado: task `:AndroidBeepingCore:downloadBeepingCore` (Gradle, registrado como dependencia de `preBuild`) que descarga `SHA256SUMS.txt` + 3 tarballs `beeping-core-android-<abi>.tar.zst` (arm64-v8a, armeabi-v7a, x86_64) de la release `beeping-core v0.8.0` en GitHub, verifica SHA256 contra el manifest publicado (build falla si mismatch), extrae con `tar -xf` (auto-detect zstd via libarchive ≥3.5 / GNU tar ≥1.31), y wirea el directorio extracted via `android.sourceSets["main"].jniLibs.srcDirs` para que AGP empaquete los `.so` en el AAR. Los 3 `.so` legacy 2020 vendoreados (`AndroidBeepingCore/src/main/jniLibs/`) borrados (git rm). Pin de versión en `gradle/libs.versions.toml` (`beepingCore = "0.8.0"`). Doc completa en `docs/beeping-core-consumption.md` (TL;DR, flujo, bumping, env requirements, cosign defer rationale, sizes ~100× growth, troubleshooting). Cosign signature verify deferred hasta que upstream BEE-2225 cambie el release workflow a `cosign sign-blob --bundle` (release actual solo emite `--output-signature` que no permite verify-blob keyless local sin cert/bundle) — tracked como `pending-011` en `docs/PENDING.md`. QA emulator API 37 (emulator-5554): `nativeloader: Load /data/app/.../base.apk!/lib/arm64-v8a/libbeepingcore.so ... ok` — el `.so` con flag `-Wl,-z,max-page-size=16384` (delivered upstream por BEE-2221 → v0.8.0) **carga limpiamente**. El bug de alignment 8192 vs 16384 que veíamos en BEE-64 QA está resuelto end-to-end.
+
+**Scope correction descubierto durante QA**: `nm -D --defined-only` sobre `libbeepingcore.so` v0.8.0 revela que el `.so` exporta **solo la C API pura** de beeping-core (`BEEPING_Create`, `BEEPING_Configure`, `BEEPING_Destroy`, `BEEPING_EncodeDataToAudioBuffer`, `BEEPING_GetEncodedAudioBuffer`, `BEEPING_DecodeAudioBuffer`, `BEEPING_GetDecodedData`, `BEEPING_GetConfidence*`, `BEEPING_SetAudioSignature`, etc.) y **NO exporta símbolos `Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_*`**. El `.so` legacy 2020 los tenía baked in (build híbrido C++ + JNI wrappers en el mismo `.so`); v0.8.0 publica únicamente la C API portable pura (apropriado para el resto del ecosistema: iOS Obj-C wrapper, futuro Dart FFI, RN JSI, Web WASM). Implicación: aunque `System.loadLibrary("beepingcore")` funciona, la primera llamada a cualquier `external fun` (`init`, `start`, `configure`, `startBeepingListen`, `getDecodedString`) lanzaría `UnsatisfiedLinkError`. Ni encode ni decode funcionan end-to-end con el binding actual de Kotlin → no hay forma de demostrar que "el SDK funciona" sin trabajo adicional.
+
+**Decisión** (consensuada con founder durante QA round 2): BEE-65 se cierra con scope corregido = "download + verify + package + load del `.so`" (lo entregado). El gap se cierra con un task nuevo BEE-68 = "JNI shim layer + wire encode + verify decode end-to-end" (5 SP), siguiendo el patrón canónico de SDK wrappers nativos (iOS Obj-C wrapper sobre C API → Swift). beeping-core queda portable puro; cada platform binding maneja su propio shim a JVM/Swift/Dart/JS.
+
+**Net delta global**: +8 SP totales en Phase 8 (+3 BEE-67 + 5 BEE-68); fin date desliza +2 días hábiles. BEE-65 cerró 3 días antes de su slot planificado (`Fin est.` 2026-05-14, cerrada 2026-05-11) — adelanto absorbido por el scope addition de BEE-68.
+
+**Nueva fecha fin estimada**: 2026-05-20 (mié).
+
+**Nuevo estado global**: ⚠️ **Riesgo medio** (de-escalado desde 🔴 alto). R2 cerrado upstream.
+
+#### Cambios de estado
+
+- BEE-65: `🚧 In Progress` → `✅ Done` (5 SP, scope narrowed con justificación documentada).
+- R2 (16 KB page size support): 🔴 Alto → 🟢 **Resuelto**. `beeping-core v0.8.0` publica los 3 ABIs Android (arm64-v8a, armeabi-v7a, x86_64) con `-Wl,-z,max-page-size=16384` linker flag. Verificado durante QA BEE-65 (API 37 emulator, ZeroLoadError). Upstream BEE-2221 cerrada.
+
+#### Scope changes
+
+- **BEE-67 añadida** (3 SP, feat/sample): sample pivot listener-only — quitar Send button + EnvSelector + cloud config del sample app + auto-start listener + branding rojo Beeping. Beeps los emite script Mac-side `scripts/send-beep`. Detalle ya anunciado en entrada [2026-05-07]. Total Phase 8: 102 → 105 SP.
+- **BEE-68 añadida** (5 SP, feat/native): JNI shim layer en `AndroidBeepingCore/src/main/cpp/` que mapea `Java_*` → `BEEPING_*` (init→Create, configure→Configure, start→AudioRecord loop + DecodeAudioBuffer + GetConfidence + invoke BeepingCallback, getDecodedString→GetDecodedData, encode NEW→EncodeDataToAudioBuffer + GetEncodedAudioBuffer, etc.). NDK r27 + CMake (`externalNativeBuild`) ya wired por BEE-54 — añadir CMakeLists.txt es incremental. Patrón equivalente al Obj-C wrapper iOS. Sin este task, ni Send ni Listen funcionan end-to-end. Total Phase 8: 105 → 110 SP.
+
+#### Detalle implementation BEE-65
+
+- **Ficheros modificados** (2):
+  - `gradle/libs.versions.toml` — pin `beepingCore = "0.8.0"` con nota sobre flujo de bump y SHA256SUMS attached al mismo tag.
+  - `AndroidBeepingCore/build.gradle.kts` — task `downloadBeepingCore` registrado, `dependsOn(preBuild)`, helper `sha256()`, `inputs.property(version, abis)` + `outputs.dir(...)` para Gradle cache UP-TO-DATE, `android.sourceSets["main"].jniLibs.srcDirs(...)` apuntando a `build/intermediates/beeping-core/`.
+- **Ficheros eliminados** (3 vía `git rm`):
+  - `AndroidBeepingCore/src/main/jniLibs/arm64-v8a/libbeepingcore.so` (250 KB legacy 2020 Jul)
+  - `AndroidBeepingCore/src/main/jniLibs/armeabi-v7a/libbeepingcore.so` (170 KB)
+  - `AndroidBeepingCore/src/main/jniLibs/x86_64/libbeepingcore.so` (282 KB)
+- **Ficheros nuevos** (1 doc + entries):
+  - `docs/beeping-core-consumption.md` — TL;DR, cómo funciona, bumping flow, env requirements (tar bsdtar 3.5+ o GNU tar 1.31+), por qué cosign verify está deferred + tracking BEE-2225 upstream + pending-011 local, sizes ~100× growth (arm64 23 MB vs 250 KB legacy — heads-up para BEE-66), troubleshooting (tar zstd, SHA256 mismatch, alignment, offline cache).
+  - `docs/PENDING.md` ⏳ pending-011 — añadir cosign `verify-blob --bundle` al `downloadBeepingCore` cuando upstream BEE-2225 cierre.
+
+#### Validación BEE-65
+
+- `./gradlew :AndroidBeepingCore:downloadBeepingCore` — descarga + verify SHA256 pasa para los 3 ABIs (extract OK).
+- `./gradlew :app:installDebug` — APK construye con `.so` de v0.8.0 empaquetados.
+- Runtime API 37 (emulator-5554):
+  - `nativeloader: Load /data/app/.../base.apk!/lib/arm64-v8a/libbeepingcore.so using class loader ns clns-9: ok` — load OK, sin `UnsatisfiedLinkError` ni alignment error.
+  - Tap LOCAL + tap Send → `NotImplementedError("BEE-65 — LocalEncoder.encode() requires the encoder native function from beeping-core")` controlado (es el TODO marker preservado intencionalmente). Sin crash nativo.
+  - `nm -D --defined-only` sobre el `.so` extraído — confirma C API completa + ausencia de `Java_*` symbols (lo que motivó BEE-68).
+
+#### QA
+
+- 🧑‍🔬 Human QA Checkpoint: **2 rounds**. Round 1 founder aprobó el `.so` load. Round 2 founder cuestionó si "la SDK funciona realmente" → análisis `nm` reveló gap → scope correction consensuada → BEE-68 añadida + cierre limpio con la verdad documentada.
+
+#### Métricas tras BEE-65 + scope changes
+
+- 17/20 tasks cerradas (BEE-51..65 + BEE-1793 + BEE-1815), **89/110 SP (80.9%)**.
+- 3 tasks pending: BEE-67 (3 SP, sample pivot), BEE-68 (5 SP, JNI shim), BEE-66 (13 SP, Maven Central). Restante: 21 SP.
+
+#### Secuencia revisada
+
+1. ✅ BEE-65 cerrada (esta entrada).
+2. ⏳ BEE-68 (JNI shim + wire encode + decode end-to-end) — **siguiente**, demuestra que la SDK funciona.
+3. ⏳ BEE-67 (sample pivot listener-only + `scripts/send-beep`) — depende de BEE-68 (necesita `LocalEncoder.decoded()` funcional + encode side viviendo en el script Mac).
+4. ⏳ BEE-66 (Maven Central) al final, post-pruebas.
+
+---
 
 ### [2026-05-07] — Closed BEE-64 + R2 risk escalated to Alto + Pivot announced for BEE-67
 

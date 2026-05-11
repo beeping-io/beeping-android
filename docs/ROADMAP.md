@@ -14,15 +14,15 @@
 | **Fecha de inicio del proyecto** | 2026-04-28 (mar) |
 | **Velocidad asumida** | 8 story points / día hábil |
 | **Margen de riesgo** | 20% (planificación defensiva) |
-| **Fecha fin estimada (con margen)** | 2026-05-15 (vie) — adelantada -3 días respecto al snapshot inicial |
-| **Fecha fin sin margen** | 2026-05-13 (mié) |
-| **Story points totales** | 99 SP (Phase 8) |
-| **Esfuerzo bruto** | 12.4 días hábiles |
-| **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
-| **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-05-07 (trigger: `Closed BEE-64`) |
-| **Tasks completadas** | 16 / 18 (BEE-51..64 + BEE-1793 + BEE-1815) · 84 SP cerrados de 102 (82.4%) |
-| **Velocidad observada** | 84 SP en 6 sesiones (16 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
+| **Fecha fin estimada (con margen)** | 2026-05-20 (mié) — desliza +2 días por scope addition BEE-67 + BEE-68 |
+| **Fecha fin sin margen** | 2026-05-18 (lun) |
+| **Story points totales** | 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-68) |
+| **Esfuerzo bruto** | 13.75 días hábiles |
+| **Esfuerzo con margen** | 16.5 → **17 días hábiles** |
+| **Estado global** | ⚠️ **Riesgo medio** — R2 (16 KB pages) resuelto upstream con beeping-core v0.8.0. R1 (releases firmadas) reducido a 🟢 bajo (releases ya firmadas con cosign, verify-blob defer trackeado en pending-011 / BEE-2225). Nuevo work in-scope: BEE-67 + BEE-68. Ver `docs/PRODUCTO.md` §19. |
+| **Última actualización** | 2026-05-11 (trigger: `Closed BEE-65 (narrowed scope) + BEE-67 + BEE-68 added`) |
+| **Tasks completadas** | 17 / 20 (BEE-51..65 + BEE-1793 + BEE-1815) · 89 SP cerrados de 110 (80.9%) |
+| **Velocidad observada** | 89 SP en 7 sesiones (17 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -34,7 +34,7 @@
 
 | # | Milestone | Linear ID | SP | Inicio est. | Fin est. (con margen) | Estado |
 |---|---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | `cf4da38e-c680-40ba-9194-20d0f075ef73` | 99 | 2026-04-28 | 2026-05-18 | ⚠️ Riesgo medio |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | `cf4da38e-c680-40ba-9194-20d0f075ef73` | 110 | 2026-04-28 | 2026-05-20 | ⚠️ Riesgo medio |
 
 > Phases 0–7 ya están cerradas o pertenecen a otros repos del ecosistema.
 > Phases 9–21 son sucesoras (sdk iOS, Flutter, RN, web, server-side, refs apps,
@@ -69,9 +69,11 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-01 (vie) | ✅ Done |
 | 13b | [BEE-1815](https://linear.app/me8/issue/BEE-1815) | 🧪 Split CloudEncoder E2E into DEV/PROD opt-in + auto-load `.env.local` — **scope addition durante execution** | 1 | 74 | 2026-05-04 (lun) | ✅ Done |
 | 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 82 | 2026-05-14 (jue) | ✅ Done |
-| 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) | 5 | 87 | 2026-05-14 (jue) | ⏳ Pending |
-| 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 102 | 2026-05-15 (vie) | ⏳ Pending |
-| | **Totales** | | **102** | **102** | **2026-05-15** | |
+| 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) — **scope narrowed durante QA: download + verify + package + load** | 5 | 87 | 2026-05-11 (lun) | ✅ Done |
+| 15b | BEE-68 *(pending Linear create)* | 🔧 JNI shim layer + wire `LocalEncoder.encode()` + verify decode end-to-end — **scope addition descubierto durante QA BEE-65** | 5 | 92 | 2026-05-15 (vie) | ⏳ Pending |
+| 15c | BEE-67 *(pending Linear create)* | 📱 Sample pivot listener-only + `scripts/send-beep` Mac-side — **scope addition acordado durante QA BEE-64** | 3 | 95 | 2026-05-18 (lun) | ⏳ Pending |
+| 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 108 | 2026-05-20 (mié) | ⏳ Pending |
+| | **Totales** | | **110** | **110** | **2026-05-20** | |
 
 > **Nota** sobre fechas forward: las `Fin est.` de BEE-53, BEE-55..BEE-65 NO se han recalculado individualmente tras el cierre de BEE-52+54 — sólo la fecha fin del milestone (BEE-66) se ajusta con el adelanto de -3 días (combined effect). Recalcular forward dates per-task **no aporta valor** porque ya no se ejecutan estrictamente en orden de identifier (BEE-54 se cerró antes que BEE-53, por ejemplo). El budget de 15 días totales se mantiene como referencia.
 
