@@ -11,23 +11,90 @@
 ## 🎯 Snapshot actual
 
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
-- **Fecha fin estimada (con 20% margen)**: 2026-05-20 (mié)
+- **Fecha fin real**: ✅ **2026-05-12 (mar)** — 8 días antes del estimate
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: ⚠️ **Riesgo medio** — R2 (16 KB pages) resuelto upstream (beeping-core v0.8.0 incluye flag `max-page-size=16384`, BEE-2221 cerrada). Nuevo work added in-scope: BEE-67 (sample pivot listener-only, 3 SP) y BEE-68 (JNI shim layer + wire encode end-to-end, 5 SP) tras descubrir durante QA BEE-65 que v0.8.0 expone solo C API pura (sin símbolos `Java_*`)
-- **Última actualización**: 2026-05-11 (trigger: `Closed BEE-2226 (JNI shim end-to-end)`)
+- **Estado global**: ✅ **CERRADO** — Phase 8 milestone closed. `io.beeping:beeping-android:0.0.0` publicado en Sonatype Central Portal (PUBLISHING → Maven Central live ~15 min post-publish). R1 + R2 + R5 resueltos. BEE-67 (sample pivot listener-only) deferred a Phase 9.
+- **Última actualización**: 2026-05-12 (trigger: `Closed BEE-66 + Phase 8 milestone closure`)
 - **Story points totales**: 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-2226)
-- **Story points cerrados**: 94 SP (BEE-51..65 + BEE-2226 + BEE-1793 + BEE-1815)
-- **Story points remaining**: 16 SP (85.5% completado)
-- **Days esfuerzo (con margen)**: 17 días hábiles
-- **Fecha fin estimada actualizada**: 2026-05-20 (mié) — +2 días respecto al snapshot anterior por scope addition
+- **Story points cerrados**: **108 SP (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815)** — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: 0 SP
+- **Days esfuerzo (real)**: 11 sesiones across 14 días calendario (2026-04-28 → 2026-05-12)
+- **Fecha fin real**: 2026-05-12 — 8 días antes del estimate 2026-05-20
 
-| # | Milestone | SP | Inicio est. | Fin est. | Estado |
+| # | Milestone | SP | Inicio est. | Fin real | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 110 | 2026-04-28 | 2026-05-20 | ⚠️ Riesgo medio |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 110 | 2026-04-28 | 2026-05-12 | ✅ Done |
 
 ---
 
 ## 📜 History
+
+### [2026-05-12] — ✅ Closed BEE-66 + Phase 8 milestone closure (`io.beeping:beeping-android:0.0.0` published to Maven Central)
+
+**Trigger detallado**: BEE-66 cerrada con primer release real publicado en Maven Central via Sonatype Central Portal. Entregado en esta sesión:
+
+**Software-side infrastructure** (committed previously en `1bc2dd9`):
+- Plugin `com.vanniktech.maven.publish` 0.30.0 + Dokka 1.9.20 configurados.
+- `mavenPublishing { ... }` block con coordinates `io.beeping:beeping-android:0.0.0`, POM completa, `publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)`, `signAllPublications()` condicional.
+- `.github/workflows/release.yml` con validación de secrets + `publishAndReleaseToMavenCentral` triggered por tag `v*.*.*`.
+- `.github/workflows/ci.yml` con `maven-publish-smoke` job que valida POM en cada PR.
+- `docs/maven-central-publishing.md` con onboarding completo.
+
+**OSSRH onboarding** (founder-side, completado durante esta sesión):
+- Cuenta Sonatype Central Portal creada (SSO Google con `alfred@beeping.io`).
+- Namespace `io.beeping` verified (pre-existing from SSO, ownership confirmada).
+- GPG key 4096-bit RSA v4 generada (key id `31D455DD29962492`), publicada en `keys.openpgp.org` + verified email binding.
+- User Token Sonatype regenerado.
+- 5 GitHub Secrets configurados (`MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_KEY`, `SIGNING_KEY_PASSWORD`; `SIGNING_KEY_ID` añadido pero no usado por el workflow).
+
+**Iteración del workflow (6 runs)**: 
+1. ❌ Wrapper jar SHA validation failed → regenerar wrapper jar a canonical 8.10.2 (commit `d0d3cd2`).
+2-5. ❌ Múltiples fallos en signing: tested base64 (line-wrap incompat con Java's Base64.getDecoder), single-line base64 + 8-char keyId (BouncyCastle busca subkey de firma inexistente — master tiene `[SC]`), single-line `\n`-escaped sin keyId. Fix definitivo: `SIGNING_KEY` como **ASCII-armored multi-line directo** (sin base64, sin escaping) + sin `SIGNING_KEY_ID` env var (forzando path 2-arg de `useInMemoryPgpKeys(key, password)` que auto-detecta master).
+6. ✅ Run 6 verde end-to-end → `publishAndReleaseToMavenCentral` exitoso → deployment `io.beeping-e36103fb-efd9-4ea0-8f6d-4a7fe4e28e6d` en estado **PUBLISHING** con 2/2 components validated + todos los .asc/MD5/SHA1/SHA256/SHA512 generados.
+
+**Fix commits adicionales** durante la iteración:
+- `d0d3cd2` — `fix(build): regenerate gradle-wrapper.jar to canonical 8.10.2`
+- `c4577a6` — `chore(build): sync gradle-wrapper.properties + scripts to 8.10.2 regen`
+- `c9bf4e0` — `fix(publish): stop passing SIGNING_KEY_ID to in-memory signing`
+
+**Net delta**: BEE-66 cerrada same-day. 0 días slide. Phase 8 cierra **8 días antes** del fin date estimate (2026-05-20 → 2026-05-12). BEE-67 (sample pivot, 3 SP) deferred a Phase 9.
+
+**Nueva fecha fin real**: 2026-05-12 (mar).
+
+**Nuevo estado global**: ✅ **CERRADO**.
+
+#### Cambios de estado
+
+- BEE-66: `🚧 In Progress` → `✅ Done` (13 SP).
+- Phase 8 milestone: `⚠️ Riesgo medio` → `✅ Done`.
+- R1 (releases firmadas via cosign + Maven Central GPG): ⚠️ medio → ✅ resuelto (release v0.0.0 firmada y publicada).
+- R3 (Sonatype OSSRH staging delay): 🟡 bajo-medio → ✅ resuelto (namespace pre-verified vía SSO, primera release publicada same-day).
+
+#### Scope cambios
+
+- **BEE-67 deferred a Phase 9** (3 SP movidos out). Razón: founder no tiene device físico → sample pivot listener-only no demostrable in-session sin device, deferred hasta tener device físico para QA acústico end-to-end. Lo entregado en BEE-2226 (`SdkPlumbingTest` instrumented + emulator QA Send/Listen sin crash) cubre la validación software-side del SDK.
+
+#### Métricas finales Phase 8
+
+- **19/19 tasks closed** (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815) — todas las del scope sin BEE-67 deferred.
+- **108 SP cerrados** de 110 totales (BEE-67 = 3 SP deferred a Phase 9).
+- 11 sesiones across 14 días calendario (2026-04-28 → 2026-05-12).
+- **8 días antes del fin date estimate** (2026-05-20).
+- Zero rollbacks, zero hotfixes, zero broken commits en `develop` o `main`.
+
+#### Artifacts publicados
+
+- **Maven Central coordinates**: `io.beeping:beeping-android:0.0.0`
+- **Portal UI**: https://central.sonatype.com/artifact/io.beeping/beeping-android (~15 min post-publish)
+- **Maven Central direct**: https://repo1.maven.org/maven2/io/beeping/beeping-android/0.0.0/ (~2h post-publish)
+- **GitHub tag**: `v0.0.0` en `milestone/phase-8`
+
+#### Siguiente
+
+- Phase 8 cierre formal: PR `milestone/phase-8` → `develop` listing las 19 tasks closed + `Closes BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815`.
+- Phase 9 next (sin date asignada): BEE-67 sample pivot + más SDK milestones del ecosistema.
+
+---
 
 ### [2026-05-11] — Closed BEE-2226 (JNI shim layer + encode/decode end-to-end working)
 
