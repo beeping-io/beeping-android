@@ -55,15 +55,16 @@ jobs:
 
       - name: 🔑 Validate secrets
         # Fail-fast if any required secret is missing — better than a silent
-        # half-publish that uploads unsigned artifacts.
+        # half-publish that uploads unsigned artifacts. SIGNING_KEY_ID is
+        # documented as required for keys with signing subkeys; our master
+        # key signs directly so we treat it as optional.
         env:
           MCU: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MCP: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           SK: ${{ secrets.SIGNING_KEY }}
-          SKID: ${{ secrets.SIGNING_KEY_ID }}
           SKP: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
-          for var in MCU MCP SK SKID SKP; do
+          for var in MCU MCP SK SKP; do
             if [ -z "${!var}" ]; then
               echo "❌ Missing required secret: $var"
               echo "See docs/maven-central-publishing.md for the onboarding flow."
@@ -77,8 +78,12 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          # Note: SIGNING_KEY_ID intentionally NOT mapped. Our master key has the
+          # [SC] (sign + certify) flag and no separate signing subkey, so the
+          # in-memory signing plugin should default to the master. Passing the
+          # 8-char keyId made BouncyCastle look for a subkey with that ID and
+          # silently fall through to "no configured signatory".
         run: |
           ./gradlew :AndroidBeepingCore:publishToMavenLocal --no-configuration-cache
           echo "── Local artifacts ──"
@@ -90,8 +95,12 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          # Note: SIGNING_KEY_ID intentionally NOT mapped. Our master key has the
+          # [SC] (sign + certify) flag and no separate signing subkey, so the
+          # in-memory signing plugin should default to the master. Passing the
+          # 8-char keyId made BouncyCastle look for a subkey with that ID and
+          # silently fall through to "no configured signatory".
         run: |
           ./gradlew :AndroidBeepingCore:publishAndReleaseToMavenCentral --no-configuration-cache
 
