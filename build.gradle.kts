@@ -1,0 +1,10 @@
+// Top-level build file — declare plugins for the whole tree without applying them.
+// Each module's build.gradle.kts opts in via `alias(libs.plugins.<id>)`.
+
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.openapi.generator) apply false
+}

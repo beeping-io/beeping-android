@@ -1,7 +1,6 @@
 # EditorConfig — https://editorconfig.org
 #
-# Universal style baseline. Real ktlint + detekt + Android Lint config
-# lands in BEE-63 when the Kotlin migration is far enough along.
+# Universal style baseline + ktlint rule overrides for the SDK (BEE-63).
 
 root = true
 
@@ -17,6 +16,18 @@ indent_size = 4
 max_line_length = 120
 ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# ── ktlint rule overrides (BEE-63) ────────────────────────────────────────────
+# package-name: the public namespace is `com.beeping.AndroidBeepingCore` (mixed
+#   case) — that's the SDK's published Kotlin/Java package, exposed to every
+#   consumer. Renaming it is a breaking API change for downstream apps and is
+#   out of scope of the lint task.
+# function-naming: BeepingCoreJNI.kt declares JNI external functions whose
+#   names must match the C entry points exported by `libbeepingcore.so`
+#   (e.g. native methods called from generated `Java_…_*` symbols).
+[*.{kt,kts}]
+ktlint_standard_package-name = disabled
+ktlint_standard_function-naming = disabled
 
 [*.{xml,html,svg}]
 indent_size = 4

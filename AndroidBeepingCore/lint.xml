@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Module-level Android Lint config (BEE-63).
+
+  - GradleDependency / AndroidGradlePluginVersion: advisory checks that flag
+    newer dependency versions. Useful as a nudge but NOT a code-quality gate.
+    Periodic dependency maintenance is owned by Dependabot / Renovate (or
+    manually) — failing CI on every upstream release would block unrelated
+    work. Disabled here; we surface the same info in `./gradlew dependencyUpdates`.
+-->
+<lint>
+    <issue id="GradleDependency" severity="ignore"/>
+    <issue id="AndroidGradlePluginVersion" severity="ignore"/>
+</lint>

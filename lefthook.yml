@@ -1,0 +1,48 @@
+# Lefthook — modern Git hooks manager
+# https://github.com/evilmartians/lefthook
+#
+# Hooks are installed automatically by `npm install` via the `prepare` script.
+# To skip hooks (NEVER without explicit authorization): git commit --no-verify
+#
+# This config intentionally only enables the hooks required by BEE-51:
+#   - commit-msg → commitlint (Conventional Commits enforcement)
+#   - pre-push   → protect-base-branches (defense in depth)
+#
+# Pre-commit hooks (gitleaks, markdownlint, yaml-lint, etc.) are deferred to a
+# future task — see docs/PENDING.md.
+
+# Validate every commit message follows Conventional Commits.
+commit-msg:
+  commands:
+    commitlint:
+      tags: convention
+      run: |
+        if command -v commitlint >/dev/null 2>&1; then
+          commitlint --edit {1}
+        elif command -v npx >/dev/null 2>&1 && [ -f commitlint.config.mjs ]; then
+          npx --no-install commitlint --edit {1} 2>/dev/null || \
+          npx commitlint --edit {1}
+        else
+          echo "⚠️  commitlint not installed — skipping commit message lint."
+          echo "   Install: npm install"
+          exit 0
+        fi
+
+# Block direct pushes to base branches (defense in depth — GitHub branch
+# protection is the authoritative enforcement; this catches the mistake earlier
+# locally).
+pre-push:
+  commands:
+    protect-base-branches:
+      tags: safety
+      run: |
+        protected="main develop"
+        current=$(git symbolic-ref --short HEAD 2>/dev/null || echo "DETACHED")
+        for branch in $protected; do
+          if [ "$current" = "$branch" ]; then
+            echo "❌ Direct push to '$branch' is blocked."
+            echo "   Open a pull request from a feature branch instead."
+            echo "   This rule protects against accidental commits to base branches."
+            exit 1
+          fi
+        done

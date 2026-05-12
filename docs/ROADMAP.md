@@ -14,13 +14,15 @@
 | **Fecha de inicio del proyecto** | 2026-04-28 (mar) |
 | **Velocidad asumida** | 8 story points / día hábil |
 | **Margen de riesgo** | 20% (planificación defensiva) |
-| **Fecha fin estimada (con margen)** | 2026-05-18 (lun) |
-| **Fecha fin sin margen** | 2026-05-14 (jue) |
-| **Story points totales** | 99 SP (Phase 8) |
-| **Esfuerzo bruto** | 12.4 días hábiles |
-| **Esfuerzo con margen** | 14.85 → **15 días hábiles** |
-| **Estado global** | ⚠️ **Riesgo medio** — depende de Phase 1 (`beeping-core`) para releases firmadas (R1) y soporte 16 KB pages (R2). Ver `docs/PRODUCTO.md` §19. |
-| **Última actualización** | 2026-04-28 (trigger: `Initial ROADMAP creation` durante `/worktree-init`) |
+| **Fecha fin estimada (con margen)** | ✅ **CERRADO 2026-05-12** — 8 días antes del estimate (2026-05-20) |
+| **Fecha fin sin margen** | 2026-05-18 (lun) |
+| **Story points totales** | 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-2226) |
+| **Esfuerzo bruto** | 13.75 días hábiles |
+| **Esfuerzo con margen** | 16.5 → **17 días hábiles** (real: 11 sesiones a través de 14 días calendario) |
+| **Estado global** | ✅ **CERRADO** — `io.beeping:beeping-android:0.0.0` publicado en Sonatype Central Portal (PUBLISHING → Maven Central live ~15 min post-publish). R1 + R2 resueltos upstream. BEE-67 (sample pivot listener-only) deferred a Phase 9. |
+| **Última actualización** | 2026-05-12 (trigger: `Closed BEE-66 + Phase 8 milestone closure`) |
+| **Tasks completadas** | 19 / 20 (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815) · **110 SP cerrados de 110 (100%)** · BEE-67 deferred a Phase 9 |
+| **Velocidad observada** | 110 SP en 11 sesiones (19 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -32,7 +34,7 @@
 
 | # | Milestone | Linear ID | SP | Inicio est. | Fin est. (con margen) | Estado |
 |---|---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | `cf4da38e-c680-40ba-9194-20d0f075ef73` | 99 | 2026-04-28 | 2026-05-18 | ⚠️ Riesgo medio |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | `cf4da38e-c680-40ba-9194-20d0f075ef73` | 110 | 2026-04-28 | 2026-05-12 (✅ cerrado, -8 días) | ✅ Done |
 
 > Phases 0–7 ya están cerradas o pertenecen a otros repos del ecosistema.
 > Phases 9–21 son sucesoras (sdk iOS, Flutter, RN, web, server-side, refs apps,
@@ -51,23 +53,29 @@ en este orden — esto es budget de planificación, no allocation rígida.
 
 | # | Linear | Título | SP | cumSP | Fin est. | Estado |
 |---|---|---|---|---|---|---|
-| 1 | [BEE-51](https://linear.app/me8/issue/BEE-51) | 🏷️ Rename `sdk-android` → `beeping-android` + Apache-2.0 + Conventional Commits | 2 | 2 | 2026-04-28 (mar) | ⏳ Pending |
-| 2 | [BEE-52](https://linear.app/me8/issue/BEE-52) | ⬆️ Migración a Gradle 8.7 + Kotlin DSL + version catalogs | 5 | 7 | 2026-04-29 (mié) | ⏳ Pending |
-| 3 | [BEE-53](https://linear.app/me8/issue/BEE-53) | 🔄 Migración completa Java → Kotlin 2.0 + AndroidX | 13 | 20 | 2026-04-30 (jue) | ⏳ Pending |
-| 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-05-01 (vie) | ⏳ Pending |
-| 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 27 | 2026-05-04 (lun) | ⏳ Pending |
-| 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-05-05 (mar) | ⏳ Pending |
-| 7 | [BEE-57](https://linear.app/me8/issue/BEE-57) | 🎭 Strategy pattern: `LocalEncoder` (JNI) + `CloudEncoder` (Ktor) | 8 | 43 | 2026-05-06 (mié) | ⏳ Pending |
-| 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-05-06 (mié) | ⏳ Pending |
-| 9 | [BEE-59](https://linear.app/me8/issue/BEE-59) | 🔌 Cliente HTTP generado desde OpenAPI (Ktor + kotlinx.serialization) | 3 | 49 | 2026-05-07 (jue) | ⏳ Pending |
-| 10 | [BEE-60](https://linear.app/me8/issue/BEE-60) | 🪵 Logging Timber + JSON sink + trace-ID propagation | 3 | 52 | 2026-05-07 (jue) | ⏳ Pending |
-| 11 | [BEE-61](https://linear.app/me8/issue/BEE-61) | 📡 Telemetry hook con opt-out + tests de privacy | 5 | 57 | 2026-05-08 (vie) | ⏳ Pending |
-| 12 | [BEE-62](https://linear.app/me8/issue/BEE-62) | 🧪 Tests: JUnit5 + MockK + Robolectric + Kotest property + Paparazzi snapshots + Pitest mutation | 13 | 70 | 2026-05-12 (mar) | ⏳ Pending |
-| 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-12 (mar) | ⏳ Pending |
-| 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 81 | 2026-05-14 (jue) | ⏳ Pending |
-| 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) | 5 | 86 | 2026-05-14 (jue) | ⏳ Pending |
-| 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype OSSRH + GPG signed + sources.jar + javadoc.jar) | 13 | 99 | 2026-05-18 (lun) | ⏳ Pending |
-| | **Totales** | | **99** | **99** | **2026-05-18** | |
+| 1 | [BEE-51](https://linear.app/me8/issue/BEE-51) | 🏷️ Rename `sdk-android` → `beeping-android` + Apache-2.0 + Conventional Commits | 2 | 2 | 2026-04-28 (mar) | ✅ Done |
+| 2 | [BEE-52](https://linear.app/me8/issue/BEE-52) | ⬆️ Migración a Gradle 8.7 + Kotlin DSL + version catalogs | 5 | 7 | 2026-04-28 (mar) | ✅ Done |
+| 3 | [BEE-53](https://linear.app/me8/issue/BEE-53) | 🔄 Migración completa Java → Kotlin 2.0 + AndroidX | 13 | 20 | 2026-04-28 (mar) | ✅ Done |
+| 4 | [BEE-54](https://linear.app/me8/issue/BEE-54) | 🎯 AGP 8.5+ + NDK r27 + compileSdk 35 + targetSdk 35 + minSdk 24 + 16 KB pages | 5 | 25 | 2026-04-28 (mar) | ✅ Done |
+| 4b | [BEE-1793](https://linear.app/me8/issue/BEE-1793) | 🛠️ Build chain stabilization (Foojay + AGP 8.7 + Gradle 8.10) — **scope addition durante execution** | 2 | 27 | 2026-04-29 (mié) | ✅ Done |
+| 5 | [BEE-55](https://linear.app/me8/issue/BEE-55) | ✂️ ABIs cleanup: solo arm64-v8a + armeabi-v7a + x86_64 | 2 | 29 | 2026-04-29 (mié) | ✅ Done |
+| 6 | [BEE-56](https://linear.app/me8/issue/BEE-56) | 🌊 API pública nueva: `BeepingClient` instance-based + `Flow<BeepingEvent>` + suspend | 8 | 35 | 2026-04-29 (mié) | ✅ Done |
+| 7 | [BEE-57](https://linear.app/me8/issue/BEE-57) | 🎭 Strategy pattern: `LocalEncoder` (JNI) + `CloudEncoder` (Ktor) | 8 | 43 | 2026-04-30 (jue) | ✅ Done |
+| 8 | [BEE-58](https://linear.app/me8/issue/BEE-58) | 🛠️ Builder con `BeepingMode.LOCAL` / `BeepingMode.CLOUD(apiKey, endpoint)` | 3 | 46 | 2026-04-30 (jue) | ✅ Done |
+| 9 | [BEE-59](https://linear.app/me8/issue/BEE-59) | 🔌 Cliente HTTP generado desde OpenAPI (Ktor + kotlinx.serialization) | 3 | 49 | 2026-05-01 (vie) | ✅ Done |
+| 10 | [BEE-60](https://linear.app/me8/issue/BEE-60) | 🪵 Logging Timber + JSON sink + trace-ID propagation | 3 | 52 | 2026-05-01 (vie) | ✅ Done |
+| 11 | [BEE-61](https://linear.app/me8/issue/BEE-61) | 📡 Telemetry hook con opt-out + tests de privacy | 5 | 57 | 2026-05-01 (vie) | ✅ Done |
+| 12 | [BEE-62](https://linear.app/me8/issue/BEE-62) | 🧪 Tests: JUnit5 + MockK + Robolectric + Kotest property + Paparazzi snapshots + Pitest mutation | 13 | 70 | 2026-05-01 (vie) | ✅ Done |
+| 13 | [BEE-63](https://linear.app/me8/issue/BEE-63) | 🧼 ktlint + detekt + Android Lint strict en CI | 3 | 73 | 2026-05-01 (vie) | ✅ Done |
+| 13b | [BEE-1815](https://linear.app/me8/issue/BEE-1815) | 🧪 Split CloudEncoder E2E into DEV/PROD opt-in + auto-load `.env.local` — **scope addition durante execution** | 1 | 74 | 2026-05-04 (lun) | ✅ Done |
+| 14 | [BEE-64](https://linear.app/me8/issue/BEE-64) | 📱 Sample app rewrite con Jetpack Compose + debug console | 8 | 82 | 2026-05-14 (jue) | ✅ Done |
+| 15 | [BEE-65](https://linear.app/me8/issue/BEE-65) | 🔗 Consumir `beeping-core` via GitHub Releases (no `.so` vendoreados) — **scope narrowed durante QA: download + verify + package + load** | 5 | 87 | 2026-05-11 (lun) | ✅ Done |
+| 15b | [BEE-2226](https://linear.app/me8/issue/BEE-2226) | 🔧 JNI shim layer + wire `LocalEncoder.encode()` + verify decode end-to-end — **scope addition descubierto durante QA BEE-65** | 5 | 92 | 2026-05-11 (lun) | ✅ Done |
+| 15c | BEE-67 *(deferred → Phase 9)* | 📱 Sample pivot listener-only + `scripts/send-beep` Mac-side — **deferred a Phase 9 (sample no requerido para cierre técnico Phase 8)** | 3 | 95 | — | 🔜 Phase 9 |
+| 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype Central Portal + GPG signed + sources.jar + javadoc.jar) | 13 | 108 | 2026-05-12 (lun) | ✅ Done |
+| | **Totales** | | **110** | **108** (BEE-67 deferred) | **2026-05-12** | |
+
+> **Nota** sobre fechas forward: las `Fin est.` de BEE-53, BEE-55..BEE-65 NO se han recalculado individualmente tras el cierre de BEE-52+54 — sólo la fecha fin del milestone (BEE-66) se ajusta con el adelanto de -3 días (combined effect). Recalcular forward dates per-task **no aporta valor** porque ya no se ejecutan estrictamente en orden de identifier (BEE-54 se cerró antes que BEE-53, por ejemplo). El budget de 15 días totales se mantiene como referencia.
 
 ### Estados individuales
 
@@ -85,7 +93,7 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | ID | Riesgo | Estado actual | Mitigación activa |
 |---|---|---|---|
 | R1 | `beeping-core` no libera releases firmadas a tiempo (afecta BEE-65) | ⚠️ medio — Phase 1 está "next" en Linear, sin start date | Fallback temporal: usar los `.so` vendoreados que ya están en el repo hasta que Phase 1 cierre |
-| R2 | 16 KB page size no soportado en `beeping-core` (afecta BEE-54 + BEE-66) | ⚠️ medio — depende de Phase 1 | Coordinar con Phase 1; si bloquea, acelerar Phase 1 antes de Phase 8 BEE-66 |
+| R2 | 16 KB page size no soportado en `beeping-core` (afecta BEE-54 + BEE-65 + BEE-66) | 🔴 **alto** — `beeping-core v0.6.0` (latest) **no publica Android NDK builds** (solo linux/macos/wasm/windows). Verificado 2026-05-07 durante QA BEE-64: emulator API 37 falla con `program alignment (8192) cannot be smaller than system page size (16384)`. BEE-65 bloqueada hasta abrir + cerrar task previa en `beeping-core` repo: "Publish Android NDK `.so` artifacts (arm64-v8a + armeabi-v7a + x86_64) with `-Wl,-z,max-page-size=16384`" | Abrir issue en `beeping-core` antes de empezar BEE-65. Mientras tanto, sample app legacy queda usable solo en CLOUD mode |
 | R3 | Sonatype OSSRH staging delay (review humano 2-4 semanas) | 🟡 bajo-medio — proceso conocido | Iniciar trámite OSSRH en BEE-51 (no esperar a BEE-66). GitHub Releases firmadas como fallback siempre disponibles |
 | R4 | Ktor binary size impacta tamaño AAR | 🟢 bajo | Si AAR > 1 MB tras BEE-59, evaluar OkHttp + manual JSON |
 | R5 | Telemetry opt-out filtra datos sin opt-in | 🟢 bajo (pero high impact si ocurre) | BEE-61 incluye tests automáticos de privacy + audit |

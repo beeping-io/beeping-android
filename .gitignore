@@ -7,6 +7,9 @@
 # ── VS Code ──────────────────────────────────────────────────────────────
 .vscode/
 
+# ── Claude Code (per-session state, machine-specific) ────────────────────
+.claude/
+
 # ── Gradle ───────────────────────────────────────────────────────────────
 .gradle/
 build/
@@ -65,6 +68,10 @@ coverage/
 *.exec
 jacoco.xml
 jacoco/
+
+# ── Node / npm (dev tooling only — SDK is Kotlin/Gradle) ─────────────────
+node_modules/
+npm-debug.log*
 
 # ── Generated ────────────────────────────────────────────────────────────
 generated/

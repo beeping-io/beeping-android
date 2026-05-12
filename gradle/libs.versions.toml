@@ -1,0 +1,135 @@
+# Version catalog — single source of truth for plugins, libs, and bundles.
+# https://docs.gradle.org/current/userguide/platforms.html
+
+[versions]
+# Android Gradle Plugin + NDK
+agp = "8.7.3"
+ndk = "27.0.12077973"
+
+# Android SDK levels (Android 7.0+ → Android 15)
+compileSdk = "35"
+targetSdk = "35"
+minSdk = "24"
+
+# Java toolchain — Gradle 8.7 requires JDK 17+
+javaTarget = "17"
+
+# Kotlin — applied to the Android modules in BEE-53 (Java→Kotlin migration)
+kotlin = "2.0.21"
+kotlinBom = "2.0.21"
+
+# Kotlin coroutines (replaces legacy Timer/TimerTask polling loops)
+coroutines = "1.9.0"
+
+# Ktor — HTTP client for CloudEncoder (BEE-57)
+ktor = "3.0.3"
+
+# Kotlinx Serialization — JSON for Ktor request/response (BEE-57)
+kotlinxSerializationJson = "1.7.3"
+
+# OpenAPI Generator — generates the Ktor client from beepbox's openapi.yaml (BEE-59)
+openApiGenerator = "7.10.0"
+
+# AndroidX libraries (replaces deprecated com.android.support)
+androidxAppcompat = "1.7.0"
+androidxCore = "1.13.1"
+
+# Logging — Timber JSON sink + trace-ID (BEE-60)
+timber = "5.0.1"
+
+# Test libraries
+junit = "4.13.2"
+junitJupiter = "5.11.3"
+junitPlatform = "1.11.3"
+androidJunit5 = "1.12.0.0"
+robolectric = "4.14.1"
+kotest = "5.9.1"
+turbine = "1.1.0"
+mockk = "1.13.13"
+
+# Coverage + mutation testing
+kover = "0.9.0"
+pitest = "1.16.1"
+pitestPlugin = "1.15.0"
+
+# Static analysis (BEE-63)
+ktlintPlugin = "12.1.2"
+detekt = "1.23.7"
+
+# Jetpack Compose (BEE-64 sample app)
+composeBom = "2024.12.01"
+androidxActivityCompose = "1.9.3"
+androidxLifecycle = "2.8.7"
+
+# Instrumented test (BEE-2226 round-trip on emulator)
+androidxTestRunner = "1.6.2"
+androidxTestJunit = "1.2.1"
+
+# Maven Central publishing (BEE-66)
+# vanniktech.mavenPublish: end-to-end maven-publish + signing + sources/javadoc.jar + Central Portal upload
+# dokka: Kotlin documentation generator → javadoc.jar
+vanniktechMavenPublish = "0.30.0"
+dokka = "1.9.20"
+
+# beeping-core consumed from GitHub Releases (BEE-65). Bumping requires updating
+# SHA256SUMS check the next time `:AndroidBeepingCore:downloadBeepingCore` runs —
+# the SHA256SUMS.txt is fetched from the same release tag, so no extra config.
+beepingCore = "0.8.0"
+
+[libraries]
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlinBom" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppcompat" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidxCore" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+junit = { module = "junit:junit", version.ref = "junit" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitJupiter" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junitJupiter" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+# Jetpack Compose (BEE-64) — versions resolved by the BOM
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
+
+# Instrumented (androidTest) — BEE-2226 round-trip
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+
+[bundles]
+androidx-base = ["androidx-appcompat", "androidx-core"]
+ktor-client = ["ktor-client-core", "ktor-client-android", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json", "kotlinx-serialization-json"]
+compose-ui-bundle = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview", "compose-material3", "compose-material-icons-extended"]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openApiGenerator" }
+android-junit5 = { id = "de.mannodermaus.android-junit5", version.ref = "androidJunit5" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+pitest = { id = "info.solidsoft.pitest", version.ref = "pitestPlugin" }
+vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktechMavenPublish" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

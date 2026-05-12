@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Simple cross-platform build script for the Beeping Android SDK.
+# Convenience build script for the Beeping Android SDK.
+# Wraps the Gradle wrapper with sensible defaults and a JDK version check.
 
 detect_os() {
   local uname_out
@@ -37,7 +38,7 @@ check_java() {
   local java_bin
   java_bin="$(java_command)"
   if [[ -z "${java_bin}" ]]; then
-    echo "Error: Java not found. Please install JDK 8–11 (JDK 11 recommended)."
+    echo "Error: Java not found. Please install JDK 17+ (Gradle 8.7 requirement)."
     exit 1
   fi
 
@@ -45,7 +46,7 @@ check_java() {
   version_output="$("${java_bin}" -version 2>&1)"
   version_line="$(echo "${version_output}" | head -n1)"
 
-  # Extract major version: "1.8" -> 8, otherwise take number before first dot or space.
+  # Extract major version. Modern JDKs print like 'openjdk version "17.0.10" ...'
   if [[ "${version_line}" =~ \"1\.8\.[^\"]*\" ]]; then
     version_major=8
   else
@@ -55,19 +56,17 @@ check_java() {
   echo "Using Java: ${java_bin}"
   echo "Java version: ${version_line}"
 
-  case "${version_major}" in
-    8|9|10|11)
-      return 0
-      ;;
-    17|21)
-      echo "Warning: Detected Java ${version_major}. Gradle/AGP in this repo works best with JDK 8–11."
-      echo "Please consider setting JAVA_HOME to a JDK 11 installation (e.g., JAVA_HOME=/path/to/jdk11 ./build.sh)."
-      ;;
-    *)
-      echo "Error: Unsupported Java major version (${version_major}). Please use JDK 8–11 (JDK 11 recommended)."
-      exit 1
-      ;;
-  esac
+  if [[ "${version_major}" -lt 17 ]]; then
+    echo "Error: Java ${version_major} is too old. Gradle 8.7 requires JDK 17+."
+    echo "On macOS:  export JAVA_HOME=\$(/usr/libexec/java_home -v 17)"
+    echo "On Linux:  export JAVA_HOME=/path/to/jdk-17"
+    exit 1
+  fi
+
+  if [[ "${version_major}" -gt 22 ]]; then
+    echo "Warning: Java ${version_major} is newer than Gradle 8.7's tested range (17-22)."
+    echo "         Build may work but is unsupported."
+  fi
 }
 
 run_gradle() {
