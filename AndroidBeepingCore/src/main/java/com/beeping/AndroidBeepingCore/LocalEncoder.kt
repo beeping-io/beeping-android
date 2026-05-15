@@ -46,7 +46,7 @@ internal class LocalEncoder(
             throw BeepingException(BeepingError.NativeLibraryNotLoaded)
         }
 
-        val handle = jni.create(context.filesDir.absolutePath)
+        val handle = jni.create()
         check(handle != 0L) { "BEEPING_Create returned null handle" }
 
         try {
@@ -98,7 +98,7 @@ internal class LocalEncoder(
                 throw BeepingException(BeepingError.NativeLibraryNotLoaded)
             }
 
-            val handle = jni.create(context.filesDir.absolutePath)
+            val handle = jni.create()
             check(handle != 0L) { "BEEPING_Create returned null handle" }
 
             val minBufferBytes =

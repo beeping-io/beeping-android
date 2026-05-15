@@ -23,12 +23,11 @@ import timber.log.Timber
  */
 class BeepingCoreJNI {
     /**
-     * Create a beeping-core handle. [workDir] is an absolute path to a
-     * writeable directory; the shim chdirs there and creates a `logs/`
-     * subdir before invoking `BEEPING_Create`. Workaround for the upstream
-     * spdlog-relative-path crash; typically pass `context.filesDir.absolutePath`.
+     * Create a beeping-core handle. beeping-core ≥ 0.8.1 emits its logger
+     * to `logcat` on Android (BEE-2227), so no filesystem prep is needed
+     * from the caller.
      */
-    external fun create(workDir: String): Long
+    external fun create(): Long
 
     external fun destroy(handle: Long)
 

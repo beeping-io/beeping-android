@@ -8,9 +8,6 @@
 
 #include <jni.h>
 #include <android/log.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <cerrno>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -35,32 +32,8 @@ inline void* asPtr(jlong handle) {
 
 extern "C" {
 
-// BEEPING_Create() internally calls initBeepingLogger() which uses spdlog
-// rotating_file_sink with a *relative* path "logs/beeping.log". On Android the
-// process cwd is "/" (read-only), so the file open fails and spdlog throws an
-// uncaught exception -> SIGABRT. As a workaround we chdir to a writeable
-// directory provided by the caller (typically Context.filesDir) and create
-// the "logs/" subdir before invoking BEEPING_Create. Tracked upstream as a
-// separate task to make initBeepingLogger() Android-aware.
 JNIEXPORT jlong JNICALL
-Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_create(JNIEnv* env, jobject /*thiz*/,
-                                                            jstring workDir) {
-    if (workDir != nullptr) {
-        const char* path = env->GetStringUTFChars(workDir, nullptr);
-        if (path != nullptr) {
-            mkdir(path, 0700);  // idempotent — filesDir already exists
-            std::string logs = std::string(path) + "/logs";
-            if (mkdir(logs.c_str(), 0700) != 0 && errno != EEXIST) {
-                LOGW("mkdir %s failed (errno=%d) — BEEPING_Create may abort",
-                     logs.c_str(), errno);
-            }
-            if (chdir(path) != 0) {
-                LOGE("chdir %s failed (errno=%d) — BEEPING_Create may abort",
-                     path, errno);
-            }
-            env->ReleaseStringUTFChars(workDir, path);
-        }
-    }
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_create(JNIEnv* /*env*/, jobject /*thiz*/) {
     void* h = BEEPING_Create();
     if (h == nullptr) {
         LOGE("BEEPING_Create returned null");

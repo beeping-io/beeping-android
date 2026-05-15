@@ -1,8 +1,6 @@
 package com.beeping.AndroidBeepingCore
 
-import android.content.Context
 import android.util.Log
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -17,7 +15,8 @@ import org.junit.runner.RunWith
  *
  * **What this proves**:
  * - `libbeepingcore.so` + `libbeeping_jni.so` load at runtime.
- * - `BEEPING_Create` + chdir workaround don't SIGABRT.
+ * - `BEEPING_Create` does not SIGABRT under Android's read-only cwd
+ *   (beeping-core ≥ 0.8.1 logs to logcat via android_sink_mt — BEE-2227).
  * - `BEEPING_Configure` accepts mode/sample-rate/buffer-size and returns ≥ 0.
  * - `BEEPING_EncodeDataToAudioBuffer` produces a non-empty audio buffer for
  *   a valid base32 payload — fingerprint of a real chirp.
@@ -44,14 +43,11 @@ import org.junit.runner.RunWith
 class SdkPlumbingTest {
     @Test
     fun encode_then_decode_pipeline_is_alive_and_reaches_completion() {
-        val ctx: Context = ApplicationProvider.getApplicationContext()
-        val filesDir = ctx.filesDir.absolutePath
-
         assertTrue("native libs must load on the emulator", BeepingCoreJNI.isNativeLoaded())
         val jni = BeepingCoreJNI()
 
         // ── ENCODE ──────────────────────────────────────────────────────────
-        val encHandle = jni.create(filesDir)
+        val encHandle = jni.create()
         assertNotEquals("BEEPING_Create returned null for encoder", 0L, encHandle)
         val cfgEnc = jni.configure(encHandle, MODE_INAUDIBLE, SAMPLE_RATE, BUFFER_SIZE)
         assertTrue("encoder configure failed (rc=$cfgEnc)", cfgEnc >= 0)
@@ -106,7 +102,7 @@ class SdkPlumbingTest {
         val padded = FloatArray(rounded)
         System.arraycopy(samples, 0, padded, preSilence, written)
 
-        val decHandle = jni.create(filesDir)
+        val decHandle = jni.create()
         assertNotEquals("BEEPING_Create returned null for decoder", 0L, decHandle)
         val cfgDec = jni.configure(decHandle, MODE_ALL, SAMPLE_RATE, BUFFER_SIZE)
         assertTrue("decoder configure failed (rc=$cfgDec)", cfgDec >= 0)
