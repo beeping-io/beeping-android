@@ -7,6 +7,7 @@
 ![Kotlin target](https://img.shields.io/badge/Kotlin_target-2.0+-7F52FF)
 ![Gradle target](https://img.shields.io/badge/Gradle_target-8.7+-02303A)
 ![Android SDK](https://img.shields.io/badge/Android_SDK-24--35-3DDC84)
+[![Maven Central](https://img.shields.io/maven-central/v/io.beeping/beeping-android.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.beeping/beeping-android)
 
 > 🔊 Kotlin SDK for **data over sound** (audible + ultrasonic) on Android.
 > Decode and emit short payloads via the device speaker/microphone, locally
@@ -34,10 +35,46 @@ implemented** — track Phase 8 progress for availability.
 
 ---
 
+## 📦 Installation
+
+> ⚠️ **Maven Central onboarding pending** (Sonatype Central Portal review, 2-4 weeks
+> typical). Until the first release lands, consume the AAR directly from
+> [GitHub Releases](https://github.com/beeping-io/beeping-android/releases).
+> See [`docs/maven-central-publishing.md`](docs/maven-central-publishing.md).
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+dependencies {
+    implementation("io.beeping:beeping-android:0.0.0")
+}
+```
+
+### Gradle (Groovy)
+
+```groovy
+dependencies {
+    implementation 'io.beeping:beeping-android:0.0.0'
+}
+```
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>io.beeping</groupId>
+    <artifactId>beeping-android</artifactId>
+    <version>0.0.0</version>
+    <type>aar</type>
+</dependency>
+```
+
+---
+
 ## 🎯 Target API (post-Phase 8)
 
 ```kotlin
-// Gradle dependency (target — not yet published)
+// Gradle dependency (target — published as of v0.0.0)
 // implementation("io.beeping:beeping-android:0.0.0")
 
 import io.beeping.android.BeepingClient
@@ -67,6 +104,38 @@ client.play(pcm)
 client.stop()
 ```
 
+### Scheduled transmissions (BEE-2240, beeping-core ≥ 0.8.1)
+
+`BeepingClient` exposes the scheduler from the core C API for the typical
+"emit code X every I seconds across D seconds" use case:
+
+```kotlin
+import com.beeping.AndroidBeepingCore.BeepingPayload
+
+// 1. Preview the schedule (pure utility, no audio rendered).
+val timestamps: List<Double> = client.computeBeepSchedule(
+    duration = 10f,    // seconds, >= 2.3
+    startTime = 0f,
+    interval = 2.3f,
+)
+// → [0.0, 2.3, 4.6, 6.9, 9.2]  (5 beeps)
+
+// 2. Encode + play the whole schedule in one suspend call (LOCAL mode only).
+//    Each beep carries `code + 4-char base-32 timestamp` so receivers can
+//    recover position within the schedule via the scheduler-aware decode helpers.
+client.sendScheduled(
+    payload = BeepingPayload(payload = "abc12"),
+    duration = 10f,
+    startTime = 0f,
+    interval = 2.3f,
+    beepGainDb = 0f,  // [-60, +12] dB; 0 = identity
+    audible = false,  // true → 3.3-10 kHz (QA / demos); false → 17.8-21 kHz (prod)
+)
+```
+
+Cloud mode (`BeepingMode.Cloud`) currently fails with
+`BeepingError.SchedulingNotSupported` — no beepbox endpoint yet.
+
 See [`docs/PRODUCTO.md`](docs/PRODUCTO.md) section 10 for the full flow and
 section 11 for state/error semantics.
 
@@ -89,13 +158,63 @@ section 11 for state/error semantics.
 
 ---
 
-## 🔧 Building (current legacy stack)
+## 💻 Local development setup
 
-> Until BEE-52 modernizes the build, the project requires JDK 11.
+To work on this repo you need:
+
+- **Node 20+** for dev tooling (commitlint, lefthook hooks). Install via `nvm`, `fnm` or `brew install node`.
+- **JDK 17+** for the Android build (Gradle 8.7 requirement).
 
 ```bash
-# macOS
-export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+# install dev tooling + activate git hooks
+npm install
+```
+
+Hooks active after `npm install`:
+
+- 🪝 **`commit-msg`** — every commit message must follow Conventional Commits
+  (validated by [commitlint](https://commitlint.js.org/) with the shared preset
+  [`@beeping.io/commitlint-config`](https://github.com/beeping-io/commitlint-config))
+- 🛡️ **`pre-push`** — direct pushes to `develop` / `main` are blocked
+  (defense in depth — GitHub branch protection is authoritative)
+
+To bypass hooks (never without explicit authorization): `git commit --no-verify`.
+
+### OpenAPI client sync (BEE-59)
+
+The Ktor HTTP client used by `CloudEncoder` is generated from the canonical
+`beepbox-server` spec via [openapi-generator]. The spec is vendored at
+[`api/openapi.yaml`](api/openapi.yaml) and the source of truth lives upstream
+in [`beeping-io/beepbox`](https://github.com/beeping-io/beepbox).
+
+**Re-vendor flow** (when beepbox publishes a spec change):
+
+```bash
+# 1. Copy the latest spec from the sibling repo (or download from GitHub)
+cp ../beepbox/docs/openapi.yaml api/openapi.yaml
+
+# 2. Re-generate the client and verify everything compiles
+./gradlew :AndroidBeepingCore:openApiGenerate
+./gradlew :AndroidBeepingCore:test
+
+# 3. Commit the spec change (generated code lives in build/, gitignored)
+git add api/openapi.yaml && git commit -m "chore(api): bump openapi.yaml to <sha>"
+```
+
+The generated sources land in `AndroidBeepingCore/build/generated/openapi/`
+and are added to the main source set automatically. They live under the
+`com.beeping.AndroidBeepingCore.internal.api` package and are not part of
+the public SDK API surface.
+
+[openapi-generator]: https://github.com/OpenAPITools/openapi-generator
+
+---
+
+## 🔧 Building
+
+```bash
+# macOS — point JAVA_HOME at JDK 17+
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 
 # build the SDK + sample APK and run unit tests
 ./build.sh
