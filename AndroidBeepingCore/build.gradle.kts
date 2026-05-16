@@ -494,7 +494,10 @@ mavenPublishing {
     coordinates(
         groupId = "io.beeping",
         artifactId = "beeping-android",
-        version = "0.0.0", // 0.x ecosystem rule — see ~/.claude/CLAUDE.md §SemVer
+        // Bumped manually per release. Pre-1.0.0 ecosystem rule (see
+        // ~/.claude/CLAUDE.md §SemVer) keeps us in 0.x until the ecosystem
+        // stabilises. Aligns with the v$VERSION tag pushed to trigger release.yml.
+        version = "0.1.0",
     )
 
     pom {

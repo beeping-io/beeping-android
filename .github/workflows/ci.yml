@@ -112,11 +112,19 @@ jobs:
 
       - name: ✅ Verify artifacts + POM mandatory fields
         run: |
-          DIR=~/.m2/repository/io/beeping/beeping-android/0.0.0
-          echo "── Artifacts produced ──"
+          # Version-agnostic: pick whatever directory publishToMavenLocal created.
+          # Keeps the smoke job decoupled from the version bumped in build.gradle.kts.
+          BASE=~/.m2/repository/io/beeping/beeping-android
+          DIR=$(find "$BASE" -maxdepth 1 -mindepth 1 -type d | head -1)
+          if [ -z "$DIR" ]; then
+            echo "❌ No version directory found under $BASE — did publishToMavenLocal run?"
+            exit 1
+          fi
+          VERSION=$(basename "$DIR")
+          echo "── Artifacts produced (v$VERSION) ──"
           ls -la "$DIR"
 
-          for f in beeping-android-0.0.0.aar beeping-android-0.0.0-sources.jar beeping-android-0.0.0-javadoc.jar beeping-android-0.0.0.pom beeping-android-0.0.0.module; do
+          for f in beeping-android-${VERSION}.aar beeping-android-${VERSION}-sources.jar beeping-android-${VERSION}-javadoc.jar beeping-android-${VERSION}.pom beeping-android-${VERSION}.module; do
             if [ ! -f "$DIR/$f" ]; then
               echo "❌ Missing artifact: $f"
               exit 1
@@ -125,7 +133,7 @@ jobs:
           done
 
           echo "── POM mandatory fields (Sonatype Central Portal) ──"
-          POM="$DIR/beeping-android-0.0.0.pom"
+          POM="$DIR/beeping-android-${VERSION}.pom"
           for tag in "<name>" "<description>" "<url>" "<licenses>" "<developers>" "<scm>"; do
             if ! grep -q "$tag" "$POM"; then
               echo "❌ POM missing required tag: $tag"
