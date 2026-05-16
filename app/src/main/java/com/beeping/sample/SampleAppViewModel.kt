@@ -62,6 +62,34 @@ class SampleAppViewModel(
         }
     }
 
+    /**
+     * BEE-2240 — encode the current key as a scheduled transmission over
+     * [SCHEDULE_DURATION] s with one beep every [SCHEDULE_INTERVAL] s and play
+     * it back via the configured player. Only Local mode is supported — Cloud
+     * surfaces a `SchedulingNotSupported` error in the status panel.
+     */
+    fun onSendScheduledClick() {
+        val key = _state.value.key.trim()
+        viewModelScope.launch {
+            _state.update { it.copy(busy = true, lastError = null) }
+            val result =
+                client.sendScheduled(
+                    payload = BeepingPayload(payload = key),
+                    duration = SCHEDULE_DURATION,
+                    startTime = 0f,
+                    interval = SCHEDULE_INTERVAL,
+                    // Sample app surfaces the audible band for QA — easier to
+                    // hear the cadence than ultrasonic. Production callers
+                    // typically omit this flag (defaults to inaudible).
+                    audible = true,
+                )
+            result.onFailure { e ->
+                _state.update { it.copy(lastError = formatError(e)) }
+            }
+            _state.update { it.copy(busy = false) }
+        }
+    }
+
     fun onListenToggle(hasMicPermission: Boolean) {
         if (_state.value.listening) {
             stopListening()
@@ -148,6 +176,8 @@ class SampleAppViewModel(
             is BeepingError.NetworkError -> "Network error: ${error.cause.message ?: error.cause::class.simpleName}"
             is BeepingError.DecoderInternal ->
                 "Decoder internal: ${error.cause.message ?: error.cause::class.simpleName}"
+            is BeepingError.SchedulingNotSupported ->
+                "Scheduled send is local-only — switch to LOCAL mode to use it."
         }
 
     /**
@@ -155,6 +185,14 @@ class SampleAppViewModel(
      * for the debug console composable.
      */
     val logs get() = BeepingTimberTree.logs
+
+    private companion object {
+        // BEE-2240: default schedule shown in the sample app's "Send scheduled"
+        // button. 10 s with a 2.3 s gap yields 5 beeps — matches the upstream
+        // BEE-2238 reference example.
+        private const val SCHEDULE_DURATION = 10f
+        private const val SCHEDULE_INTERVAL = 2.3f
+    }
 }
 
 private fun SampleEnv.toMode(): BeepingMode =

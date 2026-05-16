@@ -104,6 +104,38 @@ client.play(pcm)
 client.stop()
 ```
 
+### Scheduled transmissions (BEE-2240, beeping-core ≥ 0.8.1)
+
+`BeepingClient` exposes the scheduler from the core C API for the typical
+"emit code X every I seconds across D seconds" use case:
+
+```kotlin
+import com.beeping.AndroidBeepingCore.BeepingPayload
+
+// 1. Preview the schedule (pure utility, no audio rendered).
+val timestamps: List<Double> = client.computeBeepSchedule(
+    duration = 10f,    // seconds, >= 2.3
+    startTime = 0f,
+    interval = 2.3f,
+)
+// → [0.0, 2.3, 4.6, 6.9, 9.2]  (5 beeps)
+
+// 2. Encode + play the whole schedule in one suspend call (LOCAL mode only).
+//    Each beep carries `code + 4-char base-32 timestamp` so receivers can
+//    recover position within the schedule via the scheduler-aware decode helpers.
+client.sendScheduled(
+    payload = BeepingPayload(payload = "abc12"),
+    duration = 10f,
+    startTime = 0f,
+    interval = 2.3f,
+    beepGainDb = 0f,  // [-60, +12] dB; 0 = identity
+    audible = false,  // true → 3.3-10 kHz (QA / demos); false → 17.8-21 kHz (prod)
+)
+```
+
+Cloud mode (`BeepingMode.Cloud`) currently fails with
+`BeepingError.SchedulingNotSupported` — no beepbox endpoint yet.
+
 See [`docs/PRODUCTO.md`](docs/PRODUCTO.md) section 10 for the full flow and
 section 11 for state/error semantics.
 

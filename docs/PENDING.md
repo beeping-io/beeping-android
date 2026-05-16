@@ -170,15 +170,6 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 - 🚧 **Bloqueado por**: BEE-2225 upstream en `beeping-core`.
 - 🚦 **Estado**: 🆕 Nuevo
 
-### ⏳ pending-012 — Quitar el chdir() workaround del JNI shim cuando beeping-core inicialice spdlog de forma Android-aware
-
-- 📅 **Fecha añadida**: 2026-05-11
-- 🏷️ **Tipo**: infra
-- 🧭 **Trigger**: BEE-2226 implementa el JNI shim y descubre que `BEEPING_Create()` llama a `BEEPING::initBeepingLogger()` que abre un `spdlog::rotating_file_sink` en path **relativo** `logs/beeping.log`. En Android el cwd del proceso es `/` (read-only), spdlog lanza `spdlog_ex: Failed opening file logs/beeping.log` y como es uncaught → SIGABRT. Workaround actual: el shim llama `mkdir($filesDir/logs)` + `chdir($filesDir)` antes de `BEEPING_Create`. Funcionalmente OK pero `chdir` es process-wide y huele a hack — la solución correcta vive upstream.
-- ⚙️ **Acción requerida**: cuando upstream `beeping-core` cambie `initBeepingLogger()` a aceptar un path absoluto del logger (por ej. via `BEEPING_SetLogPath(const char*)` o env var `BEEPING_LOG_PATH`) o decida que en Android el sink debe ser android-log en vez de file, eliminar el bloque `mkdir + chdir` del `Java_..._create` en `beeping_jni.cpp` y pasar el path absoluto via la nueva API. Mantener el parámetro `workDir` por si la transición no es atómica.
-- 🚧 **Bloqueado por**: [BEE-2227](https://linear.app/me8/issue/BEE-2227) upstream en `beeping-core` — "spdlog Android-aware: stop using relative path 'logs/beeping.log' (SIGABRT on Android)".
-- 🚦 **Estado**: 🆕 Nuevo
-
 ### ⏳ pending-013 — Instrumented tests para LocalEncoder + JNI shim (encode/decode round-trip)
 
 - 📅 **Fecha añadida**: 2026-05-11

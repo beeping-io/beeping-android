@@ -23,12 +23,11 @@ import timber.log.Timber
  */
 class BeepingCoreJNI {
     /**
-     * Create a beeping-core handle. [workDir] is an absolute path to a
-     * writeable directory; the shim chdirs there and creates a `logs/`
-     * subdir before invoking `BEEPING_Create`. Workaround for the upstream
-     * spdlog-relative-path crash; typically pass `context.filesDir.absolutePath`.
+     * Create a beeping-core handle. beeping-core ≥ 0.8.1 emits its logger
+     * to `logcat` on Android (BEE-2227), so no filesystem prep is needed
+     * from the caller.
      */
-    external fun create(workDir: String): Long
+    external fun create(): Long
 
     external fun destroy(handle: Long)
 
@@ -83,6 +82,40 @@ class BeepingCoreJNI {
     external fun getDecodedData(handle: Long): String?
 
     external fun getConfidence(handle: Long): Float
+
+    /**
+     * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,
+     * interval)` schedule. Pure utility — does not need a handle.
+     *
+     * Returns `null` on invalid params (e.g. `duration < 2.3`, `interval <= 0`,
+     * or `startTime + 2.3 > duration`).
+     */
+    external fun computeBeepSchedule(
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+    ): DoubleArray?
+
+    /**
+     * BEE-2240: encode [code] repeated as N beeps scheduled across [duration]
+     * seconds. Each beep's payload is `code + 4-char base-32 timestamp` —
+     * decoder side can recover the beep's position via the scheduled-payload
+     * helpers.
+     *
+     * @param type 0 = pure tones, 1 = tones + R2D2 (`melody` not exposed).
+     * @param beepGainDb dB gain (clamped upstream to `[-60, +12]`).
+     * @return a float PCM buffer of `floor(duration * sampleRate)` samples,
+     *   or `null` on invalid params / unconfigured handle.
+     */
+    external fun encodeWithSchedule(
+        handle: Long,
+        code: String,
+        type: Int,
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+        beepGainDb: Float,
+    ): FloatArray?
 
     companion object {
         const val DECODE_NO_DATA: Int = -1

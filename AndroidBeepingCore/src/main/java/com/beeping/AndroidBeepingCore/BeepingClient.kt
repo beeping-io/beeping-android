@@ -153,6 +153,90 @@ class BeepingClient internal constructor(
         }
     }
 
+    /**
+     * BEE-2240: timestamps (seconds, relative to the start of the schedule) of
+     * each beep that fits within `(duration, startTime, interval)`.
+     *
+     * Pure utility — does not allocate audio, does not require a [BeepingMode]
+     * to be `Local`. Useful for UI previews of a scheduled transmission.
+     *
+     * @throws IllegalArgumentException if the upstream parameter validation
+     *   fails (e.g. `duration < 2.3`, `interval <= 0`, `startTime + 2.3 > duration`).
+     */
+    fun computeBeepSchedule(
+        duration: Float,
+        startTime: Float = 0f,
+        interval: Float = DEFAULT_INTERVAL_SECONDS,
+    ): List<Double> {
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            throw BeepingException(BeepingError.NativeLibraryNotLoaded)
+        }
+        val timestamps =
+            BeepingCoreJNI().computeBeepSchedule(duration, startTime, interval)
+                ?: throw IllegalArgumentException(
+                    "Invalid schedule (duration=$duration startTime=$startTime interval=$interval)",
+                )
+        return timestamps.toList()
+    }
+
+    /**
+     * BEE-2240: encode [payload] repeated as N beeps over [duration] seconds
+     * and play the resulting WAV via the configured [WavPlayer].
+     *
+     * Each beep's audio payload is `payload.payload + 4-char base-32 timestamp`,
+     * which lets the receiver recover the beep's position within the schedule
+     * via the scheduler-aware decode helpers.
+     *
+     * Only [BeepingMode.Local] is supported today; in [BeepingMode.Cloud] the
+     * call fails with [BeepingError.SchedulingNotSupported] (no equivalent
+     * beepbox endpoint yet).
+     *
+     * @param beepGainDb dB gain applied to each beep (clamped upstream to
+     *   `[-60, +12]`). Default 0 = identity.
+     * @param audible if `true`, encodes in the audible 3.3-10 kHz band — useful
+     *   for QA / demos. Default `false` is the production-grade inaudible band.
+     */
+    suspend fun sendScheduled(
+        payload: BeepingPayload,
+        duration: Float,
+        startTime: Float = 0f,
+        interval: Float = DEFAULT_INTERVAL_SECONDS,
+        beepGainDb: Float = 0f,
+        audible: Boolean = false,
+    ): Result<Unit> {
+        check(!closed) { "BeepingClient is closed" }
+
+        emitter.emit(
+            TelemetryEvent.EncodeRequested(
+                mode = modeString,
+                keyLength = payload.payload.length,
+                traceId = traceId,
+            ),
+        )
+        val started = System.currentTimeMillis()
+
+        return runCatching {
+            val wav =
+                encoder.encodeScheduled(payload.payload, duration, startTime, interval, beepGainDb, audible)
+            emitter.emit(
+                TelemetryEvent.EncodeSucceeded(
+                    traceId = traceId,
+                    durationMs = System.currentTimeMillis() - started,
+                    byteCount = wav.size,
+                ),
+            )
+            player?.play(wav)
+            Unit
+        }.onFailure { e ->
+            emitter.emit(
+                TelemetryEvent.EncodeFailed(
+                    traceId = traceId,
+                    errorType = e::class.simpleName ?: "Unknown",
+                ),
+            )
+        }
+    }
+
     /** Releases all resources and cancels any active listen session. Idempotent. */
     fun close() {
         if (closed) return
@@ -172,6 +256,11 @@ class BeepingClient internal constructor(
 
     private companion object {
         private const val TRACE_ID_LEN = 8
+
+        // BEE-2238 / BEE-2240: 2.3 s is the minimum gap between beeps imposed
+        // by beeping-core (each beep occupies ~2.3 s of audio); also the natural
+        // default interval.
+        private const val DEFAULT_INTERVAL_SECONDS = 2.3f
     }
 
     /**
