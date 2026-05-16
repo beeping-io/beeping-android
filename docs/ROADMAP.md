@@ -14,15 +14,15 @@
 | **Fecha de inicio del proyecto** | 2026-04-28 (mar) |
 | **Velocidad asumida** | 8 story points / día hábil |
 | **Margen de riesgo** | 20% (planificación defensiva) |
-| **Fecha fin estimada (con margen)** | ✅ **CERRADO 2026-05-12** — 8 días antes del estimate (2026-05-20) |
+| **Fecha fin estimada (con margen)** | ✅ **CERRADO 2026-05-12** — followups extension 2026-05-14..2026-05-16 |
 | **Fecha fin sin margen** | 2026-05-18 (lun) |
-| **Story points totales** | 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-2226) |
+| **Story points totales** | 125 SP (110 originales + 15 followups: 2 BEE-2248 + 3 BEE-2234 + 5 BEE-2235 + 5 BEE-2240) |
 | **Esfuerzo bruto** | 13.75 días hábiles |
-| **Esfuerzo con margen** | 16.5 → **17 días hábiles** (real: 11 sesiones a través de 14 días calendario) |
-| **Estado global** | ✅ **CERRADO** — `io.beeping:beeping-android:0.0.0` publicado en Sonatype Central Portal (PUBLISHING → Maven Central live ~15 min post-publish). R1 + R2 resueltos upstream. BEE-67 (sample pivot listener-only) deferred a Phase 9. |
-| **Última actualización** | 2026-05-12 (trigger: `Closed BEE-66 + Phase 8 milestone closure`) |
-| **Tasks completadas** | 19 / 20 (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815) · **110 SP cerrados de 110 (100%)** · BEE-67 deferred a Phase 9 |
-| **Velocidad observada** | 110 SP en 11 sesiones (19 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
+| **Esfuerzo con margen** | 16.5 → **17 días hábiles** (real: 12 sesiones a través de 18 días calendario) |
+| **Estado global** | ✅ **CERRADO (followups incluidos)** — `io.beeping:beeping-android:0.0.0` publicado en Maven Central + scheduler API exposed via `BeepingClient.sendScheduled` (BEE-2240). 4 followups cerrados tras `release-please` v0.0.0 cuando upstream `beeping-core v0.8.1` publicó BEE-2227 + BEE-2238. R1 + R2 + R3 resueltos. BEE-67 deferred a Phase 9. BEE-2234/2235 partial-closed por founder fiat (scripts + docs + `/test` page deferred). |
+| **Última actualización** | 2026-05-16 (trigger: `Closed Phase 8 followups (BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240)`) |
+| **Tasks completadas** | 23 / 24 (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815 + BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240) · **122 SP cerrados de 125 (98%)** · BEE-67 (3 SP) deferred a Phase 9 |
+| **Velocidad observada** | 122 SP en 12 sesiones (23 closures); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
 
@@ -34,7 +34,7 @@
 
 | # | Milestone | Linear ID | SP | Inicio est. | Fin est. (con margen) | Estado |
 |---|---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | `cf4da38e-c680-40ba-9194-20d0f075ef73` | 110 | 2026-04-28 | 2026-05-12 (✅ cerrado, -8 días) | ✅ Done |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | `cf4da38e-c680-40ba-9194-20d0f075ef73` | 125 | 2026-04-28 | 2026-05-16 (✅ cerrado, followups incluidos) | ✅ Done |
 
 > Phases 0–7 ya están cerradas o pertenecen a otros repos del ecosistema.
 > Phases 9–21 son sucesoras (sdk iOS, Flutter, RN, web, server-side, refs apps,
@@ -73,7 +73,11 @@ en este orden — esto es budget de planificación, no allocation rígida.
 | 15b | [BEE-2226](https://linear.app/me8/issue/BEE-2226) | 🔧 JNI shim layer + wire `LocalEncoder.encode()` + verify decode end-to-end — **scope addition descubierto durante QA BEE-65** | 5 | 92 | 2026-05-11 (lun) | ✅ Done |
 | 15c | BEE-67 *(deferred → Phase 9)* | 📱 Sample pivot listener-only + `scripts/send-beep` Mac-side — **deferred a Phase 9 (sample no requerido para cierre técnico Phase 8)** | 3 | 95 | — | 🔜 Phase 9 |
 | 16 | [BEE-66](https://linear.app/me8/issue/BEE-66) | 📦 Maven Central publishing (Sonatype Central Portal + GPG signed + sources.jar + javadoc.jar) | 13 | 108 | 2026-05-12 (lun) | ✅ Done |
-| | **Totales** | | **110** | **108** (BEE-67 deferred) | **2026-05-12** | |
+| 17 | [BEE-2248](https://linear.app/me8/issue/BEE-2248) | 🤖 Remove JNI mkdir+chdir workaround for beeping-core logs — **followup post-v0.0.0 unblock by `beeping-core` v0.8.1 (BEE-2227)** | 2 | 110 | 2026-05-15 (vie) | ✅ Done |
+| 18 | [BEE-2234](https://linear.app/me8/issue/BEE-2234) | 🧪 QA SDK en dispositivo físico (`scripts/send-beep.sh`) — **partial-closed founder fiat: runtime validated, scripts + docs + matrix deferred** | 3 | 113 | 2026-05-15 (vie) | ✅ Done |
+| 19 | [BEE-2235](https://linear.app/me8/issue/BEE-2235) | 🧪 QA SDK en emulador (`beeping-www /test` page) — **partial-closed founder fiat: runtime validated, `/test` page + docs deferred** | 5 | 118 | 2026-05-15 (vie) | ✅ Done |
+| 20 | [BEE-2240](https://linear.app/me8/issue/BEE-2240) | 🤖 Expose beep scheduler (`computeBeepSchedule` + `sendScheduled`) — **followup post-v0.0.0 unblock by `beeping-core` v0.8.1 (BEE-2238)** | 5 | 123 | 2026-05-16 (sáb) | ✅ Done |
+| | **Totales** | | **125** | **122** (BEE-67 deferred) | **2026-05-16** | |
 
 > **Nota** sobre fechas forward: las `Fin est.` de BEE-53, BEE-55..BEE-65 NO se han recalculado individualmente tras el cierre de BEE-52+54 — sólo la fecha fin del milestone (BEE-66) se ajusta con el adelanto de -3 días (combined effect). Recalcular forward dates per-task **no aporta valor** porque ya no se ejecutan estrictamente en orden de identifier (BEE-54 se cerró antes que BEE-53, por ejemplo). El budget de 15 días totales se mantiene como referencia.
 

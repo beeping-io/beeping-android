@@ -11,23 +11,95 @@
 ## 🎯 Snapshot actual
 
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
-- **Fecha fin real**: ✅ **2026-05-12 (mar)** — 8 días antes del estimate
+- **Fecha fin real**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: ✅ **CERRADO** — Phase 8 milestone closed. `io.beeping:beeping-android:0.0.0` publicado en Sonatype Central Portal (PUBLISHING → Maven Central live ~15 min post-publish). R1 + R2 + R5 resueltos. BEE-67 (sample pivot listener-only) deferred a Phase 9.
-- **Última actualización**: 2026-05-12 (trigger: `Closed BEE-66 + Phase 8 milestone closure`)
-- **Story points totales**: 110 SP (Phase 8 — 99 originales + 2 BEE-1793 + 1 BEE-1815 + 3 BEE-67 + 5 BEE-2226)
-- **Story points cerrados**: **108 SP (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815)** — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Estado global**: ✅ **CERRADO (followups incluidos)** — Phase 8 milestone closed con 4 followups post-v0.0.0. `io.beeping:beeping-android:0.0.0` publicado en Maven Central + scheduler API exposed via BEE-2240. R1 + R2 + R3 resueltos. BEE-67 deferred a Phase 9. BEE-2234/2235 partial-closed founder fiat.
+- **Última actualización**: 2026-05-16 (trigger: `Closed Phase 8 followups (BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240)`)
+- **Story points totales**: 125 SP (110 originales + 15 followups: 2 BEE-2248 + 3 BEE-2234 + 5 BEE-2235 + 5 BEE-2240)
+- **Story points cerrados**: **122 SP (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815 + 4 followups)** — BEE-67 deferred = 3 SP movidos a Phase 9
 - **Story points remaining (esta Phase)**: 0 SP
-- **Days esfuerzo (real)**: 11 sesiones across 14 días calendario (2026-04-28 → 2026-05-12)
-- **Fecha fin real**: 2026-05-12 — 8 días antes del estimate 2026-05-20
+- **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (2026-04-28 → 2026-05-16)
 
 | # | Milestone | SP | Inicio est. | Fin real | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 110 | 2026-04-28 | 2026-05-12 | ✅ Done |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 125 | 2026-04-28 | 2026-05-16 | ✅ Done |
 
 ---
 
 ## 📜 History
+
+### [2026-05-16] — ✅ Closed Phase 8 followups burndown (BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240) — milestone reopen + close
+
+**Trigger detallado**: 4 followup tasks adicionadas y cerradas tras `release-please` v0.0.0 del 2026-05-12, gracias al release upstream `beeping-core v0.8.1` (cuts 2026-05-15) que cerró BEE-2227 + BEE-2228 + BEE-2238 + BEE-2225. La phase quedaba marked CERRADO pero el milestone se reabrió en Linear con 4 tasks dependientes downstream que ahora estaban desbloqueadas.
+
+**Trabajo entregado en esta extensión (2 sesiones across 3 días calendario)**:
+
+**BEE-2248** (commit `ee5e289` — `refactor(jni): remove mkdir+chdir workaround`):
+- Bump `beepingCore` 0.8.0 → 0.8.1 en `gradle/libs.versions.toml` (primer release con BEE-2227 fix → `android_sink_mt` logger via `logcat`)
+- Removed `mkdir($filesDir/logs) + chdir($filesDir)` block (lines 38-63 de `beeping_jni.cpp`) y `jstring workDir` JNI param
+- Dropped `workDir: String` param de `BeepingCoreJNI.create()` + 2 callsites en `LocalEncoder.kt` + 2 en `SdkPlumbingTest.kt`
+- Cleaned `<sys/stat.h>`, `<unistd.h>`, `<cerrno>` includes
+- Removed `pending-012` de `docs/PENDING.md`
+- 6 ficheros, +12 / -53 lines
+- QA: emulator API 35 smoke (founder approved cycle 1)
+
+**BEE-2234 + BEE-2235** (cerradas sin commit nuevo — partial closure founder fiat):
+- Lo entregado: SDK runtime validated en emulator + (founder asserted) device, no SIGABRT, logs visible en `logcat`
+- Lo NO entregado y documentado en comentarios Linear:
+  - `scripts/send-beep.sh` host-side port from iOS BEE-2220
+  - `docs/qa/send-beep.md`
+  - `docs/qa/emulator-mic-forwarding.md`
+  - `/test` page en `beeping-www` repo
+  - 4-combo QA matrix (dev/prod × audible/inaudible) con capture rates ≥7/9
+- Reopen futuro como tasks separadas si se necesitan
+
+**BEE-2240** (commit `ae2f0a8` — `feat(scheduler): expose beep scheduler API`):
+- 2 nuevos JNIEXPORT bridges en `beeping_jni.cpp`: `computeBeepSchedule` (size-query + alloc + fill pattern) + `encodeWithSchedule` (handle-bound, returns float[] de `floor(d × sampleRate)`)
+- 2 nuevos `external fun` en `BeepingCoreJNI.kt`
+- New `encodeScheduled(key, d, s, i, gainDb, audible)` member en `BeepingEncoder` interface
+- `LocalEncoder` impl: routes audible=`true` → `BEEPING_MODE_AUDIBLE` (2, 3.3-10 kHz) for QA, `false` → `BEEPING_MODE_INAUDIBLE` (3, 17.8-21 kHz) production
+- `CloudEncoder` throws `BeepingException(SchedulingNotSupported)` — sin endpoint beepbox aún
+- New `data object SchedulingNotSupported : BeepingError()` + sample app `formatBeepingError` case
+- New public methods en `BeepingClient`: `computeBeepSchedule(d, s, i): List<Double>` + `suspend sendScheduled(payload, d, s, i, gainDb, audible)`
+- New JVM test class `SchedulerTest.kt` con 4 casos (NativeLibraryNotLoaded guard + Cloud reject + key-pattern guard + property-based over 50 iterations)
+- Extended `SdkPlumbingTest` instrumented test: `encodeWithSchedule(10s @ 2.3s)` → buffer 441000 samples exactos
+- Sample app: nuevo botón "Send scheduled (10s @ 2.3s, LOCAL)" con audible=true
+- README: nueva sección "Scheduled transmissions"
+- 13 ficheros, +625 lines
+- QA: 2 ciclos en emulator API 35:
+  - Ciclo 1 (default `audible=false`): data path verified (441000 frames delivered, no SIGABRT) — pero founder no oyó nada porque banda ultrasónica
+  - Ciclo 2 (sample uses `audible=true`): founder confirmó audición "Si perfecto" — 5 beeps espaciados ~2.3s sobre 10s
+
+**Net delta**: +15 SP closed (122 SP total cerrados, 98% del scope final 125 SP); BEE-67 sigue deferred a Phase 9 (sample pivot listener-only).
+
+**Nueva fecha fin real**: 2026-05-16 (sáb) — 4 días después del cierre original 2026-05-12, gated por timing del release upstream `beeping-core v0.8.1`.
+
+**Nuevo estado global**: ✅ **CERRADO (followups incluidos)**.
+
+#### Cambios de estado
+
+- BEE-2248: `Backlog` → `In Progress` → `✅ Done` (2 SP).
+- BEE-2234: `Todo` → `✅ Done` (3 SP) — partial closure documented.
+- BEE-2235: `Todo` → `✅ Done` (5 SP) — partial closure documented.
+- BEE-2240: `Backlog` → `In Progress` → `✅ Done` (5 SP).
+- Phase 8 milestone: `unstarted` (reopened) → `✅ Done` con followups.
+
+#### Scope cambios
+
+- **Phase 8 reopen + scope extension** desde 110 SP → 125 SP (+15 SP). Razón: 4 tasks adicionadas tras `release-please v0.0.0` para integrar capabilities downstream desbloqueadas por upstream `beeping-core` BEE-2227 (logger Android-aware) + BEE-2238 (scheduler API).
+- **BEE-2234/2235 partial-closure**: founder eligió cerrar sin entregar scripts + docs + `/test` page + QA matrix; gap documented en cada Linear comment.
+
+#### Riesgos
+
+- Sin riesgos nuevos. R1 + R2 + R3 siguen resueltos. Pendings restantes (11) no entran al milestone por elección de founder en Paso 9.0 pre-close gate.
+
+#### Siguiente
+
+- PR `milestone/phase-8-followups` → `develop` listando 4 tasks closed + `Closes BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240`.
+- Tras merge a develop: cortar `release-please` v0.0.1 (patch release per SemVer — refactor + feat-minor sin breaking API), publicar a Maven Central.
+- Phase 9 next: BEE-67 sample pivot + iOS Phase 9 milestones del ecosistema.
+
+---
 
 ### [2026-05-12] — ✅ Closed BEE-66 + Phase 8 milestone closure (`io.beeping:beeping-android:0.0.0` published to Maven Central)
 
