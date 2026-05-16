@@ -83,6 +83,40 @@ class BeepingCoreJNI {
 
     external fun getConfidence(handle: Long): Float
 
+    /**
+     * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,
+     * interval)` schedule. Pure utility — does not need a handle.
+     *
+     * Returns `null` on invalid params (e.g. `duration < 2.3`, `interval <= 0`,
+     * or `startTime + 2.3 > duration`).
+     */
+    external fun computeBeepSchedule(
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+    ): DoubleArray?
+
+    /**
+     * BEE-2240: encode [code] repeated as N beeps scheduled across [duration]
+     * seconds. Each beep's payload is `code + 4-char base-32 timestamp` —
+     * decoder side can recover the beep's position via the scheduled-payload
+     * helpers.
+     *
+     * @param type 0 = pure tones, 1 = tones + R2D2 (`melody` not exposed).
+     * @param beepGainDb dB gain (clamped upstream to `[-60, +12]`).
+     * @return a float PCM buffer of `floor(duration * sampleRate)` samples,
+     *   or `null` on invalid params / unconfigured handle.
+     */
+    external fun encodeWithSchedule(
+        handle: Long,
+        code: String,
+        type: Int,
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+        beepGainDb: Float,
+    ): FloatArray?
+
     companion object {
         const val DECODE_NO_DATA: Int = -1
         const val DECODE_START_TOKEN: Int = -2

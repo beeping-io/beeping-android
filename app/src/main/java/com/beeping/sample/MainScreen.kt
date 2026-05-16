@@ -140,6 +140,14 @@ fun MainScreen(viewModel: SampleAppViewModel) {
                 }
 
                 Button(
+                    onClick = { viewModel.onSendScheduledClick() },
+                    enabled = !state.busy && state.key.isNotBlank() && state.env == SampleEnv.LOCAL,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Send scheduled (10s @ 2.3s, LOCAL)")
+                }
+
+                Button(
                     onClick = { toggleListen() },
                     colors =
                         ButtonDefaults.buttonColors(

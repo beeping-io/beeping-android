@@ -46,6 +46,13 @@ sealed class BeepingError {
     data class DecoderInternal(
         val cause: Throwable,
     ) : BeepingError()
+
+    /**
+     * The scheduler API ([BeepingClient.sendScheduled]) is local-only at the
+     * moment — beepbox-server has no equivalent endpoint yet. Thrown by
+     * [CloudEncoder] when called with [BeepingMode.Cloud].
+     */
+    data object SchedulingNotSupported : BeepingError()
 }
 
 /**

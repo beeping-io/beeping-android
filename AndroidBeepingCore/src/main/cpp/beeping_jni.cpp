@@ -145,4 +145,74 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidence(JNIEnv* /*env*/
     return BEEPING_GetConfidence(asPtr(handle));
 }
 
+// BEE-2240: scheduler bridges. Mirror the BEE-2238 public C API:
+//   computeBeepSchedule — pure utility, no handle, returns timestamps[]
+//   encodeWithSchedule  — handle-bound, returns one continuous PCM buffer
+
+// Returns a fresh double[] of timestamps, or null on invalid params.
+// (size-query call to BEEPING_ComputeBeepSchedule decides the array length;
+// a second call fills it. Both calls cheap — no allocation upstream.)
+JNIEXPORT jdoubleArray JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_computeBeepSchedule(
+        JNIEnv* env, jobject /*thiz*/,
+        jfloat duration, jfloat startTime, jfloat interval) {
+    int32_t count = 0;
+    int32_t rc = BEEPING_ComputeBeepSchedule(
+            duration, startTime, interval,
+            nullptr, 0, &count);
+    if (rc != 0 || count < 0) {
+        LOGW("computeBeepSchedule size-query rc=%d count=%d", rc, count);
+        return nullptr;
+    }
+    jdoubleArray out = env->NewDoubleArray(count);
+    if (out == nullptr) return nullptr;
+    if (count == 0) return out;
+    std::vector<double> tmp(static_cast<size_t>(count));
+    rc = BEEPING_ComputeBeepSchedule(
+            duration, startTime, interval,
+            tmp.data(), count, nullptr);
+    if (rc != 0) {
+        LOGW("computeBeepSchedule fill rc=%d", rc);
+        return nullptr;
+    }
+    env->SetDoubleArrayRegion(out, 0, count, tmp.data());
+    return out;
+}
+
+// Returns a fresh float[] of `floor(duration * sampleRate)` samples, or null
+// on error. Allocates via BEEPING_GetScheduleBufferSize against the active
+// handle (must already be Configure()d).
+JNIEXPORT jfloatArray JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_encodeWithSchedule(
+        JNIEnv* env, jobject /*thiz*/,
+        jlong handle, jstring code, jint type,
+        jfloat duration, jfloat startTime, jfloat interval,
+        jfloat beepGainDb) {
+    if (handle == 0 || code == nullptr) return nullptr;
+    const int32_t bufSize = BEEPING_GetScheduleBufferSize(duration, asPtr(handle));
+    if (bufSize <= 0) {
+        LOGE("encodeWithSchedule: GetScheduleBufferSize returned %d", bufSize);
+        return nullptr;
+    }
+    const char* utf = env->GetStringUTFChars(code, nullptr);
+    if (utf == nullptr) return nullptr;
+    const jsize codeLen = env->GetStringUTFLength(code);
+    std::vector<float> buf(static_cast<size_t>(bufSize), 0.0f);
+    int32_t written = 0;
+    const int32_t rc = BEEPING_EncodeWithSchedule(
+            utf, static_cast<int32_t>(codeLen),
+            static_cast<int32_t>(type), nullptr, 0,
+            duration, startTime, interval, beepGainDb,
+            buf.data(), bufSize, &written, asPtr(handle));
+    env->ReleaseStringUTFChars(code, utf);
+    if (rc != 0 || written <= 0) {
+        LOGE("encodeWithSchedule rc=%d written=%d", rc, written);
+        return nullptr;
+    }
+    jfloatArray out = env->NewFloatArray(written);
+    if (out == nullptr) return nullptr;
+    env->SetFloatArrayRegion(out, 0, written, buf.data());
+    return out;
+}
+
 }  // extern "C"

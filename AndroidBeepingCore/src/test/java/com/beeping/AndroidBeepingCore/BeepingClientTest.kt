@@ -56,6 +56,15 @@ class BeepingClientTest {
                 object : BeepingEncoder {
                     override suspend fun encode(key: String): ByteArray = ByteArray(0)
 
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
+
                     override fun decoded(): Flow<BeepingPayload> =
                         flow {
                             payloads.forEach { emit(it) }
@@ -80,6 +89,15 @@ class BeepingClientTest {
             val encoder =
                 object : BeepingEncoder {
                     override suspend fun encode(key: String): ByteArray = ByteArray(0)
+
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
 
                     override fun decoded(): Flow<BeepingPayload> =
                         flow {
@@ -109,6 +127,15 @@ class BeepingClientTest {
                         return byteArrayOf(0x52, 0x49, 0x46, 0x46) // "RIFF" magic
                     }
 
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
+
                     override fun decoded(): Flow<BeepingPayload> = emptyFlow()
 
                     override fun close() {}
@@ -129,6 +156,15 @@ class BeepingClientTest {
                 object : BeepingEncoder {
                     override suspend fun encode(key: String): ByteArray =
                         throw BeepingException(BeepingError.AuthenticationFailed)
+
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
 
                     override fun decoded(): Flow<BeepingPayload> = emptyFlow()
 
@@ -167,6 +203,15 @@ class BeepingClientTest {
 /** Test double that satisfies the [BeepingEncoder] contract without doing any I/O. */
 private class NoOpEncoder : BeepingEncoder {
     override suspend fun encode(key: String): ByteArray = ByteArray(0)
+
+    override suspend fun encodeScheduled(
+        key: String,
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+        beepGainDb: Float,
+        audible: Boolean,
+    ): ByteArray = ByteArray(0)
 
     override fun decoded(): Flow<BeepingPayload> = emptyFlow()
 

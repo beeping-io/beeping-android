@@ -79,6 +79,19 @@ internal class CloudEncoder(
         return response.body()
     }
 
+    override suspend fun encodeScheduled(
+        key: String,
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+        beepGainDb: Float,
+        audible: Boolean,
+    ): ByteArray {
+        // BEE-2240: no `/v1/encode/scheduled` endpoint on beepbox yet. Throw
+        // a typed error so consumers can branch on Cloud-mode limitation.
+        throw BeepingException(BeepingError.SchedulingNotSupported)
+    }
+
     override fun decoded(): Flow<BeepingPayload> {
         // pending-006 — Cloud-mode live decoding requires AudioRecord chunking
         // + cyclic POST /v1/decode. Out of scope for BEE-57/59.

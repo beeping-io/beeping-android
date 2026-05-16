@@ -64,6 +64,42 @@ internal class LocalEncoder(
         }
     }
 
+    override suspend fun encodeScheduled(
+        key: String,
+        duration: Float,
+        startTime: Float,
+        interval: Float,
+        beepGainDb: Float,
+        audible: Boolean,
+    ): ByteArray {
+        require(key.matches(KEY_PATTERN)) {
+            "Key must match the 5-char base32 pattern $KEY_PATTERN_STR (got '$key')"
+        }
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            throw BeepingException(BeepingError.NativeLibraryNotLoaded)
+        }
+
+        val handle = jni.create()
+        check(handle != 0L) { "BEEPING_Create returned null handle" }
+
+        try {
+            val mode = if (audible) BEEPING_MODE_AUDIBLE else BEEPING_MODE_INAUDIBLE
+            val cfg = jni.configure(handle, mode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
+            check(cfg >= 0) { "BEEPING_Configure failed (rc=$cfg)" }
+
+            val pcm =
+                jni.encodeWithSchedule(handle, key, ENCODE_TYPE_PURE_TONES, duration, startTime, interval, beepGainDb)
+                    ?: error(
+                        "BEEPING_EncodeWithSchedule returned null " +
+                            "(duration=$duration startTime=$startTime interval=$interval)",
+                    )
+            check(pcm.isNotEmpty()) { "scheduled encode produced 0 samples" }
+            return floatPcmToWavBytes(pcm, SAMPLE_RATE)
+        } finally {
+            jni.destroy(handle)
+        }
+    }
+
     private fun drainEncodedSamples(
         handle: Long,
         total: Int,
@@ -197,6 +233,7 @@ internal class LocalEncoder(
         private const val KEY_PATTERN_STR = "^[0-9a-v]{5}\$"
 
         // BEEPING_MODE enum mirror — from BeepingCoreLib_api.h.
+        private const val BEEPING_MODE_AUDIBLE = 2
         private const val BEEPING_MODE_INAUDIBLE = 3
         private const val BEEPING_MODE_ALL = 5
 

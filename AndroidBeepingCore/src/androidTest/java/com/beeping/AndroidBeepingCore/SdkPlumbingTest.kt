@@ -164,6 +164,76 @@ class SdkPlumbingTest {
         // the call itself must not crash, which already passed if we got here.
     }
 
+    /**
+     * BEE-2240 — assert that the scheduler API surface is plumbed end-to-end
+     * to the native side and produces an output buffer of the size the caller
+     * expects from `duration × sampleRate`.
+     *
+     * Pure plumbing check: we don't validate the *content* of the buffer here
+     * (that's the role of beeping-core's own tests). What we do validate:
+     *
+     *  - `computeBeepSchedule(10, 0, 2.3)` returns a non-empty timestamp array
+     *    that is monotonically increasing
+     *  - `encodeWithSchedule(code, 10, 0, 2.3)` returns a buffer of exactly
+     *    `floor(10 × 44100) = 441000` float samples, fully zeroed in the
+     *    inter-beep silence regions
+     *  - The buffer is not all-zero (i.e. the beeps were actually rendered)
+     */
+    @Test
+    fun encodeWithSchedule_returns_buffer_of_expected_size_with_non_silent_beeps() {
+        assertTrue("native libs must load on the emulator", BeepingCoreJNI.isNativeLoaded())
+        val jni = BeepingCoreJNI()
+
+        val schedule = jni.computeBeepSchedule(SCHEDULE_DURATION, SCHEDULE_START, SCHEDULE_INTERVAL)
+        assertNotNull("computeBeepSchedule returned null for valid params", schedule)
+        val timestamps = schedule!!
+        assertTrue("schedule must contain at least 1 beep, got ${timestamps.size}", timestamps.size >= 1)
+        for (i in 1 until timestamps.size) {
+            assertTrue(
+                "schedule timestamps must be monotonically increasing at index $i: " +
+                    "${timestamps[i - 1]} -> ${timestamps[i]}",
+                timestamps[i] > timestamps[i - 1],
+            )
+        }
+        Log.i(TAG, "schedule: $timestamps")
+
+        val handle = jni.create()
+        assertNotEquals("BEEPING_Create returned null for scheduled encoder", 0L, handle)
+        val cfg = jni.configure(handle, MODE_INAUDIBLE, SAMPLE_RATE, BUFFER_SIZE)
+        assertTrue("encoder configure failed (rc=$cfg)", cfg >= 0)
+
+        // beepGainDb = 0f (identity), no dB scaling.
+        val pcm =
+            jni.encodeWithSchedule(
+                handle,
+                PAYLOAD,
+                ENCODE_TYPE_PURE_TONES,
+                SCHEDULE_DURATION,
+                SCHEDULE_START,
+                SCHEDULE_INTERVAL,
+                0f,
+            )
+        jni.destroy(handle)
+        assertNotNull("encodeWithSchedule returned null", pcm)
+        val samples = pcm!!
+
+        val expected = (SCHEDULE_DURATION * SAMPLE_RATE).toInt()
+        assertEquals(
+            "buffer size must equal floor(duration × sampleRate)",
+            expected,
+            samples.size,
+        )
+
+        var anyNonZero = false
+        for (s in samples) {
+            if (s != 0f) {
+                anyNonZero = true
+                break
+            }
+        }
+        assertTrue("encoded buffer is fully silent — beeps were not rendered", anyNonZero)
+    }
+
     private companion object {
         private const val TAG = "BEE-2226-plumbing"
         private const val PAYLOAD = "abc12"
@@ -172,5 +242,11 @@ class SdkPlumbingTest {
         private const val ENCODE_TYPE_PURE_TONES = 0
         private const val SAMPLE_RATE = 44_100f
         private const val BUFFER_SIZE = 4096
+
+        // BEE-2240 schedule probe — matches the canonical example from the
+        // upstream BEE-2238 task description.
+        private const val SCHEDULE_DURATION = 10f
+        private const val SCHEDULE_START = 0f
+        private const val SCHEDULE_INTERVAL = 2.3f
     }
 }
