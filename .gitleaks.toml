@@ -1,0 +1,16 @@
+# gitleaks configuration for beeping-android.
+#
+# Inherits the default ruleset; only adds an allowlist for paths that are
+# intentionally meant to contain API-key-shaped fixtures (unit tests that
+# verify the log-redaction logic). Adding new test fixtures elsewhere
+# should NOT be allowlisted here — the burden of proof is on the test,
+# not the scanner.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Intentional API-key-shaped fixtures for redaction unit tests"
+paths = [
+  '''AndroidBeepingCore/src/test/java/com/beeping/AndroidBeepingCore/BeepingTimberTreeTest\.kt''',
+]

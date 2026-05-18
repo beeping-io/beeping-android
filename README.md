@@ -262,6 +262,21 @@ Real config lands in Phase 8. Targets per `docs/PRODUCTO.md` section 12:
 
 ---
 
+## 💬 Community
+
+### Chat & support
+
+- 💬 **Discord** — [chat with the team and other developers](https://discord.gg/beeping)
+- 💼 **Slack** — coming soon (will be cross-bridged with Discord)
+- 🐛 **Issues** — see the [issue tracker](issues) for bugs and feature requests
+
+### Follow us
+
+Social handles coming soon — see the issue tracker for status.
+
+- 🐦 X (Twitter) · 💼 LinkedIn · 📸 Instagram · 🎵 TikTok
+- 📺 YouTube · 🐘 Mastodon · 🦋 Bluesky
+
 ## 🤝 Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). Conventions, branch model and PR
