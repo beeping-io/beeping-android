@@ -94,6 +94,20 @@ class BeepingCoreJNI {
     external fun getDecodedMode(handle: Long): Int
 
     /**
+     * BEE-2314: `BEEPING_ParseScheduledPayload` (pure, no handle). Splits a
+     * `code + 4-char base-32 timestamp` payload and returns the timestamp in
+     * seconds (>= 0), or a negative error code (-2 = invalid / too short).
+     */
+    external fun parseScheduledTimestamp(payload: String): Int
+
+    /**
+     * BEE-2314: `BEEPING_GetDecodedScheduledPayload` (handle-bound). Reads the
+     * last decoded payload and splits it. Returns `null` when there is no data
+     * or the decode/split failed.
+     */
+    external fun getDecodedScheduledPayload(handle: Long): ScheduledPayload?
+
+    /**
      * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,
      * interval)` schedule. Pure utility — does not need a handle.
      *

@@ -246,4 +246,44 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_encodeWithSchedule(
     return out;
 }
 
+// BEE-2314: scheduled-payload decode. Mirror the BEE-2240 encode side.
+//   parseScheduledTimestamp — pure utility (no handle): split a payload string
+//     `code + 4-char base-32 timestamp`, returning the timestamp in seconds.
+//   getDecodedScheduledPayload — handle-bound: GetDecodedData + split in one
+//     step, returning a ScheduledPayload object (or null on no-data/failure).
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_parseScheduledTimestamp(
+        JNIEnv* env, jobject /*thiz*/, jstring payload) {
+    if (payload == nullptr) return -2;
+    const char* utf = env->GetStringUTFChars(payload, nullptr);
+    if (utf == nullptr) return -2;
+    const jsize len = env->GetStringUTFLength(payload);
+    int32_t timestampSec = -1;
+    // outCode = nullptr → only the timestamp is decoded; rc is 0 or -2.
+    const int32_t rc = BEEPING_ParseScheduledPayload(
+            utf, static_cast<int32_t>(len), nullptr, 0, nullptr, &timestampSec);
+    env->ReleaseStringUTFChars(payload, utf);
+    return (rc != 0) ? rc : timestampSec;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedScheduledPayload(
+        JNIEnv* env, jobject /*thiz*/, jlong handle) {
+    if (handle == 0) return nullptr;
+    char code[kDecodedBufferSize] = {0};
+    int32_t codeSize = 0;
+    int32_t timestampSec = -1;
+    const int32_t rc = BEEPING_GetDecodedScheduledPayload(
+            code, kDecodedBufferSize, &codeSize, &timestampSec, asPtr(handle));
+    // rc: >0 ok; 0 no data; negative integrity/-10 split failure.
+    if (rc <= 0) return nullptr;
+    jclass cls = env->FindClass("com/beeping/AndroidBeepingCore/ScheduledPayload");
+    if (cls == nullptr) return nullptr;
+    jmethodID ctor = env->GetMethodID(cls, "<init>", "(Ljava/lang/String;I)V");
+    if (ctor == nullptr) return nullptr;
+    jstring jcode = env->NewStringUTF(code);
+    return env->NewObject(cls, ctor, jcode, timestampSec);
+}
+
 }  // extern "C"

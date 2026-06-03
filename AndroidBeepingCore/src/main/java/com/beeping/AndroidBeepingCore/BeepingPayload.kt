@@ -22,4 +22,16 @@ data class BeepingPayload(
     val timestamp: Long = System.currentTimeMillis(),
     val confidence: Float = 1.0f,
     val metrics: ReceptionMetrics? = null,
-)
+) {
+    /**
+     * BEE-2314: parses this payload as a scheduled transmission
+     * (`code + 4-char base-32 timestamp`, emitted by [BeepingClient.sendScheduled]).
+     *
+     * Returns `null` if the payload is too short, not a valid scheduled payload,
+     * or the native library isn't loaded.
+     */
+    fun parseScheduled(): ScheduledPayload? {
+        if (!BeepingCoreJNI.isNativeLoaded()) return null
+        return assembleScheduledPayload(payload, BeepingCoreJNI().parseScheduledTimestamp(payload))
+    }
+}
