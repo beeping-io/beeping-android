@@ -497,7 +497,9 @@ mavenPublishing {
         // Bumped manually per release. Pre-1.0.0 ecosystem rule (see
         // ~/.claude/CLAUDE.md §SemVer) keeps us in 0.x until the ecosystem
         // stabilises. Aligns with the v$VERSION tag pushed to trigger release.yml.
-        version = "0.1.0",
+        // 0.2.0 (BEE-2320): wave 2 — encoding mode, trace-id, AudioFocusLost,
+        // reception metrics, scheduled decode, diagnostics, audio signature.
+        version = "0.2.0",
     )
 
     pom {
