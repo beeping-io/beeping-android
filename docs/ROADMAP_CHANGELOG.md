@@ -13,20 +13,34 @@
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
 - **Fecha fin real (wave 1)**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: 🔄 **REABIERTO (wave 2 · 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode). 28 SP nuevos open. Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
-- **Última actualización**: 2026-06-02 (trigger: `Scope change — reopen Phase 8 wave 2: +4 C API coverage tasks (BEE-2313..2316) + 3 contract-parity followups (BEE-2305/2306/2307)`)
-- **Story points totales**: 158 SP (125 wave 1 + 33 wave 2: 9 contract-parity BEE-2305/06/07 + 19 C-API-coverage BEE-2313/14/15/16 + 5 release BEE-2320/2321)
-- **Story points cerrados**: **122 SP (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815 + 4 wave-1 followups)** — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: **33 SP** (wave 2 open: BEE-2307 2 + BEE-2306 2 + BEE-2305 5 + BEE-2313 8 + BEE-2314 5 + BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2)
+- **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
+- **Última actualización**: 2026-06-03 (trigger: `Closed BEE-2307 + Scope change — add BEE-2326 (fast-uri Dependabot fix)`)
+- **Story points totales**: 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326)
+- **Story points cerrados**: **124 SP** (122 wave 1 + BEE-2307 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: **32 SP** (wave 2 open: BEE-2306 2 + BEE-2305 5 + BEE-2313 8 + BEE-2314 5 + BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1)
 - **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 158 | 2026-04-28 | wave 2 ETA 2026-06-10 | 🔄 In Progress (wave 2) |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 159 | 2026-04-28 | wave 2 ETA 2026-06-10 | 🔄 In Progress (wave 2) |
 
 ---
 
 ## 📜 History
+
+### [2026-06-03] — ✅ Closed BEE-2307 + 🔒 Scope change: add BEE-2326 (fast-uri Dependabot fix, +1 SP)
+
+**BEE-2307** (commit `feat(audio): BEE-2307 emit BeepingError.AudioFocusLost on real audio-focus loss`):
+- Nuevo `AudioFocusGuard.kt` (`internal`) — `AudioManager` focus request (AudioFocusRequest API ≥26 / overload legacy 24-25) → `onLoss` en `AUDIOFOCUS_LOSS`/`LOSS_TRANSIENT`; `abandon()` idempotente.
+- `LocalEncoder.decoded()`: instala el guard tras `startRecording()` → `close(BeepingException(AudioFocusLost))` en pérdida; `awaitClose` lo abandona. Extraído `openAudioRecord()` (detekt LongMethod).
+- `BeepingError.kt` KDoc + `BeepingClientTest` (Flow-level) + `AudioFocusGuardTest` (6 tests MockK).
+- Gates ✅: tests 0 fallos, ktlint+detekt 0 issues. QA físico aprobado founder (1 ciclo).
+
+**BEE-2326** (`Scope change`): 2 alertas Dependabot `high` en `package-lock.json` — `fast-uri` (`GHSA-v39h-62p7-jpjc` host confusion + `GHSA-q3j6-qgpj-74h6` path traversal, ambas patched 3.1.2), transitiva de `@commitlint/cli`. Dev-tooling, **no entra en el AAR**. Task creada en Phase 8 wave 2 (1 SP).
+
+**Net delta**: BEE-2307 cerrada (−2 SP remaining), +1 SP nuevo (BEE-2326). Total 158 → 159 SP. Cerrados 122 → 124. Remaining wave 2: 32 SP.
+
+---
 
 ### [2026-06-02] — 🔄 Scope change — reopen Phase 8 wave 2: C API coverage + contract parity (+28 SP)
 
