@@ -109,4 +109,24 @@ class LocalEncoderTest {
             encoder.close()
             encoder.close() // must not throw
         }
+
+    @Test
+    fun `BEE-2305 default encodingMode is ALL`() {
+        assertEquals(BeepingEncodingMode.ALL, LocalEncoder(context = context).encodingMode)
+    }
+
+    @Test
+    fun `BEE-2305 factory passes encodingMode to LocalEncoder and defaults to ALL`() {
+        val explicit =
+            BeepingEncoderFactory.create(
+                BeepingMode.Local,
+                context,
+                "t",
+                BeepingEncodingMode.AUDIBLE,
+            ) as LocalEncoder
+        assertEquals(BeepingEncodingMode.AUDIBLE, explicit.encodingMode)
+
+        val default = BeepingEncoderFactory.create(BeepingMode.Local, context, "t") as LocalEncoder
+        assertEquals(BeepingEncodingMode.ALL, default.encodingMode)
+    }
 }

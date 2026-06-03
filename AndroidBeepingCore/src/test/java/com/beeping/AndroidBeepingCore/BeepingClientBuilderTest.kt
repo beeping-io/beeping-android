@@ -142,6 +142,19 @@ class BeepingClientBuilderTest {
     }
 
     @Test
+    fun `BEE-2305 encodingMode setter is fluent and builds`() {
+        val client =
+            BeepingClient
+                .Builder(context)
+                .mode(BeepingMode.Local)
+                .encodingMode(BeepingEncodingMode.AUDIBLE)
+                .build()
+
+        assertNotNull(client)
+        client.close()
+    }
+
+    @Test
     fun `Builder is fluent — all setters return Builder for chaining`() {
         // Compile-time check: chaining must work without intermediate vals.
         val client =

@@ -5,7 +5,7 @@ package com.beeping.AndroidBeepingCore
  *
  * The payload string is typically 5–9 chars (the legacy SDK used 5-char
  * "beep keys"). The exact maximum length depends on the chosen encoding
- * profile — see `EnumBeepingMode` (internal).
+ * profile — see [BeepingEncodingMode].
  *
  * @property payload The decoded / to-be-encoded text.
  * @property timestamp Wall-clock time of decode/encode (millis since epoch).

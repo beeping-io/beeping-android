@@ -38,6 +38,7 @@ import java.nio.ByteOrder
 internal class LocalEncoder(
     private val context: Context,
     private val jni: BeepingCoreJNI = BeepingCoreJNI(),
+    val encodingMode: BeepingEncodingMode = BeepingEncodingMode.ALL,
     @Suppress("unused") traceId: String = "anon",
 ) : BeepingEncoder {
     override suspend fun encode(key: String): ByteArray {
@@ -52,7 +53,9 @@ internal class LocalEncoder(
         check(handle != 0L) { "BEEPING_Create returned null handle" }
 
         try {
-            val cfg = jni.configure(handle, BEEPING_MODE_INAUDIBLE, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
+            // BEE-2305: configure the encode band from the selected mode.
+            // ALL is decode-only → encodeConfigureMode maps it to INAUDIBLE.
+            val cfg = jni.configure(handle, encodingMode.encodeConfigureMode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             check(cfg >= 0) { "BEEPING_Configure failed (rc=$cfg)" }
 
             val total = jni.encode(handle, key, ENCODE_TYPE_PURE_TONES)
@@ -141,7 +144,8 @@ internal class LocalEncoder(
 
             val record = openAudioRecord()
 
-            val cfg = jni.configure(handle, BEEPING_MODE_ALL, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
+            // BEE-2305: decode in the selected band (default ALL = both bands).
+            val cfg = jni.configure(handle, encodingMode.decodeConfigureMode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             if (cfg < 0) {
                 record.release()
                 jni.destroy(handle)
@@ -251,10 +255,11 @@ internal class LocalEncoder(
         private val KEY_PATTERN = Regex("^[0-9a-v]{5}$")
         private const val KEY_PATTERN_STR = "^[0-9a-v]{5}\$"
 
-        // BEEPING_MODE enum mirror — from BeepingCoreLib_api.h.
+        // BEEPING_MODE enum mirror — from BeepingCoreLib_api.h. Used by
+        // encodeScheduled's audible flag; send()/listen() now route through
+        // BeepingEncodingMode (BEE-2305).
         private const val BEEPING_MODE_AUDIBLE = 2
         private const val BEEPING_MODE_INAUDIBLE = 3
-        private const val BEEPING_MODE_ALL = 5
 
         // Encoding type: 0 = pure tones (default). 1 = R2D2 ornament, 2 = melody.
         private const val ENCODE_TYPE_PURE_TONES = 0
