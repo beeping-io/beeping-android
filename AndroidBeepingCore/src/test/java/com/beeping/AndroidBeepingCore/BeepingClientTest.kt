@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -274,6 +275,12 @@ class BeepingClientTest {
         val ex = runCatching { client().coreVersion() }.exceptionOrNull()
         assertTrue("expected BeepingException, got ${ex?.javaClass?.simpleName}", ex is BeepingException)
         assertEquals(BeepingError.NativeLibraryNotLoaded, (ex as BeepingException).error)
+    }
+
+    @Test
+    fun `BEE-2316 setNativeLogPath returns false on the JVM where native is absent`() {
+        assertFalse(BeepingClient.setNativeLogPath("/tmp/beeping.log"))
+        assertFalse(BeepingClient.setNativeLogPath(null))
     }
 
     @Test

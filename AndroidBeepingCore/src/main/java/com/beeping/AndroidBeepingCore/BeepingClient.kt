@@ -238,6 +238,14 @@ class BeepingClient internal constructor(
     }
 
     /**
+     * BEE-2316: installs a custom audio signature (float32 mono PCM at 44100 Hz,
+     * max 2 s) mixed on top of encoded output by [send] / [sendScheduled]; pass
+     * `null` to clear. Returns `true` if accepted (rejected if longer than 2 s,
+     * or `false` in [BeepingMode.Cloud] which has no equivalent).
+     */
+    fun setAudioSignature(samples: FloatArray?): Boolean = encoder.setAudioSignature(samples)
+
+    /**
      * BEE-2315: the underlying `beeping-core` native library version string.
      *
      * @throws BeepingException with [BeepingError.NativeLibraryNotLoaded] if the
@@ -267,7 +275,19 @@ class BeepingClient internal constructor(
         player?.close()
     }
 
-    private companion object {
+    companion object {
+        /**
+         * BEE-2316: sets the absolute file path `beeping-core` writes its logs to
+         * (`BEEPING_SetLogPath`, global). Pass `null` to reset to the library
+         * default. Best called before constructing any [BeepingClient]. Returns
+         * `true` on success, `false` if the native library isn't loaded or the
+         * native call fails. Mirrors the iOS `setNativeLogPath`.
+         */
+        fun setNativeLogPath(path: String?): Boolean {
+            if (!BeepingCoreJNI.isNativeLoaded()) return false
+            return BeepingCoreJNI().setLogPath(path) == 0
+        }
+
         private const val TRACE_ID_LEN = 8
 
         // BEE-2238 / BEE-2240: 2.3 s is the minimum gap between beeps imposed

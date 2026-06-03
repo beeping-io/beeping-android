@@ -187,3 +187,12 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 - ⚙️ **Acción requerida**: cuando BEE-2228 cierre y publique nueva release de `beeping-core` con in-process round-trip funcional, (1) bumpear `beepingCore` en `gradle/libs.versions.toml`, (2) reactivar la assertion strict en `SdkPlumbingTest.kt`: `assertEquals("abc12", decoded?.trimEnd(' '))`, (3) confirmar verde en emulator.
 - 🚧 **Bloqueado por**: [BEE-2228](https://linear.app/me8/issue/BEE-2228) upstream en `beeping-core`.
 - 🚦 **Estado**: 🆕 Nuevo
+
+### ⏳ pending-015 — `BEEPING_ResetEncodedAudioBuffer` no expuesto (skip intencional)
+
+- 📅 **Fecha añadida**: 2026-06-03
+- 🏷️ **Tipo**: chore
+- 🧭 **Trigger**: durante BEE-2316 (paridad iOS de advanced config) se bridgearon `SetAudioSignature` + `SetLogPath`, pero `BEEPING_ResetEncodedAudioBuffer` quedó **fuera a propósito**. Es de uso interno (resetea el buffer de encode entre llamadas); en Android el patrón handle-por-encode de `LocalEncoder` (create → configure → encode → drain → destroy) ya garantiza un buffer limpio por encode vía `drainEncodedSamples`. iOS tampoco lo expone público (lo usa interno en su drain). No hay caso de uso para consumidores.
+- ⚙️ **Acción requerida**: ninguna por ahora. Si en el futuro se introduce un encoder con handle persistente (reuso entre encodes), evaluar bridgear `ResetEncodedAudioBuffer` para limpiar el buffer entre encodes sin recrear el handle.
+- 🚧 **Bloqueado por**: N/A (decisión de diseño, no bloqueo).
+- 🚦 **Estado**: 🆕 Nuevo

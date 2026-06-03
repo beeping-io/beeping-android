@@ -9,6 +9,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -113,6 +114,20 @@ class LocalEncoderTest {
     @Test
     fun `BEE-2305 default encodingMode is ALL`() {
         assertEquals(BeepingEncodingMode.ALL, LocalEncoder(context = context).encodingMode)
+    }
+
+    @Test
+    fun `BEE-2316 setAudioSignature accepts up to 2 seconds and rejects longer`() {
+        val encoder = LocalEncoder(context = context)
+        assertTrue("exactly 2 s must be accepted", encoder.setAudioSignature(FloatArray(44_100 * 2)))
+        assertFalse("longer than 2 s must be rejected", encoder.setAudioSignature(FloatArray(44_100 * 2 + 1)))
+    }
+
+    @Test
+    fun `BEE-2316 setAudioSignature clears on null or empty`() {
+        val encoder = LocalEncoder(context = context)
+        assertTrue(encoder.setAudioSignature(null))
+        assertTrue(encoder.setAudioSignature(FloatArray(0)))
     }
 
     @Test

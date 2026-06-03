@@ -319,4 +319,32 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodingEndFreq(JNIEnv* /*
     return BEEPING_GetDecodingEndFreq(asPtr(handle));
 }
 
+// BEE-2316: advanced config — custom audio signature (handle-bound) + log path
+// (global). Mirrors the iOS BeepingC wrapper.
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_setAudioSignature(JNIEnv* env, jobject /*thiz*/,
+                                                                       jlong handle, jfloatArray samples) {
+    if (handle == 0) return -1;
+    if (samples == nullptr) {
+        return BEEPING_SetAudioSignature(0, nullptr, asPtr(handle));
+    }
+    const jsize len = env->GetArrayLength(samples);
+    jfloat* buf = env->GetFloatArrayElements(samples, nullptr);
+    if (buf == nullptr) return -1;
+    const int32_t rc = BEEPING_SetAudioSignature(static_cast<int32_t>(len), buf, asPtr(handle));
+    env->ReleaseFloatArrayElements(samples, buf, JNI_ABORT);  // read-only — discard copy
+    return rc;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_setLogPath(JNIEnv* env, jobject /*thiz*/, jstring path) {
+    if (path == nullptr) return BEEPING_SetLogPath(nullptr);
+    const char* utf = env->GetStringUTFChars(path, nullptr);
+    if (utf == nullptr) return BEEPING_SetLogPath(nullptr);
+    const int32_t rc = BEEPING_SetLogPath(utf);
+    env->ReleaseStringUTFChars(path, utf);
+    return rc;
+}
+
 }  // extern "C"

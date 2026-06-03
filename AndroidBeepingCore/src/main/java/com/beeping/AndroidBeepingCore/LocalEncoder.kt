@@ -41,6 +41,23 @@ internal class LocalEncoder(
     val encodingMode: BeepingEncodingMode = BeepingEncodingMode.ALL,
     @Suppress("unused") traceId: String = "anon",
 ) : BeepingEncoder {
+    // BEE-2316: custom audio signature applied per-encode (no persistent handle).
+    private var audioSignature: FloatArray? = null
+
+    override fun setAudioSignature(samples: FloatArray?): Boolean {
+        if (samples == null || samples.isEmpty()) {
+            audioSignature = null
+            return true
+        }
+        if (samples.size > MAX_SIGNATURE_SAMPLES) return false
+        audioSignature = samples
+        return true
+    }
+
+    private fun applyAudioSignature(handle: Long) {
+        audioSignature?.let { jni.setAudioSignature(handle, it) }
+    }
+
     override suspend fun encode(key: String): ByteArray {
         require(key.matches(KEY_PATTERN)) {
             "Key must match the 5-char base32 pattern $KEY_PATTERN_STR (got '$key')"
@@ -57,6 +74,7 @@ internal class LocalEncoder(
             // ALL is decode-only → encodeConfigureMode maps it to INAUDIBLE.
             val cfg = jni.configure(handle, encodingMode.encodeConfigureMode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             check(cfg >= 0) { "BEEPING_Configure failed (rc=$cfg)" }
+            applyAudioSignature(handle)
 
             val total = jni.encode(handle, key, ENCODE_TYPE_PURE_TONES)
             check(total > 0) { "BEEPING_EncodeDataToAudioBuffer returned $total" }
@@ -91,6 +109,7 @@ internal class LocalEncoder(
             val mode = if (audible) BEEPING_MODE_AUDIBLE else BEEPING_MODE_INAUDIBLE
             val cfg = jni.configure(handle, mode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             check(cfg >= 0) { "BEEPING_Configure failed (rc=$cfg)" }
+            applyAudioSignature(handle)
 
             val pcm =
                 jni.encodeWithSchedule(handle, key, ENCODE_TYPE_PURE_TONES, duration, startTime, interval, beepGainDb)
@@ -297,6 +316,10 @@ internal class LocalEncoder(
 
         private const val SHORT_TO_FLOAT_DIVISOR = 32768f
         private const val MAX_PCM_AMPLITUDE = 32767f
+
+        // BEE-2316: max audio-signature length — 2 s of mono PCM at 44.1 kHz
+        // (mirrors the iOS SDK's 2-second cap).
+        private const val MAX_SIGNATURE_SAMPLES = SAMPLE_RATE * 2
 
         // Standard 44-byte WAV header for PCM 16-bit mono.
         private const val WAV_HEADER_SIZE = 44

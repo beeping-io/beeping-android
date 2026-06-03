@@ -59,6 +59,14 @@ internal interface BeepingEncoder {
      */
     fun decoded(): Flow<BeepingPayload>
 
+    /**
+     * BEE-2316: stores a custom audio signature (float32 mono PCM at 44100 Hz,
+     * max 2 s) applied on top of encoded output; `null` clears it. Returns
+     * `true` if accepted. Default: unsupported (`false`) — only [LocalEncoder]
+     * implements it (Cloud mode has no equivalent).
+     */
+    fun setAudioSignature(samples: FloatArray?): Boolean = false
+
     /** Releases all resources. Idempotent. */
     fun close()
 }

@@ -121,6 +121,23 @@ class BeepingCoreJNI {
     external fun getDecodingEndFreq(handle: Long): Float
 
     /**
+     * BEE-2316: `BEEPING_SetAudioSignature` (handle-bound). Installs a custom
+     * audio signature (float32 mono PCM) mixed over encoded output; an empty
+     * array clears it. Returns 0 on success, negative on failure.
+     */
+    external fun setAudioSignature(
+        handle: Long,
+        samples: FloatArray,
+    ): Int
+
+    /**
+     * BEE-2316: `BEEPING_SetLogPath` (global, no handle). Sets the absolute file
+     * path for core logs; `null` resets to the library default. Returns 0 on
+     * success, negative on failure.
+     */
+    external fun setLogPath(path: String?): Int
+
+    /**
      * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,
      * interval)` schedule. Pure utility — does not need a handle.
      *
