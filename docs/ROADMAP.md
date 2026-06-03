@@ -21,7 +21,7 @@
 | **Esfuerzo con margen** | wave 1: 17 días hábiles (real: 12 sesiones / 18 días cal.) + wave 2: ~5 días |
 | **Estado global** | 🔄 **REABIERTO — wave 2 (C API coverage + contract parity)** desde 2026-06-02. Audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto → 4 tasks nuevas (BEE-2313..2316). Más 3 followups de contract-parity con `beeping_flutter`/iOS (BEE-2305/06/07). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9. |
 | **Última actualización** | 2026-06-02 (trigger: `Scope change — reopen Phase 8 wave 2: +4 C API coverage tasks + 3 contract-parity followups`) |
-| **Tasks completadas** | 27 / 35 · **139 SP cerrados de 161 (86%)** · 19 SP wave 2 open · BEE-67 (3 SP) deferred a Phase 9 |
+| **Tasks completadas** | 28 / 35 · **144 SP cerrados de 161 (89%)** · 14 SP wave 2 open · BEE-67 (3 SP) deferred a Phase 9 |
 | **Velocidad observada** | 122 SP en 12 sesiones (wave 1); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
@@ -89,14 +89,14 @@ Audit `beeping-android` ↔ `beeping-core` v0.8.1: 13 funciones del C API sin ex
 | 22 | [BEE-2306](https://linear.app/me8/issue/BEE-2306) | 🔗 Inyección de trace-id externo en `BeepingClient.Builder` (X-Trace-Id e2e) | 2 | contract parity | ✅ Done |
 | 23 | [BEE-2305](https://linear.app/me8/issue/BEE-2305) | 🎚️ Exponer encoding mode (3 modos reales: AUDIBLE/NON_AUDIBLE/ALL) en Builder + send() + listen() | 5 | contract parity | ✅ Done |
 | 24 | [BEE-2313](https://linear.app/me8/issue/BEE-2313) | 📊 Exponer reception metrics (confidence/error/noise/volume/mode) en `BeepingEvent.Decoded` | 8 | C API coverage | ✅ Done |
-| 25 | [BEE-2314](https://linear.app/me8/issue/BEE-2314) | 🗓️ Scheduled-payload decode (`ParseScheduledPayload` + `GetDecodedScheduledPayload`) | 5 | C API coverage | ⏳ Pending |
+| 25 | [BEE-2314](https://linear.app/me8/issue/BEE-2314) | 🗓️ Scheduled-payload decode (`ParseScheduledPayload` + `GetDecodedScheduledPayload`) | 5 | C API coverage | ✅ Done |
 | 26 | [BEE-2315](https://linear.app/me8/issue/BEE-2315) | 🔧 Diagnostics: decoding frequency range + core version | 3 | C API coverage | ⏳ Pending |
 | 27 | [BEE-2316](https://linear.app/me8/issue/BEE-2316) | 🎛️ Advanced config: `SetAudioSignature` + skip documentado de `SetLogPath`/`Reset` | 3 | C API coverage | ⏳ Pending |
 | 28 | [BEE-2320](https://linear.app/me8/issue/BEE-2320) | 🚀 Cut & publish wave-2 release a Maven Central (release-please + GPG) — *blocked by 21–27* | 3 | release ops | ⏳ Pending |
 | 29 | [BEE-2321](https://linear.app/me8/issue/BEE-2321) | ✅ Verify wave-2 release end-to-end (Maven Central consumible + smoke) — *blocked by 28* | 2 | release ops | ⏳ Pending |
 | 30 | [BEE-2326](https://linear.app/me8/issue/BEE-2326) | 🔒 Bump `fast-uri` ≥3.1.2 — resolver 2 Dependabot high (host confusion + path traversal) | 1 | security | ⏳ Pending |
 | 31 | [BEE-2331](https://linear.app/me8/issue/BEE-2331) | 📱 Sample app: selector de encoding mode cableado a `.encodingMode()` (QA físico de BEE-2305) | 2 | sample/QA | ⏳ Pending |
-| | **Totales wave 2** | | **36** | | **4 cerrados (BEE-2307, BEE-2306, BEE-2305, BEE-2313) / 19 open** |
+| | **Totales wave 2** | | **36** | | **5 cerrados (BEE-2307, BEE-2306, BEE-2305, BEE-2313, BEE-2314) / 14 open** |
 
 > **Release gating**: BEE-2320 (cut+publish) tiene relaciones `blocks` desde las 7 features → no arranca hasta cerrarlas. BEE-2321 (verify) `blocked by` BEE-2320. El topological sort de `/tasks` las mantiene al final automáticamente.
 
