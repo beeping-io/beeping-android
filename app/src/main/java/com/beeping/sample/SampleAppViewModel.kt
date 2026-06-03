@@ -11,6 +11,7 @@ import com.beeping.AndroidBeepingCore.BeepingMode
 import com.beeping.AndroidBeepingCore.BeepingPayload
 import com.beeping.AndroidBeepingCore.BeepingTimberTree
 import com.beeping.AndroidBeepingCore.LogLevel
+import com.beeping.AndroidBeepingCore.ReceptionMetrics
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -114,7 +115,7 @@ class SampleAppViewModel(
 
     private fun startListening() {
         listenJob?.cancel()
-        _state.update { it.copy(listening = true, lastError = null, lastDecoded = null) }
+        _state.update { it.copy(listening = true, lastError = null, lastDecoded = null, lastMetrics = null) }
         listenJob =
             viewModelScope.launch {
                 client.listen().collect { event ->
@@ -123,7 +124,14 @@ class SampleAppViewModel(
                             Timber.tag("Beeping[trace=${client.traceId}]").d("listen started")
                         }
                         is BeepingEvent.Decoded -> {
-                            _state.update { it.copy(lastDecoded = event.payload.payload) }
+                            // BEE-2313: surface reception metrics in the debug console + status panel.
+                            val metricsLine = formatMetrics(event.payload.metrics)
+                            Timber
+                                .tag("Beeping[trace=${client.traceId}]")
+                                .i("decoded '${event.payload.payload}' — $metricsLine")
+                            _state.update {
+                                it.copy(lastDecoded = event.payload.payload, lastMetrics = metricsLine)
+                            }
                         }
                         is BeepingEvent.Failed -> {
                             _state.update {
@@ -158,6 +166,16 @@ class SampleAppViewModel(
         super.onCleared()
         listenJob?.cancel()
         runCatching { client.close() }
+    }
+
+    /** BEE-2313: compact one-line render of [ReceptionMetrics] for the console + status panel. */
+    private fun formatMetrics(metrics: ReceptionMetrics?): String {
+        if (metrics == null) return "no metrics"
+
+        fun pct(value: Float) = "${(value * 100).toInt()}%"
+        val vol = "%.2f".format(metrics.receivedBeepsVolume)
+        return "conf=${pct(metrics.confidence)} err=${pct(metrics.confidenceError)} " +
+            "noise=${pct(metrics.confidenceNoise)} vol=$vol mode=${metrics.decodedMode}"
     }
 
     private fun formatError(t: Throwable): String =

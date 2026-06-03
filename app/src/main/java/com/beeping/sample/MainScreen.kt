@@ -248,6 +248,13 @@ private fun StatusPanel(
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
+            state.lastMetrics?.let {
+                // BEE-2313: reception metrics for the last decode.
+                Text(
+                    "Metrics: $it",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             state.lastError?.let { err ->
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,

@@ -20,6 +20,8 @@ data class SampleUiState(
     val busy: Boolean = false,
     val listening: Boolean = false,
     val lastDecoded: String? = null,
+    // BEE-2313: human-readable reception metrics of the last decode.
+    val lastMetrics: String? = null,
     val lastError: String? = null,
     val consoleOpen: Boolean = false,
 )
