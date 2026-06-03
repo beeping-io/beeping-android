@@ -14,10 +14,10 @@
 - **Fecha fin real (wave 1)**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
-- **Última actualización**: 2026-06-03 (trigger: `Closed BEE-2307 + BEE-2306 + BEE-2305 + Scope change — add BEE-2326 + BEE-2331`)
+- **Última actualización**: 2026-06-03 (trigger: `Closed BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 + Scope change — add BEE-2326 + BEE-2331`)
 - **Story points totales**: 161 SP (125 wave 1 + 36 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326 + 2 sample-QA BEE-2331)
-- **Story points cerrados**: **131 SP** (122 wave 1 + BEE-2307 + BEE-2306 + BEE-2305 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: **27 SP** (wave 2 open: BEE-2313 8 + BEE-2314 5 + BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1 + BEE-2331 2)
+- **Story points cerrados**: **139 SP** (122 wave 1 + BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: **19 SP** (wave 2 open: BEE-2314 5 + BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1 + BEE-2331 2)
 - **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
@@ -28,7 +28,14 @@
 
 ## 📜 History
 
-### [2026-06-03] — ✅ Closed BEE-2307 + BEE-2306 + BEE-2305 + 🔒 Scope change: add BEE-2326 + BEE-2331 (+3 SP)
+### [2026-06-03] — ✅ Closed BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 + 🔒 Scope change: add BEE-2326 + BEE-2331 (+3 SP)
+
+**BEE-2313** (commits `feat(jni): BEE-2313 expose reception metrics` + `feat(sample): BEE-2313 show metrics in debug console`):
+- C API coverage: 4 JNI bridges nuevos (`getConfidenceError`/`getConfidenceNoise`/`getReceivedBeepsVolume`/`getDecodedMode`) — verificados en los 3 ABIs. `BeepingPayload.confidence` ahora poblado (campo muerto resuelto).
+- Nuevos `ReceptionMetrics` + `DecodedMode` (home de "hidden" como decode-classification). `BeepingPayload.metrics`; accesible vía `Decoded.payload.metrics`.
+- Sample app: panel "Metrics:" + log en debug console (founder pidió añadir el display ahora → QA físico aprobado en esta task, no diferido).
+- +3 tests (DecodedMode mapping + listen propagation). Native compila. Gates ✅.
+
 
 **BEE-2306** (commit `feat(http): BEE-2306 inject external trace-id via BeepingClient.Builder`):
 - `BeepingClient.Builder.traceId(value)` público — usado **verbatim** (sin truncar) o autogenera UUID-8 por default; `require(isNotBlank())` en `build()`.
