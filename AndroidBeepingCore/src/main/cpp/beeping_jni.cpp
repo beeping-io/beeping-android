@@ -145,6 +145,37 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidence(JNIEnv* /*env*/
     return BEEPING_GetConfidence(asPtr(handle));
 }
 
+// BEE-2313: reception-quality metrics. Read alongside getConfidence at
+// DECODE_COMPLETE to populate ReceptionMetrics on the Kotlin side.
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidenceError(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                        jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetConfidenceError(asPtr(handle));
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidenceNoise(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                        jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetConfidenceNoise(asPtr(handle));
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getReceivedBeepsVolume(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                            jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetReceivedBeepsVolume(asPtr(handle));
+}
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedMode(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                    jlong handle) {
+    if (handle == 0) return -1;
+    return BEEPING_GetDecodedMode(asPtr(handle));
+}
+
 // BEE-2240: scheduler bridges. Mirror the BEE-2238 public C API:
 //   computeBeepSchedule — pure utility, no handle, returns timestamps[]
 //   encodeWithSchedule  — handle-bound, returns one continuous PCM buffer

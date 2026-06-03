@@ -83,6 +83,16 @@ class BeepingCoreJNI {
 
     external fun getConfidence(handle: Long): Float
 
+    // BEE-2313: reception-quality metrics (read at DECODE_COMPLETE).
+    external fun getConfidenceError(handle: Long): Float
+
+    external fun getConfidenceNoise(handle: Long): Float
+
+    external fun getReceivedBeepsVolume(handle: Long): Float
+
+    /** `BEEPING_GetDecodedMode`: 0=audible, 1=non-audible, 2=hidden; -1 if none. */
+    external fun getDecodedMode(handle: Long): Int
+
     /**
      * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,
      * interval)` schedule. Pure utility — does not need a handle.

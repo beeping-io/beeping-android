@@ -116,6 +116,45 @@ class BeepingClientTest {
         }
 
     @Test
+    fun `BEE-2313 listen propagates ReceptionMetrics on the Decoded payload`() =
+        runTest {
+            val metrics =
+                ReceptionMetrics(
+                    confidence = 0.9f,
+                    confidenceError = 0.1f,
+                    confidenceNoise = 0.3f,
+                    receivedBeepsVolume = 0.7f,
+                    decodedMode = DecodedMode.NON_AUDIBLE,
+                )
+            val payload = BeepingPayload(payload = "abc12", confidence = 0.9f, metrics = metrics)
+            val encoder =
+                object : BeepingEncoder {
+                    override suspend fun encode(key: String): ByteArray = ByteArray(0)
+
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
+
+                    override fun decoded(): Flow<BeepingPayload> = flow { emit(payload) }
+
+                    override fun close() {}
+                }
+
+            client(encoder).listen().test {
+                assertEquals(BeepingEvent.Started, awaitItem())
+                val decoded = awaitItem() as BeepingEvent.Decoded
+                assertEquals(metrics, decoded.payload.metrics)
+                assertEquals(BeepingEvent.Stopped, awaitItem())
+                awaitComplete()
+            }
+        }
+
+    @Test
     fun `listen maps AudioFocusLost to Failed then Stopped`() =
         runTest {
             // BEE-2307: LocalEncoder closes the decode flow with

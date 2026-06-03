@@ -176,7 +176,15 @@ internal class LocalEncoder(
                         val state = jni.decodeBuffer(handle, floatBuf, n)
                         if (state == BeepingCoreJNI.DECODE_COMPLETE) {
                             jni.getDecodedData(handle)?.let { payload ->
-                                trySend(BeepingPayload(payload = payload.trimEnd(' ')))
+                                // BEE-2313: read signal-quality metrics for this decode.
+                                val metrics = readReceptionMetrics(handle)
+                                trySend(
+                                    BeepingPayload(
+                                        payload = payload.trimEnd(' '),
+                                        confidence = metrics.confidence,
+                                        metrics = metrics,
+                                    ),
+                                )
                             }
                         }
                     }
@@ -213,6 +221,20 @@ internal class LocalEncoder(
             recordBufferBytes,
         )
     }
+
+    /**
+     * BEE-2313: reads the full set of reception-quality metrics for the decode
+     * currently held by [handle]. Call immediately after `DECODE_COMPLETE`, while
+     * the native object still holds the metrics for the last decoded payload.
+     */
+    private fun readReceptionMetrics(handle: Long): ReceptionMetrics =
+        ReceptionMetrics(
+            confidence = jni.getConfidence(handle),
+            confidenceError = jni.getConfidenceError(handle),
+            confidenceNoise = jni.getConfidenceNoise(handle),
+            receivedBeepsVolume = jni.getReceivedBeepsVolume(handle),
+            decodedMode = DecodedMode.fromRaw(jni.getDecodedMode(handle)),
+        )
 
     override fun close() {
         // No persistent state — handles are owned per-encode and per-decode session.
