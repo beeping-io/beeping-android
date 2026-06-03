@@ -14,6 +14,10 @@ package com.beeping.AndroidBeepingCore
  * @property receivedBeepsVolume Mean volume of the received beeps
  *   (`BEEPING_GetReceivedBeepsVolume`).
  * @property decodedMode The band the payload was decoded in (`BEEPING_GetDecodedMode`).
+ * @property decodingBeginFreq Lower bound (Hz) of the active decode band
+ *   (`BEEPING_GetDecodingBeginFreq`, BEE-2315).
+ * @property decodingEndFreq Upper bound (Hz) of the active decode band
+ *   (`BEEPING_GetDecodingEndFreq`, BEE-2315).
  */
 data class ReceptionMetrics(
     val confidence: Float,
@@ -21,4 +25,6 @@ data class ReceptionMetrics(
     val confidenceNoise: Float,
     val receivedBeepsVolume: Float,
     val decodedMode: DecodedMode,
+    val decodingBeginFreq: Float,
+    val decodingEndFreq: Float,
 )

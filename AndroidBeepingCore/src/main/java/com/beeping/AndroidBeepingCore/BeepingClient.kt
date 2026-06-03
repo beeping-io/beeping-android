@@ -237,6 +237,19 @@ class BeepingClient internal constructor(
         }
     }
 
+    /**
+     * BEE-2315: the underlying `beeping-core` native library version string.
+     *
+     * @throws BeepingException with [BeepingError.NativeLibraryNotLoaded] if the
+     *   native library failed to load (e.g. on a JVM/host test runtime).
+     */
+    fun coreVersion(): String {
+        if (!BeepingCoreJNI.isNativeLoaded()) {
+            throw BeepingException(BeepingError.NativeLibraryNotLoaded)
+        }
+        return BeepingCoreJNI().getVersion()
+    }
+
     /** Releases all resources and cancels any active listen session. Idempotent. */
     fun close() {
         if (closed) return

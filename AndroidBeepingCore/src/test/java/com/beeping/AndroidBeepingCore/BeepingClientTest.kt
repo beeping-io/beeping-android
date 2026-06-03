@@ -125,6 +125,8 @@ class BeepingClientTest {
                     confidenceNoise = 0.3f,
                     receivedBeepsVolume = 0.7f,
                     decodedMode = DecodedMode.NON_AUDIBLE,
+                    decodingBeginFreq = 17_800f,
+                    decodingEndFreq = 21_000f,
                 )
             val payload = BeepingPayload(payload = "abc12", confidence = 0.9f, metrics = metrics)
             val encoder =
@@ -265,6 +267,14 @@ class BeepingClientTest {
             client.close()
             client.close() // must not throw
         }
+
+    @Test
+    fun `BEE-2315 coreVersion throws NativeLibraryNotLoaded on the JVM`() {
+        // No .so on the JVM test runtime — coreVersion must surface the typed error.
+        val ex = runCatching { client().coreVersion() }.exceptionOrNull()
+        assertTrue("expected BeepingException, got ${ex?.javaClass?.simpleName}", ex is BeepingException)
+        assertEquals(BeepingError.NativeLibraryNotLoaded, (ex as BeepingException).error)
+    }
 
     @Test
     fun `BeepingMode Cloud carries apiKey and endpoint`() {

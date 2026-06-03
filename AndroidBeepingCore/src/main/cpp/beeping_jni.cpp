@@ -286,4 +286,37 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedScheduledPayload(
     return env->NewObject(cls, ctor, jcode, timestampSec);
 }
 
+// BEE-2315: diagnostics — core version (no handle) + active decode frequency
+// range (handle-bound).
+
+JNIEXPORT jstring JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getVersion(JNIEnv* env, jobject /*thiz*/) {
+    const char* version = BEEPING_GetVersion();
+    return env->NewStringUTF(version != nullptr ? version : "");
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getVersionInfo(JNIEnv* env, jobject /*thiz*/) {
+    char info[128] = {0};
+    const int32_t n = BEEPING_GetVersionInfo(info);
+    if (n <= 0) return env->NewStringUTF("");
+    const int32_t safeLen = (n < static_cast<int32_t>(sizeof(info))) ? n : static_cast<int32_t>(sizeof(info)) - 1;
+    info[safeLen] = '\0';
+    return env->NewStringUTF(info);
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodingBeginFreq(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                          jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetDecodingBeginFreq(asPtr(handle));
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodingEndFreq(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                        jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetDecodingEndFreq(asPtr(handle));
+}
+
 }  // extern "C"

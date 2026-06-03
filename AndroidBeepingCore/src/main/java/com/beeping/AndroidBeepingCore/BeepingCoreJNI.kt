@@ -21,6 +21,7 @@ import timber.log.Timber
  * - [DECODE_COMPLETE] (-3): a complete word decoded — call [getDecodedData]
  * - any value ≥ 0: a single token index
  */
+@Suppress("TooManyFunctions") // thin JNI binding facade — count mirrors the C API surface
 class BeepingCoreJNI {
     /**
      * Create a beeping-core handle. beeping-core ≥ 0.8.1 emits its logger
@@ -106,6 +107,18 @@ class BeepingCoreJNI {
      * or the decode/split failed.
      */
     external fun getDecodedScheduledPayload(handle: Long): ScheduledPayload?
+
+    /** BEE-2315: `BEEPING_GetVersion` — core library version string (no handle). */
+    external fun getVersion(): String
+
+    /** `BEEPING_GetVersionInfo` — detailed version info string (no handle). */
+    external fun getVersionInfo(): String
+
+    /** `BEEPING_GetDecodingBeginFreq` — lower bound (Hz) of the active decode band. */
+    external fun getDecodingBeginFreq(handle: Long): Float
+
+    /** `BEEPING_GetDecodingEndFreq` — upper bound (Hz) of the active decode band. */
+    external fun getDecodingEndFreq(handle: Long): Float
 
     /**
      * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,

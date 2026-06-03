@@ -234,6 +234,8 @@ internal class LocalEncoder(
             confidenceNoise = jni.getConfidenceNoise(handle),
             receivedBeepsVolume = jni.getReceivedBeepsVolume(handle),
             decodedMode = DecodedMode.fromRaw(jni.getDecodedMode(handle)),
+            decodingBeginFreq = jni.getDecodingBeginFreq(handle),
+            decodingEndFreq = jni.getDecodingEndFreq(handle),
         )
 
     override fun close() {
