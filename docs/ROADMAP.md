@@ -16,12 +16,12 @@
 | **Margen de riesgo** | 20% (planificación defensiva) |
 | **Fecha fin estimada (con margen)** | 🔄 **WAVE 2 EN CURSO** — ETA 2026-06-09 (wave 1 cerró 2026-05-16) |
 | **Fecha fin sin margen** | wave 2: 2026-06-06 (sáb) |
-| **Story points totales** | 161 SP (125 wave 1 + 36 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security + 2 sample-QA BEE-2331) |
+| **Story points totales** | 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security). BEE-2331 cancelada; example rebuild → BEE-2336 (Phase 10). |
 | **Esfuerzo bruto** | 13.75 días hábiles (wave 1) + 4.1 días (wave 2) |
 | **Esfuerzo con margen** | wave 1: 17 días hábiles (real: 12 sesiones / 18 días cal.) + wave 2: ~5 días |
 | **Estado global** | 🔄 **REABIERTO — wave 2 (C API coverage + contract parity)** desde 2026-06-02. Audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto → 4 tasks nuevas (BEE-2313..2316). Más 3 followups de contract-parity con `beeping_flutter`/iOS (BEE-2305/06/07). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9. |
 | **Última actualización** | 2026-06-02 (trigger: `Scope change — reopen Phase 8 wave 2: +4 C API coverage tasks + 3 contract-parity followups`) |
-| **Tasks completadas** | 28 / 35 · **144 SP cerrados de 161 (89%)** · 14 SP wave 2 open · BEE-67 (3 SP) deferred a Phase 9 |
+| **Tasks completadas** | 28 / 34 · **144 SP cerrados de 159 (91%)** · 12 SP wave 2 open · BEE-2331 cancelada · BEE-67 (3 SP) deferred a Phase 9 |
 | **Velocidad observada** | 122 SP en 12 sesiones (wave 1); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
@@ -95,8 +95,9 @@ Audit `beeping-android` ↔ `beeping-core` v0.8.1: 13 funciones del C API sin ex
 | 28 | [BEE-2320](https://linear.app/me8/issue/BEE-2320) | 🚀 Cut & publish wave-2 release a Maven Central (release-please + GPG) — *blocked by 21–27* | 3 | release ops | ⏳ Pending |
 | 29 | [BEE-2321](https://linear.app/me8/issue/BEE-2321) | ✅ Verify wave-2 release end-to-end (Maven Central consumible + smoke) — *blocked by 28* | 2 | release ops | ⏳ Pending |
 | 30 | [BEE-2326](https://linear.app/me8/issue/BEE-2326) | 🔒 Bump `fast-uri` ≥3.1.2 — resolver 2 Dependabot high (host confusion + path traversal) | 1 | security | ⏳ Pending |
-| 31 | [BEE-2331](https://linear.app/me8/issue/BEE-2331) | 📱 Sample app: selector de encoding mode cableado a `.encodingMode()` (QA físico de BEE-2305) | 2 | sample/QA | ⏳ Pending |
-| | **Totales wave 2** | | **36** | | **5 cerrados (BEE-2307, BEE-2306, BEE-2305, BEE-2313, BEE-2314) / 14 open** |
+| 31 | [BEE-2331](https://linear.app/me8/issue/BEE-2331) | 📱 ~~Sample app: selector de encoding mode~~ | 2 | sample/QA | ❌ Canceled (superseded por BEE-2336, Phase 10) |
+| — | [BEE-2336](https://linear.app/me8/issue/BEE-2336) | 📱 Rebuild example app como copia del de beeping_flutter | 8 | example | 🌅 Phase 10 (diferido) |
+| | **Totales wave 2** | | **34** | | **5 cerrados (BEE-2307, BEE-2306, BEE-2305, BEE-2313, BEE-2314) / 12 open** |
 
 > **Release gating**: BEE-2320 (cut+publish) tiene relaciones `blocks` desde las 7 features → no arranca hasta cerrarlas. BEE-2321 (verify) `blocked by` BEE-2320. El topological sort de `/tasks` las mantiene al final automáticamente.
 

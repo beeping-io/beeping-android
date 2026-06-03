@@ -14,19 +14,33 @@
 - **Fecha fin real (wave 1)**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
-- **Última actualización**: 2026-06-03 (trigger: `Closed BEE-2307/2306/2305/2313/2314 + Scope change — add BEE-2326 + BEE-2331`)
-- **Story points totales**: 161 SP (125 wave 1 + 36 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326 + 2 sample-QA BEE-2331)
+- **Última actualización**: 2026-06-03 (trigger: `Scope change — remove :app sample (BEE-2336 deferred to Phase 10) + cancel BEE-2331`)
+- **Story points totales**: 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326). BEE-2331 cancelada; BEE-2336 (rebuild example) movida a Phase 10.
 - **Story points cerrados**: **144 SP** (122 wave 1 + BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 + BEE-2314 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: **14 SP** (wave 2 open: BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1 + BEE-2331 2)
+- **Story points remaining (esta Phase)**: **12 SP** (wave 2 open: BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1)
 - **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 161 | 2026-04-28 | wave 2 ETA 2026-06-10 | 🔄 In Progress (wave 2) |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 159 | 2026-04-28 | wave 2 ETA 2026-06-09 | 🔄 In Progress (wave 2) |
 
 ---
 
 ## 📜 History
+
+### [2026-06-03] — 🗑️ Scope change — remove `:app` sample (rebuild deferred to Phase 10) + cancel BEE-2331
+
+**Trigger**: `Scope change` (founder). El example app actual (`:app`) se borra; se reconstruirá **desde cero como copia del example de `beeping_flutter`** una vez el plugin de Flutter esté terminado. Razón: consistencia cross-platform — en vez de evolucionar el sample viejo (BEE-64), se copia el de Flutter cuando exista.
+
+**Acciones**:
+- **Borrado** del módulo `:app` (19 ficheros tracked + build artifacts). Removido de `settings.gradle.kts` + CI (`assembleDebug` ahora apunta a `:AndroidBeepingCore`).
+- **BEE-2336** creada en **Phase 10** (8 SP, Backlog): rebuild del example app como copia del de Flutter, cableando toda la API pública del SDK (encodingMode, traceId, reception metrics, scheduled decode, AudioFocusLost, debug console).
+- **BEE-2331** (selector de encoding mode en el sample) → **Canceled** (superseded por BEE-2336).
+- Docs actualizados: `CLAUDE.md` (build commands + Sample app row), `docs/PRODUCTO.md` (nota de removal), `docs/PENDING.md` (pending-009/010 re-apuntadas a BEE-2336), `docs/beeping-core-consumption.md`.
+
+**Net delta (Phase 8)**: −2 SP (BEE-2331 cancelada). Total 161 → 159 SP. Remaining wave 2: 12 SP. El display de reception metrics añadido en BEE-2313 al `:app` desaparece con el borrado (el SDK lo mantiene; el QA de BEE-2313 ya estaba aprobado). BEE-2336 (8 SP) cuenta en Phase 10, no en Phase 8.
+
+---
 
 ### [2026-06-03] — ✅ Closed BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 + 🔒 Scope change: add BEE-2326 + BEE-2331 (+3 SP)
 
