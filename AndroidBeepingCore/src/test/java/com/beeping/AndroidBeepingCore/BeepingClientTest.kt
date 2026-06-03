@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -116,6 +117,82 @@ class BeepingClientTest {
         }
 
     @Test
+    fun `BEE-2313 listen propagates ReceptionMetrics on the Decoded payload`() =
+        runTest {
+            val metrics =
+                ReceptionMetrics(
+                    confidence = 0.9f,
+                    confidenceError = 0.1f,
+                    confidenceNoise = 0.3f,
+                    receivedBeepsVolume = 0.7f,
+                    decodedMode = DecodedMode.NON_AUDIBLE,
+                    decodingBeginFreq = 17_800f,
+                    decodingEndFreq = 21_000f,
+                )
+            val payload = BeepingPayload(payload = "abc12", confidence = 0.9f, metrics = metrics)
+            val encoder =
+                object : BeepingEncoder {
+                    override suspend fun encode(key: String): ByteArray = ByteArray(0)
+
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
+
+                    override fun decoded(): Flow<BeepingPayload> = flow { emit(payload) }
+
+                    override fun close() {}
+                }
+
+            client(encoder).listen().test {
+                assertEquals(BeepingEvent.Started, awaitItem())
+                val decoded = awaitItem() as BeepingEvent.Decoded
+                assertEquals(metrics, decoded.payload.metrics)
+                assertEquals(BeepingEvent.Stopped, awaitItem())
+                awaitComplete()
+            }
+        }
+
+    @Test
+    fun `listen maps AudioFocusLost to Failed then Stopped`() =
+        runTest {
+            // BEE-2307: LocalEncoder closes the decode flow with
+            // BeepingException(AudioFocusLost) on a real loss of audio focus.
+            // listen() must surface it as Failed(AudioFocusLost) then Stopped.
+            val encoder =
+                object : BeepingEncoder {
+                    override suspend fun encode(key: String): ByteArray = ByteArray(0)
+
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
+
+                    override fun decoded(): Flow<BeepingPayload> =
+                        flow {
+                            throw BeepingException(BeepingError.AudioFocusLost)
+                        }
+
+                    override fun close() {}
+                }
+
+            client(encoder).listen().test {
+                assertEquals(BeepingEvent.Started, awaitItem())
+                assertEquals(BeepingEvent.Failed(BeepingError.AudioFocusLost), awaitItem())
+                assertEquals(BeepingEvent.Stopped, awaitItem())
+                awaitComplete()
+            }
+        }
+
+    @Test
     fun `send delegates to encoder_encode and returns success when bytes returned`() =
         runTest {
             val expectedKey = "abc12"
@@ -191,6 +268,20 @@ class BeepingClientTest {
             client.close()
             client.close() // must not throw
         }
+
+    @Test
+    fun `BEE-2315 coreVersion throws NativeLibraryNotLoaded on the JVM`() {
+        // No .so on the JVM test runtime — coreVersion must surface the typed error.
+        val ex = runCatching { client().coreVersion() }.exceptionOrNull()
+        assertTrue("expected BeepingException, got ${ex?.javaClass?.simpleName}", ex is BeepingException)
+        assertEquals(BeepingError.NativeLibraryNotLoaded, (ex as BeepingException).error)
+    }
+
+    @Test
+    fun `BEE-2316 setNativeLogPath returns false on the JVM where native is absent`() {
+        assertFalse(BeepingClient.setNativeLogPath("/tmp/beeping.log"))
+        assertFalse(BeepingClient.setNativeLogPath(null))
+    }
 
     @Test
     fun `BeepingMode Cloud carries apiKey and endpoint`() {

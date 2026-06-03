@@ -49,7 +49,7 @@ dependencia de `preBuild`, así que cualquier `assembleDebug`,
    versión cambió, descarga nueva).
 3. Verificar que `build/intermediates/beeping-core/<abi>/libbeepingcore.so`
    existe para los 3 ABIs.
-4. `./gradlew :AndroidBeepingCore:check :app:assembleDebug` verde.
+4. `./gradlew :AndroidBeepingCore:check :AndroidBeepingCore:assembleDebug` verde.
 5. QA en emulator + device físico (al menos un device con Android 14+
    para 16 KB pages).
 6. Commit con `chore(deps): BEE-XXXX bump beeping-core 0.8.0 → 0.9.0`.
