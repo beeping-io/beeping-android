@@ -36,4 +36,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "beeping-android"
 
-include(":AndroidBeepingCore", ":app")
+// :app (example) removed 2026-06-03 — rebuilt as a copy of the beeping_flutter
+// example after the Flutter plugin lands (BEE-2336, Phase 10).
+include(":AndroidBeepingCore")
