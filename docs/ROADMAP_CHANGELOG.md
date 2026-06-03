@@ -11,22 +11,133 @@
 ## 🎯 Snapshot actual
 
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
-- **Fecha fin real**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
+- **Fecha fin real (wave 1)**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: ✅ **CERRADO (followups incluidos)** — Phase 8 milestone closed con 4 followups post-v0.0.0. `io.beeping:beeping-android:0.0.0` publicado en Maven Central + scheduler API exposed via BEE-2240. R1 + R2 + R3 resueltos. BEE-67 deferred a Phase 9. BEE-2234/2235 partial-closed founder fiat.
-- **Última actualización**: 2026-05-16 (trigger: `Closed Phase 8 followups (BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240)`)
-- **Story points totales**: 125 SP (110 originales + 15 followups: 2 BEE-2248 + 3 BEE-2234 + 5 BEE-2235 + 5 BEE-2240)
-- **Story points cerrados**: **122 SP (BEE-51..66 + BEE-2226 + BEE-1793 + BEE-1815 + 4 followups)** — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: 0 SP
-- **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (2026-04-28 → 2026-05-16)
+- **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
+- **Última actualización**: 2026-06-03 (trigger: `Scope change — remove :app sample (BEE-2336 deferred to Phase 10) + cancel BEE-2331`)
+- **Story points totales**: 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326). BEE-2331 cancelada; BEE-2336 (rebuild example) movida a Phase 10.
+- **Story points cerrados**: **151 SP** (122 wave 1 + BEE-2307/2306/2305/2313/2314/2315/2316/2326 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: **5 SP** (solo release: BEE-2320 3 + BEE-2321 2) — **features + security completas; BEE-2320 desbloqueada**
+- **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
 
-| # | Milestone | SP | Inicio est. | Fin real | Estado |
+| # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 125 | 2026-04-28 | 2026-05-16 | ✅ Done |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 159 | 2026-04-28 | wave 2 ETA 2026-06-09 | 🔄 In Progress (wave 2) |
 
 ---
 
 ## 📜 History
+
+### [2026-06-03] — ✅ Closed BEE-2326 (fast-uri ≥3.1.2 — 2 Dependabot high resueltas)
+
+**BEE-2326** (commit `fix(deps): BEE-2326 force fast-uri >=3.1.2 to clear Dependabot alerts`):
+- `package.json` override `{ "fast-uri": ">=3.1.2" }` + lockfile regen (3.1.0 → 3.1.2). `npm audit` → 0 vulnerabilities. Dev-tooling (commitlint), no entra en el AAR. QA Skipped. **Todas las features + security de wave 2 cerradas — solo queda el release.**
+
+---
+
+### [2026-06-03] — ✅ Closed BEE-2316 (advanced config: SetAudioSignature + SetLogPath, paridad iOS)
+
+**BEE-2316** (commit `feat(jni): BEE-2316 advanced config — SetAudioSignature + SetLogPath`):
+- **Scope shift** (founder "lo mismo que iOS"): el title pedía SetLogPath "paridad iOS" vs el body "skip". Audit de `beeping-ios` confirmó que iOS expone **ambos** (`setAudioSignature` + `setNativeLogPath`) → se bridgean los dos (no skip de SetLogPath). Solo `ResetEncodedAudioBuffer` queda skip (interno, drain — `pending-015`).
+- 2 bridges JNI (`setAudioSignature` handle-bound + `setLogPath` global) verificados en 3 ABIs. `BeepingClient.setAudioSignature(FloatArray?): Boolean` (valida ≤2s, aplica per-encode) + `BeepingClient.setNativeLogPath(String?): Boolean` (static). `BeepingEncoder` gana el método con default `false`.
+- +3 tests. QA Skipped (sample app borrado). **Cierra la C API coverage de wave 2.**
+
+---
+
+### [2026-06-03] — ✅ Closed BEE-2315 (diagnostics: core version + decode freq range)
+
+**BEE-2315** (commit `feat(jni): BEE-2315 diagnostics — core version + decoding freq range`):
+- 4 bridges JNI (`getVersion`/`getVersionInfo` sin handle + `getDecodingBeginFreq`/`getDecodingEndFreq`) — verificados en 3 ABIs. `BeepingClient.coreVersion()` (guard `NativeLibraryNotLoaded`).
+- `ReceptionMetrics` +2 campos de freq (banda activa del decode). detekt `TooManyFunctions` suprimido en `BeepingCoreJNI` (binding 1:1 con el C API).
+- +1 test (coreVersion JVM guard). QA Skipped (sample app borrado → diferido a BEE-2336/2321).
+
+---
+
+### [2026-06-03] — 🗑️ Scope change — remove `:app` sample (rebuild deferred to Phase 10) + cancel BEE-2331
+
+**Trigger**: `Scope change` (founder). El example app actual (`:app`) se borra; se reconstruirá **desde cero como copia del example de `beeping_flutter`** una vez el plugin de Flutter esté terminado. Razón: consistencia cross-platform — en vez de evolucionar el sample viejo (BEE-64), se copia el de Flutter cuando exista.
+
+**Acciones**:
+- **Borrado** del módulo `:app` (19 ficheros tracked + build artifacts). Removido de `settings.gradle.kts` + CI (`assembleDebug` ahora apunta a `:AndroidBeepingCore`).
+- **BEE-2336** creada en **Phase 10** (8 SP, Backlog): rebuild del example app como copia del de Flutter, cableando toda la API pública del SDK (encodingMode, traceId, reception metrics, scheduled decode, AudioFocusLost, debug console).
+- **BEE-2331** (selector de encoding mode en el sample) → **Canceled** (superseded por BEE-2336).
+- Docs actualizados: `CLAUDE.md` (build commands + Sample app row), `docs/PRODUCTO.md` (nota de removal), `docs/PENDING.md` (pending-009/010 re-apuntadas a BEE-2336), `docs/beeping-core-consumption.md`.
+
+**Net delta (Phase 8)**: −2 SP (BEE-2331 cancelada). Total 161 → 159 SP. Remaining wave 2: 12 SP. El display de reception metrics añadido en BEE-2313 al `:app` desaparece con el borrado (el SDK lo mantiene; el QA de BEE-2313 ya estaba aprobado). BEE-2336 (8 SP) cuenta en Phase 10, no en Phase 8.
+
+---
+
+### [2026-06-03] — ✅ Closed BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 + 🔒 Scope change: add BEE-2326 + BEE-2331 (+3 SP)
+
+**BEE-2313** (commits `feat(jni): BEE-2313 expose reception metrics` + `feat(sample): BEE-2313 show metrics in debug console`):
+- C API coverage: 4 JNI bridges nuevos (`getConfidenceError`/`getConfidenceNoise`/`getReceivedBeepsVolume`/`getDecodedMode`) — verificados en los 3 ABIs. `BeepingPayload.confidence` ahora poblado (campo muerto resuelto).
+- Nuevos `ReceptionMetrics` + `DecodedMode` (home de "hidden" como decode-classification). `BeepingPayload.metrics`; accesible vía `Decoded.payload.metrics`.
+- Sample app: panel "Metrics:" + log en debug console (founder pidió añadir el display ahora → QA físico aprobado en esta task, no diferido).
+- +3 tests (DecodedMode mapping + listen propagation). Native compila. Gates ✅.
+
+**BEE-2314** (commit `feat(jni): BEE-2314 scheduled-payload decode`):
+- C API coverage: 2 bridges (`parseScheduledTimestamp` pura + `getDecodedScheduledPayload` handle-bound vía `NewObject`) — bridge ambos (founder). Símbolos verificados en 3 ABIs.
+- `ScheduledPayload(code, timestampSec)` + `BeepingPayload.parseScheduled()` (split del payload ya decodificado; degrada a null sin lib nativa). El C API solo da (code, timestampSec) — no "índice/total"; documentado.
+- 5 tests (split assembly + JVM null-degrade). **QA físico SKIPPED (founder fiat)** — sin display en sample app.
+
+
+**BEE-2306** (commit `feat(http): BEE-2306 inject external trace-id via BeepingClient.Builder`):
+- `BeepingClient.Builder.traceId(value)` público — usado **verbatim** (sin truncar) o autogenera UUID-8 por default; `require(isNotBlank())` en `build()`.
+- Cero cambios en factory/CloudEncoder/logger: el `traceId` resuelto ya fluía a `X-Trace-Id` + tag del logger.
+- `+4` tests en `BeepingClientBuilderTest` (11/11). Header propagation ya cubierta por `CloudEncoderTest`. QA Skipped (telemetría sin UI). Gates ✅.
+
+
+**BEE-2307** (commit `feat(audio): BEE-2307 emit BeepingError.AudioFocusLost on real audio-focus loss`):
+- Nuevo `AudioFocusGuard.kt` (`internal`) — `AudioManager` focus request (AudioFocusRequest API ≥26 / overload legacy 24-25) → `onLoss` en `AUDIOFOCUS_LOSS`/`LOSS_TRANSIENT`; `abandon()` idempotente.
+- `LocalEncoder.decoded()`: instala el guard tras `startRecording()` → `close(BeepingException(AudioFocusLost))` en pérdida; `awaitClose` lo abandona. Extraído `openAudioRecord()` (detekt LongMethod).
+- `BeepingError.kt` KDoc + `BeepingClientTest` (Flow-level) + `AudioFocusGuardTest` (6 tests MockK).
+- Gates ✅: tests 0 fallos, ktlint+detekt 0 issues. QA físico aprobado founder (1 ciclo).
+
+**BEE-2326** (`Scope change`): 2 alertas Dependabot `high` en `package-lock.json` — `fast-uri` (`GHSA-v39h-62p7-jpjc` host confusion + `GHSA-q3j6-qgpj-74h6` path traversal, ambas patched 3.1.2), transitiva de `@commitlint/cli`. Dev-tooling, **no entra en el AAR**. Task creada en Phase 8 wave 2 (1 SP).
+
+**BEE-2305** (commit `feat(audio): BEE-2305 selectable encoding mode (AUDIBLE/NON_AUDIBLE/ALL)`):
+- ⚠️ **Ajuste de contrato**: el spec asumía 4 modos (incl. `hidden`), pero `beeping-core` v0.8.1 solo tiene 3 configure modes (`AUDIBLE=2`, `INAUDIBLE=3`, `ALL=5`). "hidden" es clasificación de decode (`GetDecodedMode`, BEE-2313), no banda seleccionable; iOS tampoco lo expone. **Founder: exponer 3 modos.**
+- Nuevo enum público `BeepingEncodingMode` (rawValue == core) + `Builder.encodingMode()` (default ALL) → `LocalEncoder.encode/decoded` dejan de hardcodear INAUDIBLE/ALL. Borrado `EnumBeepingMode` (desalineado). `send`: ALL→inaudible; `listen`: directo. +7 tests. Gates ✅.
+- **QA físico DEFERRED** (founder): requiere selector en el sample app → **BEE-2331** (`Scope change`, +2 SP) creada para el selector + QA audible-vs-no-audible.
+- Follow-up Flutter: contrato BEE-85 a 3 valores (Phase 10).
+
+**Net delta acumulado del día**: cerradas BEE-2307 (2) + BEE-2306 (2) + BEE-2305 (5) = 9 SP. Nuevas BEE-2326 (1) + BEE-2331 (2) = +3 SP. Total 158 → 161 SP. Cerrados 122 → 131. Remaining wave 2: 27 SP.
+
+---
+
+### [2026-06-02] — 🔄 Scope change — reopen Phase 8 wave 2: C API coverage + contract parity (+28 SP)
+
+**Trigger detallado**: `Scope change`. Durante el arranque de los followups de contract-parity (BEE-2305/06/07, ya en el milestone pero **nunca reflejados en el ROADMAP**) se corrió un audit de cobertura `beeping-android` ↔ `beeping-core` v0.8.1. Resultado:
+
+- **Versión**: ✅ al día — pinned `beepingCore = "0.8.1"` (`gradle/libs.versions.toml:77`) == último release GitHub (`v0.8.1`, 2026-05-15). Sin drift.
+- **Cobertura C API**: ❌ parcial — de las **24 funciones** del C API (`include/BeepingCoreLib_api.h`), 13 no están bridged y `BEEPING_GetConfidence` está bridged en JNI+Kotlin pero **nunca se llama** → `BeepingPayload.confidence` es un campo muerto (siempre default).
+
+**Decisión del founder** (2026-06-02): crear 4 tasks nuevas de cobertura (las 4 aprobadas) + trackear las 3 contract-parity ya existentes. Phase 8 se reabre como **wave 2**.
+
+**Tasks añadidas a Phase 8 (wave 2, +28 SP)**:
+
+Contract parity (ya en milestone, ahora tracked en ROADMAP · 9 SP):
+- **BEE-2307** (2 SP) — 🐛 Emitir `BeepingError.AudioFocusLost` en pérdida real de foco de audio
+- **BEE-2306** (2 SP) — 🔗 Inyección de trace-id externo en `BeepingClient.Builder` (X-Trace-Id e2e)
+- **BEE-2305** (5 SP) — 🎚️ Exponer encoding mode (audible/nonAudible/hidden/all)
+
+C API coverage (nuevas · 19 SP):
+- **BEE-2313** (8 SP) — 📊 Exponer reception metrics (confidence/error/noise/volume/mode) en `BeepingEvent.Decoded`
+- **BEE-2314** (5 SP) — 🗓️ Scheduled-payload decode (`ParseScheduledPayload` + `GetDecodedScheduledPayload`)
+- **BEE-2315** (3 SP) — 🔧 Diagnostics: decoding frequency range + core version
+- **BEE-2316** (3 SP) — 🎛️ Advanced config: `SetAudioSignature` + skip documentado de `SetLogPath`/`Reset`
+
+Release ops (al final del milestone · 5 SP · gated por `blocks` relations sobre las 7 features):
+- **BEE-2320** (3 SP) — 🚀 Cut & publish wave-2 release a Maven Central (release-please + GPG) · *blocked by* las 7 features
+- **BEE-2321** (2 SP) — ✅ Verify wave-2 release end-to-end (artefacto Maven Central consumible + smoke) · *blocked by* BEE-2320
+
+**Skip intencional documentado** (a `docs/PENDING.md` vía BEE-2316): `BEEPING_SetLogPath` (BEE-2248 eliminó el workaround de logs — no se re-introduce) + `BEEPING_ResetEncodedAudioBuffer` (uso interno, cubierto por el drain).
+
+**Net delta global**: +33 SP (158 total). Milestone Phase 8: `✅ Done` → `🔄 In Progress (wave 2)`. ETA wave 2: 2026-06-10 (33 SP / 8 SP·día × 1.2 margen ≈ 5 días hábiles desde 2026-06-02). Orden de ejecución: BEE-2307 primero (founder), features después, y **release (BEE-2320 → BEE-2321) al final** vía `blocks` relations. Sin cambios en milestones downstream (Phase 9+ consumen el AAR ya publicado; la nueva API es aditiva, no breaking).
+
+**Riesgos**: sin nuevos. R2 (16 KB pages) resuelto en wave 1. Las 4 tasks de coverage son aditivas sobre el JNI shim ya estable (BEE-2226/2248).
+
+---
 
 ### [2026-05-16] — ✅ Closed Phase 8 followups burndown (BEE-2248 + BEE-2234 + BEE-2235 + BEE-2240) — milestone reopen + close
 

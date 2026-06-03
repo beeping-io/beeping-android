@@ -145,6 +145,37 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidence(JNIEnv* /*env*/
     return BEEPING_GetConfidence(asPtr(handle));
 }
 
+// BEE-2313: reception-quality metrics. Read alongside getConfidence at
+// DECODE_COMPLETE to populate ReceptionMetrics on the Kotlin side.
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidenceError(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                        jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetConfidenceError(asPtr(handle));
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getConfidenceNoise(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                        jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetConfidenceNoise(asPtr(handle));
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getReceivedBeepsVolume(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                            jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetReceivedBeepsVolume(asPtr(handle));
+}
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedMode(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                    jlong handle) {
+    if (handle == 0) return -1;
+    return BEEPING_GetDecodedMode(asPtr(handle));
+}
+
 // BEE-2240: scheduler bridges. Mirror the BEE-2238 public C API:
 //   computeBeepSchedule — pure utility, no handle, returns timestamps[]
 //   encodeWithSchedule  — handle-bound, returns one continuous PCM buffer
@@ -213,6 +244,107 @@ Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_encodeWithSchedule(
     if (out == nullptr) return nullptr;
     env->SetFloatArrayRegion(out, 0, written, buf.data());
     return out;
+}
+
+// BEE-2314: scheduled-payload decode. Mirror the BEE-2240 encode side.
+//   parseScheduledTimestamp — pure utility (no handle): split a payload string
+//     `code + 4-char base-32 timestamp`, returning the timestamp in seconds.
+//   getDecodedScheduledPayload — handle-bound: GetDecodedData + split in one
+//     step, returning a ScheduledPayload object (or null on no-data/failure).
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_parseScheduledTimestamp(
+        JNIEnv* env, jobject /*thiz*/, jstring payload) {
+    if (payload == nullptr) return -2;
+    const char* utf = env->GetStringUTFChars(payload, nullptr);
+    if (utf == nullptr) return -2;
+    const jsize len = env->GetStringUTFLength(payload);
+    int32_t timestampSec = -1;
+    // outCode = nullptr → only the timestamp is decoded; rc is 0 or -2.
+    const int32_t rc = BEEPING_ParseScheduledPayload(
+            utf, static_cast<int32_t>(len), nullptr, 0, nullptr, &timestampSec);
+    env->ReleaseStringUTFChars(payload, utf);
+    return (rc != 0) ? rc : timestampSec;
+}
+
+JNIEXPORT jobject JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodedScheduledPayload(
+        JNIEnv* env, jobject /*thiz*/, jlong handle) {
+    if (handle == 0) return nullptr;
+    char code[kDecodedBufferSize] = {0};
+    int32_t codeSize = 0;
+    int32_t timestampSec = -1;
+    const int32_t rc = BEEPING_GetDecodedScheduledPayload(
+            code, kDecodedBufferSize, &codeSize, &timestampSec, asPtr(handle));
+    // rc: >0 ok; 0 no data; negative integrity/-10 split failure.
+    if (rc <= 0) return nullptr;
+    jclass cls = env->FindClass("com/beeping/AndroidBeepingCore/ScheduledPayload");
+    if (cls == nullptr) return nullptr;
+    jmethodID ctor = env->GetMethodID(cls, "<init>", "(Ljava/lang/String;I)V");
+    if (ctor == nullptr) return nullptr;
+    jstring jcode = env->NewStringUTF(code);
+    return env->NewObject(cls, ctor, jcode, timestampSec);
+}
+
+// BEE-2315: diagnostics — core version (no handle) + active decode frequency
+// range (handle-bound).
+
+JNIEXPORT jstring JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getVersion(JNIEnv* env, jobject /*thiz*/) {
+    const char* version = BEEPING_GetVersion();
+    return env->NewStringUTF(version != nullptr ? version : "");
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getVersionInfo(JNIEnv* env, jobject /*thiz*/) {
+    char info[128] = {0};
+    const int32_t n = BEEPING_GetVersionInfo(info);
+    if (n <= 0) return env->NewStringUTF("");
+    const int32_t safeLen = (n < static_cast<int32_t>(sizeof(info))) ? n : static_cast<int32_t>(sizeof(info)) - 1;
+    info[safeLen] = '\0';
+    return env->NewStringUTF(info);
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodingBeginFreq(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                          jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetDecodingBeginFreq(asPtr(handle));
+}
+
+JNIEXPORT jfloat JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_getDecodingEndFreq(JNIEnv* /*env*/, jobject /*thiz*/,
+                                                                        jlong handle) {
+    if (handle == 0) return 0.0f;
+    return BEEPING_GetDecodingEndFreq(asPtr(handle));
+}
+
+// BEE-2316: advanced config — custom audio signature (handle-bound) + log path
+// (global). Mirrors the iOS BeepingC wrapper.
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_setAudioSignature(JNIEnv* env, jobject /*thiz*/,
+                                                                       jlong handle, jfloatArray samples) {
+    if (handle == 0) return -1;
+    if (samples == nullptr) {
+        return BEEPING_SetAudioSignature(0, nullptr, asPtr(handle));
+    }
+    const jsize len = env->GetArrayLength(samples);
+    jfloat* buf = env->GetFloatArrayElements(samples, nullptr);
+    if (buf == nullptr) return -1;
+    const int32_t rc = BEEPING_SetAudioSignature(static_cast<int32_t>(len), buf, asPtr(handle));
+    env->ReleaseFloatArrayElements(samples, buf, JNI_ABORT);  // read-only — discard copy
+    return rc;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_beeping_AndroidBeepingCore_BeepingCoreJNI_setLogPath(JNIEnv* env, jobject /*thiz*/, jstring path) {
+    if (path == nullptr) return BEEPING_SetLogPath(nullptr);
+    const char* utf = env->GetStringUTFChars(path, nullptr);
+    if (utf == nullptr) return BEEPING_SetLogPath(nullptr);
+    const int32_t rc = BEEPING_SetLogPath(utf);
+    env->ReleaseStringUTFChars(path, utf);
+    return rc;
 }
 
 }  // extern "C"

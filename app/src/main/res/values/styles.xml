@@ -1,8 +1,0 @@
-<resources>
-    <!--
-        Theme used by AndroidManifest before the Compose surface inflates. We
-        keep the splash transparent so MainActivity's Compose content paints
-        directly. setContent { } applies its own MaterialTheme.
-    -->
-    <style name="Theme.BeepingSample" parent="android:Theme.Material.Light.NoActionBar" />
-</resources>

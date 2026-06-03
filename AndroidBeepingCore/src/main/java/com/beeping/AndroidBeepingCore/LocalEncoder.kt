@@ -2,8 +2,10 @@ package com.beeping.AndroidBeepingCore
 
 import android.Manifest
 import android.content.Context
+import android.content.Context.AUDIO_SERVICE
 import android.content.pm.PackageManager
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import androidx.core.content.ContextCompat
@@ -36,8 +38,26 @@ import java.nio.ByteOrder
 internal class LocalEncoder(
     private val context: Context,
     private val jni: BeepingCoreJNI = BeepingCoreJNI(),
+    val encodingMode: BeepingEncodingMode = BeepingEncodingMode.ALL,
     @Suppress("unused") traceId: String = "anon",
 ) : BeepingEncoder {
+    // BEE-2316: custom audio signature applied per-encode (no persistent handle).
+    private var audioSignature: FloatArray? = null
+
+    override fun setAudioSignature(samples: FloatArray?): Boolean {
+        if (samples == null || samples.isEmpty()) {
+            audioSignature = null
+            return true
+        }
+        if (samples.size > MAX_SIGNATURE_SAMPLES) return false
+        audioSignature = samples
+        return true
+    }
+
+    private fun applyAudioSignature(handle: Long) {
+        audioSignature?.let { jni.setAudioSignature(handle, it) }
+    }
+
     override suspend fun encode(key: String): ByteArray {
         require(key.matches(KEY_PATTERN)) {
             "Key must match the 5-char base32 pattern $KEY_PATTERN_STR (got '$key')"
@@ -50,8 +70,11 @@ internal class LocalEncoder(
         check(handle != 0L) { "BEEPING_Create returned null handle" }
 
         try {
-            val cfg = jni.configure(handle, BEEPING_MODE_INAUDIBLE, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
+            // BEE-2305: configure the encode band from the selected mode.
+            // ALL is decode-only → encodeConfigureMode maps it to INAUDIBLE.
+            val cfg = jni.configure(handle, encodingMode.encodeConfigureMode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             check(cfg >= 0) { "BEEPING_Configure failed (rc=$cfg)" }
+            applyAudioSignature(handle)
 
             val total = jni.encode(handle, key, ENCODE_TYPE_PURE_TONES)
             check(total > 0) { "BEEPING_EncodeDataToAudioBuffer returned $total" }
@@ -86,6 +109,7 @@ internal class LocalEncoder(
             val mode = if (audible) BEEPING_MODE_AUDIBLE else BEEPING_MODE_INAUDIBLE
             val cfg = jni.configure(handle, mode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             check(cfg >= 0) { "BEEPING_Configure failed (rc=$cfg)" }
+            applyAudioSignature(handle)
 
             val pcm =
                 jni.encodeWithSchedule(handle, key, ENCODE_TYPE_PURE_TONES, duration, startTime, interval, beepGainDb)
@@ -137,25 +161,10 @@ internal class LocalEncoder(
             val handle = jni.create()
             check(handle != 0L) { "BEEPING_Create returned null handle" }
 
-            val minBufferBytes =
-                AudioRecord.getMinBufferSize(
-                    SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                )
-            val recordBufferBytes = maxOf(minBufferBytes, BUFFER_SIZE * Short.SIZE_BYTES * 4)
+            val record = openAudioRecord()
 
-            @Suppress("MissingPermission") // checked above
-            val record =
-                AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    recordBufferBytes,
-                )
-
-            val cfg = jni.configure(handle, BEEPING_MODE_ALL, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
+            // BEE-2305: decode in the selected band (default ALL = both bands).
+            val cfg = jni.configure(handle, encodingMode.decodeConfigureMode, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             if (cfg < 0) {
                 record.release()
                 jni.destroy(handle)
@@ -163,6 +172,15 @@ internal class LocalEncoder(
             }
 
             record.startRecording()
+
+            // BEE-2307: emit BeepingError.AudioFocusLost on a real loss of audio
+            // focus (incoming call, assistant, another app grabbing the mic).
+            // Terminal for this session — close the flow with the typed cause so
+            // BeepingClient.listen() surfaces it as Failed(AudioFocusLost) + Stopped.
+            val focusGuard = AudioFocusGuard(context.getSystemService(AUDIO_SERVICE) as AudioManager)
+            focusGuard.request {
+                close(BeepingException(BeepingError.AudioFocusLost))
+            }
 
             val readerJob =
                 launch(Dispatchers.IO) {
@@ -177,19 +195,67 @@ internal class LocalEncoder(
                         val state = jni.decodeBuffer(handle, floatBuf, n)
                         if (state == BeepingCoreJNI.DECODE_COMPLETE) {
                             jni.getDecodedData(handle)?.let { payload ->
-                                trySend(BeepingPayload(payload = payload.trimEnd(' ')))
+                                // BEE-2313: read signal-quality metrics for this decode.
+                                val metrics = readReceptionMetrics(handle)
+                                trySend(
+                                    BeepingPayload(
+                                        payload = payload.trimEnd(' '),
+                                        confidence = metrics.confidence,
+                                        metrics = metrics,
+                                    ),
+                                )
                             }
                         }
                     }
                 }
 
             awaitClose {
+                focusGuard.abandon()
                 readerJob.cancel()
                 runCatching { record.stop() }
                 runCatching { record.release() }
                 jni.destroy(handle)
             }
         }
+
+    /**
+     * Opens a MONO 16-bit PCM [AudioRecord] on the mic at [SAMPLE_RATE], sized
+     * to the larger of the platform minimum and four JNI buffers. The caller
+     * must have verified `RECORD_AUDIO` before invoking.
+     */
+    @Suppress("MissingPermission") // RECORD_AUDIO checked by decoded() before this call
+    private fun openAudioRecord(): AudioRecord {
+        val minBufferBytes =
+            AudioRecord.getMinBufferSize(
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
+        val recordBufferBytes = maxOf(minBufferBytes, BUFFER_SIZE * Short.SIZE_BYTES * 4)
+        return AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            SAMPLE_RATE,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            recordBufferBytes,
+        )
+    }
+
+    /**
+     * BEE-2313: reads the full set of reception-quality metrics for the decode
+     * currently held by [handle]. Call immediately after `DECODE_COMPLETE`, while
+     * the native object still holds the metrics for the last decoded payload.
+     */
+    private fun readReceptionMetrics(handle: Long): ReceptionMetrics =
+        ReceptionMetrics(
+            confidence = jni.getConfidence(handle),
+            confidenceError = jni.getConfidenceError(handle),
+            confidenceNoise = jni.getConfidenceNoise(handle),
+            receivedBeepsVolume = jni.getReceivedBeepsVolume(handle),
+            decodedMode = DecodedMode.fromRaw(jni.getDecodedMode(handle)),
+            decodingBeginFreq = jni.getDecodingBeginFreq(handle),
+            decodingEndFreq = jni.getDecodingEndFreq(handle),
+        )
 
     override fun close() {
         // No persistent state — handles are owned per-encode and per-decode session.
@@ -232,10 +298,11 @@ internal class LocalEncoder(
         private val KEY_PATTERN = Regex("^[0-9a-v]{5}$")
         private const val KEY_PATTERN_STR = "^[0-9a-v]{5}\$"
 
-        // BEEPING_MODE enum mirror — from BeepingCoreLib_api.h.
+        // BEEPING_MODE enum mirror — from BeepingCoreLib_api.h. Used by
+        // encodeScheduled's audible flag; send()/listen() now route through
+        // BeepingEncodingMode (BEE-2305).
         private const val BEEPING_MODE_AUDIBLE = 2
         private const val BEEPING_MODE_INAUDIBLE = 3
-        private const val BEEPING_MODE_ALL = 5
 
         // Encoding type: 0 = pure tones (default). 1 = R2D2 ornament, 2 = melody.
         private const val ENCODE_TYPE_PURE_TONES = 0
@@ -249,6 +316,10 @@ internal class LocalEncoder(
 
         private const val SHORT_TO_FLOAT_DIVISOR = 32768f
         private const val MAX_PCM_AMPLITUDE = 32767f
+
+        // BEE-2316: max audio-signature length — 2 s of mono PCM at 44.1 kHz
+        // (mirrors the iOS SDK's 2-second cap).
+        private const val MAX_SIGNATURE_SAMPLES = SAMPLE_RATE * 2
 
         // Standard 44-byte WAV header for PCM 16-bit mono.
         private const val WAV_HEADER_SIZE = 44

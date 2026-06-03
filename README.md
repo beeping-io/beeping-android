@@ -262,6 +262,21 @@ Real config lands in Phase 8. Targets per `docs/PRODUCTO.md` section 12:
 
 ---
 
+## 💬 Community
+
+### Chat & support
+
+- 💬 **Discord** — [chat with the team and other developers](https://discord.gg/beeping)
+- 💼 **Slack** — coming soon (will be cross-bridged with Discord)
+- 🐛 **Issues** — see the [issue tracker](issues) for bugs and feature requests
+
+### Follow us
+
+Social handles coming soon — see the issue tracker for status.
+
+- 🐦 X (Twitter) · 💼 LinkedIn · 📸 Instagram · 🎵 TikTok
+- 📺 YouTube · 🐘 Mastodon · 🦋 Bluesky
+
 ## 🤝 Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). Conventions, branch model and PR
@@ -271,6 +286,16 @@ rules are shared ecosystem-wide via
 ## 🔒 Security
 
 See [`SECURITY.md`](SECURITY.md). **Do not open public issues for vulnerabilities.**
+
+## 💬 Community
+
+Have a question, idea or showcase? Three places to talk:
+
+- **GitHub Discussions** — async forum, indexable: <https://github.com/beeping-io/.github/discussions>
+- **Slack** — real-time chat: [join the workspace](https://join.slack.com/t/beeping-io/shared_invite/zt-3yv2kc6qs-tWxx1AViHgdEembSPqm26Q)
+- **Discord** — same channels, Discord flavour: <https://discord.gg/XNPXdZK7>
+
+Code of Conduct (Contributor Covenant 2.1): <https://github.com/beeping-io/.github/blob/main/CODE_OF_CONDUCT.md>
 
 ## 📜 License
 

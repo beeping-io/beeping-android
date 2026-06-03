@@ -55,8 +55,8 @@ jobs:
       - name: 📊 Coverage report + threshold gate (Kover ≥ 70%)
         run: ./gradlew --no-daemon :AndroidBeepingCore:koverXmlReport :AndroidBeepingCore:koverHtmlReport :AndroidBeepingCore:koverVerify
 
-      - name: 🏗️ Assemble debug APK (`:app:assembleDebug`)
-        run: ./gradlew --no-daemon :app:assembleDebug
+      - name: 🏗️ Assemble library AAR (`:AndroidBeepingCore:assembleDebug`)
+        run: ./gradlew --no-daemon :AndroidBeepingCore:assembleDebug
 
       - name: 📤 Upload test reports
         if: always()

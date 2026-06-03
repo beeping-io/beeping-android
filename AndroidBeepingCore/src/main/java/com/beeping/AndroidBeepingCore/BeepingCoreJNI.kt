@@ -21,6 +21,7 @@ import timber.log.Timber
  * - [DECODE_COMPLETE] (-3): a complete word decoded — call [getDecodedData]
  * - any value ≥ 0: a single token index
  */
+@Suppress("TooManyFunctions") // thin JNI binding facade — count mirrors the C API surface
 class BeepingCoreJNI {
     /**
      * Create a beeping-core handle. beeping-core ≥ 0.8.1 emits its logger
@@ -82,6 +83,59 @@ class BeepingCoreJNI {
     external fun getDecodedData(handle: Long): String?
 
     external fun getConfidence(handle: Long): Float
+
+    // BEE-2313: reception-quality metrics (read at DECODE_COMPLETE).
+    external fun getConfidenceError(handle: Long): Float
+
+    external fun getConfidenceNoise(handle: Long): Float
+
+    external fun getReceivedBeepsVolume(handle: Long): Float
+
+    /** `BEEPING_GetDecodedMode`: 0=audible, 1=non-audible, 2=hidden; -1 if none. */
+    external fun getDecodedMode(handle: Long): Int
+
+    /**
+     * BEE-2314: `BEEPING_ParseScheduledPayload` (pure, no handle). Splits a
+     * `code + 4-char base-32 timestamp` payload and returns the timestamp in
+     * seconds (>= 0), or a negative error code (-2 = invalid / too short).
+     */
+    external fun parseScheduledTimestamp(payload: String): Int
+
+    /**
+     * BEE-2314: `BEEPING_GetDecodedScheduledPayload` (handle-bound). Reads the
+     * last decoded payload and splits it. Returns `null` when there is no data
+     * or the decode/split failed.
+     */
+    external fun getDecodedScheduledPayload(handle: Long): ScheduledPayload?
+
+    /** BEE-2315: `BEEPING_GetVersion` — core library version string (no handle). */
+    external fun getVersion(): String
+
+    /** `BEEPING_GetVersionInfo` — detailed version info string (no handle). */
+    external fun getVersionInfo(): String
+
+    /** `BEEPING_GetDecodingBeginFreq` — lower bound (Hz) of the active decode band. */
+    external fun getDecodingBeginFreq(handle: Long): Float
+
+    /** `BEEPING_GetDecodingEndFreq` — upper bound (Hz) of the active decode band. */
+    external fun getDecodingEndFreq(handle: Long): Float
+
+    /**
+     * BEE-2316: `BEEPING_SetAudioSignature` (handle-bound). Installs a custom
+     * audio signature (float32 mono PCM) mixed over encoded output; an empty
+     * array clears it. Returns 0 on success, negative on failure.
+     */
+    external fun setAudioSignature(
+        handle: Long,
+        samples: FloatArray,
+    ): Int
+
+    /**
+     * BEE-2316: `BEEPING_SetLogPath` (global, no handle). Sets the absolute file
+     * path for core logs; `null` resets to the library default. Returns 0 on
+     * success, negative on failure.
+     */
+    external fun setLogPath(path: String?): Int
 
     /**
      * BEE-2240: compute the timestamps of each beep in a `(duration, startTime,

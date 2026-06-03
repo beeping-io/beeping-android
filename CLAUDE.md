@@ -37,7 +37,7 @@ locally via JNI to `beeping-core` or remotely via the `beepbox` HTTP server.
 | Public API | Singleton-ish + listener | `BeepingClient` instance + `Flow<BeepingEvent>` | BEE-56 |
 | Native libs | Vendored `.so` (Jul 2020) | Consumed from `beeping-core` GH releases | BEE-65 |
 | Distribution | None | Maven Central + GH Releases (signed) | BEE-66 |
-| Sample app | Empty manifest, no Activity | Jetpack Compose + debug console | BEE-64 |
+| Sample app | Empty manifest, no Activity | **Removed 2026-06-03** — rebuilt as a copy of the `beeping_flutter` example after the Flutter plugin lands | BEE-2336 (Phase 10) |
 | CI | None | GitHub Actions (lint + test + assemble) | Paso 5 / BEE-63 / BEE-62 |
 | Lint | None | ktlint + detekt + Android Lint strict | BEE-63 |
 | Tests | 1 trivial JVM test | JUnit5 + MockK + Robolectric + Kotest + Paparazzi + Pitest + instrumented | BEE-62 |
@@ -114,7 +114,7 @@ Currently (legacy stack, JDK 11):
 
 - `./build.sh` — clean+test+assemble shortcut
 - `./gradlew :AndroidBeepingCore:test` — unit tests
-- `./gradlew :app:assembleDebug` — sample APK
+- `./gradlew :AndroidBeepingCore:assembleDebug` — library AAR (the `:app` example was removed 2026-06-03; see BEE-2336)
 
 After BEE-52 modernization:
 

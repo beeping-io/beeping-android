@@ -284,6 +284,11 @@ Internamente:
 
 ### Módulo `:app` (sample app)
 
+> ⚠️ **Removido 2026-06-03.** El módulo `:app` se borró; el example app se
+> reconstruirá como copia del example de `beeping_flutter` una vez el plugin de
+> Flutter esté terminado (BEE-2336, Phase 10). La descripción de abajo es la
+> referencia de qué debe cubrir el example reconstruido.
+
 App Compose + Material 3 demostrativa que:
 - Lista los modos (LOCAL / CLOUD) seleccionables.
 - Muestra el debug console con eventos `BeepingEvent` en tiempo real.
