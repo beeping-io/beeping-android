@@ -11,7 +11,15 @@ sealed class BeepingError {
     /** RECORD_AUDIO permission was denied or revoked at runtime. Recoverable. */
     data object MissingMicPermission : BeepingError()
 
-    /** Audio focus was lost mid-session (e.g. an incoming call). Recoverable. */
+    /**
+     * Audio focus was lost mid-session — an incoming call, the voice assistant,
+     * or another app grabbing the mic (BEE-2307).
+     *
+     * Terminal for the current listening session: [BeepingClient.listen] emits
+     * [BeepingEvent.Failed] with this error followed by [BeepingEvent.Stopped].
+     * Recoverable at the host level — collect [BeepingClient.listen] again once
+     * focus is regained to re-arm.
+     */
     data object AudioFocusLost : BeepingError()
 
     /** `libbeepingcore.so` failed to load. Non-recoverable in [BeepingMode.Local]. */

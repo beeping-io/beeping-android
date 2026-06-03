@@ -2,8 +2,10 @@ package com.beeping.AndroidBeepingCore
 
 import android.Manifest
 import android.content.Context
+import android.content.Context.AUDIO_SERVICE
 import android.content.pm.PackageManager
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import androidx.core.content.ContextCompat
@@ -137,23 +139,7 @@ internal class LocalEncoder(
             val handle = jni.create()
             check(handle != 0L) { "BEEPING_Create returned null handle" }
 
-            val minBufferBytes =
-                AudioRecord.getMinBufferSize(
-                    SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                )
-            val recordBufferBytes = maxOf(minBufferBytes, BUFFER_SIZE * Short.SIZE_BYTES * 4)
-
-            @Suppress("MissingPermission") // checked above
-            val record =
-                AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    recordBufferBytes,
-                )
+            val record = openAudioRecord()
 
             val cfg = jni.configure(handle, BEEPING_MODE_ALL, SAMPLE_RATE.toFloat(), BUFFER_SIZE)
             if (cfg < 0) {
@@ -163,6 +149,15 @@ internal class LocalEncoder(
             }
 
             record.startRecording()
+
+            // BEE-2307: emit BeepingError.AudioFocusLost on a real loss of audio
+            // focus (incoming call, assistant, another app grabbing the mic).
+            // Terminal for this session — close the flow with the typed cause so
+            // BeepingClient.listen() surfaces it as Failed(AudioFocusLost) + Stopped.
+            val focusGuard = AudioFocusGuard(context.getSystemService(AUDIO_SERVICE) as AudioManager)
+            focusGuard.request {
+                close(BeepingException(BeepingError.AudioFocusLost))
+            }
 
             val readerJob =
                 launch(Dispatchers.IO) {
@@ -184,12 +179,36 @@ internal class LocalEncoder(
                 }
 
             awaitClose {
+                focusGuard.abandon()
                 readerJob.cancel()
                 runCatching { record.stop() }
                 runCatching { record.release() }
                 jni.destroy(handle)
             }
         }
+
+    /**
+     * Opens a MONO 16-bit PCM [AudioRecord] on the mic at [SAMPLE_RATE], sized
+     * to the larger of the platform minimum and four JNI buffers. The caller
+     * must have verified `RECORD_AUDIO` before invoking.
+     */
+    @Suppress("MissingPermission") // RECORD_AUDIO checked by decoded() before this call
+    private fun openAudioRecord(): AudioRecord {
+        val minBufferBytes =
+            AudioRecord.getMinBufferSize(
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
+        val recordBufferBytes = maxOf(minBufferBytes, BUFFER_SIZE * Short.SIZE_BYTES * 4)
+        return AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            SAMPLE_RATE,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            recordBufferBytes,
+        )
+    }
 
     override fun close() {
         // No persistent state — handles are owned per-encode and per-decode session.

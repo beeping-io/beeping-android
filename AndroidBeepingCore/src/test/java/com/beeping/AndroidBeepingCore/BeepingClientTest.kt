@@ -116,6 +116,41 @@ class BeepingClientTest {
         }
 
     @Test
+    fun `listen maps AudioFocusLost to Failed then Stopped`() =
+        runTest {
+            // BEE-2307: LocalEncoder closes the decode flow with
+            // BeepingException(AudioFocusLost) on a real loss of audio focus.
+            // listen() must surface it as Failed(AudioFocusLost) then Stopped.
+            val encoder =
+                object : BeepingEncoder {
+                    override suspend fun encode(key: String): ByteArray = ByteArray(0)
+
+                    override suspend fun encodeScheduled(
+                        key: String,
+                        duration: Float,
+                        startTime: Float,
+                        interval: Float,
+                        beepGainDb: Float,
+                        audible: Boolean,
+                    ): ByteArray = ByteArray(0)
+
+                    override fun decoded(): Flow<BeepingPayload> =
+                        flow {
+                            throw BeepingException(BeepingError.AudioFocusLost)
+                        }
+
+                    override fun close() {}
+                }
+
+            client(encoder).listen().test {
+                assertEquals(BeepingEvent.Started, awaitItem())
+                assertEquals(BeepingEvent.Failed(BeepingError.AudioFocusLost), awaitItem())
+                assertEquals(BeepingEvent.Stopped, awaitItem())
+                awaitComplete()
+            }
+        }
+
+    @Test
     fun `send delegates to encoder_encode and returns success when bytes returned`() =
         runTest {
             val expectedKey = "abc12"
