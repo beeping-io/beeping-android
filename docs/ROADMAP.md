@@ -21,7 +21,7 @@
 | **Esfuerzo con margen** | wave 1: 17 días hábiles (real: 12 sesiones / 18 días cal.) + wave 2: ~5 días |
 | **Estado global** | 🔄 **REABIERTO — wave 2 (C API coverage + contract parity)** desde 2026-06-02. Audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto → 4 tasks nuevas (BEE-2313..2316). Más 3 followups de contract-parity con `beeping_flutter`/iOS (BEE-2305/06/07). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9. |
 | **Última actualización** | 2026-06-02 (trigger: `Scope change — reopen Phase 8 wave 2: +4 C API coverage tasks + 3 contract-parity followups`) |
-| **Tasks completadas** | 24 / 34 · **124 SP cerrados de 159 (78%)** · 32 SP wave 2 open · BEE-67 (3 SP) deferred a Phase 9 |
+| **Tasks completadas** | 25 / 34 · **126 SP cerrados de 159 (79%)** · 30 SP wave 2 open · BEE-67 (3 SP) deferred a Phase 9 |
 | **Velocidad observada** | 122 SP en 12 sesiones (wave 1); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
@@ -86,7 +86,7 @@ Audit `beeping-android` ↔ `beeping-core` v0.8.1: 13 funciones del C API sin ex
 | # | Linear | Título | SP | Tipo | Estado |
 |---|---|---|---|---|---|
 | 21 | [BEE-2307](https://linear.app/me8/issue/BEE-2307) | 🐛 Emitir `BeepingError.AudioFocusLost` en pérdida real de foco de audio | 2 | contract parity | ✅ Done |
-| 22 | [BEE-2306](https://linear.app/me8/issue/BEE-2306) | 🔗 Inyección de trace-id externo en `BeepingClient.Builder` (X-Trace-Id e2e) | 2 | contract parity | ⏳ Pending |
+| 22 | [BEE-2306](https://linear.app/me8/issue/BEE-2306) | 🔗 Inyección de trace-id externo en `BeepingClient.Builder` (X-Trace-Id e2e) | 2 | contract parity | ✅ Done |
 | 23 | [BEE-2305](https://linear.app/me8/issue/BEE-2305) | 🎚️ Exponer encoding mode (audible/nonAudible/hidden/all) en Builder + send() + listen() | 5 | contract parity | ⏳ Pending |
 | 24 | [BEE-2313](https://linear.app/me8/issue/BEE-2313) | 📊 Exponer reception metrics (confidence/error/noise/volume/mode) en `BeepingEvent.Decoded` | 8 | C API coverage | ⏳ Pending |
 | 25 | [BEE-2314](https://linear.app/me8/issue/BEE-2314) | 🗓️ Scheduled-payload decode (`ParseScheduledPayload` + `GetDecodedScheduledPayload`) | 5 | C API coverage | ⏳ Pending |
@@ -95,7 +95,7 @@ Audit `beeping-android` ↔ `beeping-core` v0.8.1: 13 funciones del C API sin ex
 | 28 | [BEE-2320](https://linear.app/me8/issue/BEE-2320) | 🚀 Cut & publish wave-2 release a Maven Central (release-please + GPG) — *blocked by 21–27* | 3 | release ops | ⏳ Pending |
 | 29 | [BEE-2321](https://linear.app/me8/issue/BEE-2321) | ✅ Verify wave-2 release end-to-end (Maven Central consumible + smoke) — *blocked by 28* | 2 | release ops | ⏳ Pending |
 | 30 | [BEE-2326](https://linear.app/me8/issue/BEE-2326) | 🔒 Bump `fast-uri` ≥3.1.2 — resolver 2 Dependabot high (host confusion + path traversal) | 1 | security | ⏳ Pending |
-| | **Totales wave 2** | | **34** | | **1 cerrado (BEE-2307) / 32 open** |
+| | **Totales wave 2** | | **34** | | **2 cerrados (BEE-2307, BEE-2306) / 30 open** |
 
 > **Release gating**: BEE-2320 (cut+publish) tiene relaciones `blocks` desde las 7 features → no arranca hasta cerrarlas. BEE-2321 (verify) `blocked by` BEE-2320. El topological sort de `/tasks` las mantiene al final automáticamente.
 

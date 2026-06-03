@@ -14,10 +14,10 @@
 - **Fecha fin real (wave 1)**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
 - **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
-- **Última actualización**: 2026-06-03 (trigger: `Closed BEE-2307 + Scope change — add BEE-2326 (fast-uri Dependabot fix)`)
+- **Última actualización**: 2026-06-03 (trigger: `Closed BEE-2307 + BEE-2306 + Scope change — add BEE-2326 (fast-uri Dependabot fix)`)
 - **Story points totales**: 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326)
-- **Story points cerrados**: **124 SP** (122 wave 1 + BEE-2307 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: **32 SP** (wave 2 open: BEE-2306 2 + BEE-2305 5 + BEE-2313 8 + BEE-2314 5 + BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1)
+- **Story points cerrados**: **126 SP** (122 wave 1 + BEE-2307 + BEE-2306 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: **30 SP** (wave 2 open: BEE-2305 5 + BEE-2313 8 + BEE-2314 5 + BEE-2315 3 + BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1)
 - **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
@@ -28,7 +28,13 @@
 
 ## 📜 History
 
-### [2026-06-03] — ✅ Closed BEE-2307 + 🔒 Scope change: add BEE-2326 (fast-uri Dependabot fix, +1 SP)
+### [2026-06-03] — ✅ Closed BEE-2307 + BEE-2306 + 🔒 Scope change: add BEE-2326 (fast-uri Dependabot fix, +1 SP)
+
+**BEE-2306** (commit `feat(http): BEE-2306 inject external trace-id via BeepingClient.Builder`):
+- `BeepingClient.Builder.traceId(value)` público — usado **verbatim** (sin truncar) o autogenera UUID-8 por default; `require(isNotBlank())` en `build()`.
+- Cero cambios en factory/CloudEncoder/logger: el `traceId` resuelto ya fluía a `X-Trace-Id` + tag del logger.
+- `+4` tests en `BeepingClientBuilderTest` (11/11). Header propagation ya cubierta por `CloudEncoderTest`. QA Skipped (telemetría sin UI). Gates ✅.
+
 
 **BEE-2307** (commit `feat(audio): BEE-2307 emit BeepingError.AudioFocusLost on real audio-focus loss`):
 - Nuevo `AudioFocusGuard.kt` (`internal`) — `AudioManager` focus request (AudioFocusRequest API ≥26 / overload legacy 24-25) → `onLoss` en `AUDIOFOCUS_LOSS`/`LOSS_TRANSIENT`; `abandon()` idempotente.
