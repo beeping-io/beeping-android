@@ -16,8 +16,8 @@
 - **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
 - **Última actualización**: 2026-06-03 (trigger: `Scope change — remove :app sample (BEE-2336 deferred to Phase 10) + cancel BEE-2331`)
 - **Story points totales**: 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326). BEE-2331 cancelada; BEE-2336 (rebuild example) movida a Phase 10.
-- **Story points cerrados**: **147 SP** (122 wave 1 + BEE-2307 + BEE-2306 + BEE-2305 + BEE-2313 + BEE-2314 + BEE-2315 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: **9 SP** (wave 2 open: BEE-2316 3 + BEE-2320 3 + BEE-2321 2 + BEE-2326 1)
+- **Story points cerrados**: **150 SP** (122 wave 1 + BEE-2307/2306/2305/2313/2314/2315/2316 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: **6 SP** (wave 2 open: BEE-2320 3 + BEE-2321 2 + BEE-2326 1) — **C API coverage completa**
 - **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
@@ -27,6 +27,15 @@
 ---
 
 ## 📜 History
+
+### [2026-06-03] — ✅ Closed BEE-2316 (advanced config: SetAudioSignature + SetLogPath, paridad iOS)
+
+**BEE-2316** (commit `feat(jni): BEE-2316 advanced config — SetAudioSignature + SetLogPath`):
+- **Scope shift** (founder "lo mismo que iOS"): el title pedía SetLogPath "paridad iOS" vs el body "skip". Audit de `beeping-ios` confirmó que iOS expone **ambos** (`setAudioSignature` + `setNativeLogPath`) → se bridgean los dos (no skip de SetLogPath). Solo `ResetEncodedAudioBuffer` queda skip (interno, drain — `pending-015`).
+- 2 bridges JNI (`setAudioSignature` handle-bound + `setLogPath` global) verificados en 3 ABIs. `BeepingClient.setAudioSignature(FloatArray?): Boolean` (valida ≤2s, aplica per-encode) + `BeepingClient.setNativeLogPath(String?): Boolean` (static). `BeepingEncoder` gana el método con default `false`.
+- +3 tests. QA Skipped (sample app borrado). **Cierra la C API coverage de wave 2.**
+
+---
 
 ### [2026-06-03] — ✅ Closed BEE-2315 (diagnostics: core version + decode freq range)
 
