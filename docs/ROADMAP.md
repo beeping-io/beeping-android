@@ -21,7 +21,7 @@
 | **Esfuerzo con margen** | wave 1: 17 días hábiles (real: 12 sesiones / 18 días cal.) + wave 2: ~5 días |
 | **Estado global** | 🔄 **REABIERTO — wave 2 (C API coverage + contract parity)** desde 2026-06-02. Audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto → 4 tasks nuevas (BEE-2313..2316). Más 3 followups de contract-parity con `beeping_flutter`/iOS (BEE-2305/06/07). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9. |
 | **Última actualización** | 2026-06-02 (trigger: `Scope change — reopen Phase 8 wave 2: +4 C API coverage tasks + 3 contract-parity followups`) |
-| **Tasks completadas** | 30 / 34 · **150 SP cerrados de 159 (94%)** · 6 SP wave 2 open · BEE-2331 cancelada · BEE-67 (3 SP) deferred a Phase 9 |
+| **Tasks completadas** | 31 / 34 · **151 SP cerrados de 159 (95%)** · 5 SP wave 2 open (solo release) · BEE-2331 cancelada · BEE-67 (3 SP) deferred a Phase 9 |
 | **Velocidad observada** | 122 SP en 12 sesiones (wave 1); recalibración deferred — datos contra ejecutor Claude no representan velocidad humana |
 
 ---
@@ -94,10 +94,10 @@ Audit `beeping-android` ↔ `beeping-core` v0.8.1: 13 funciones del C API sin ex
 | 27 | [BEE-2316](https://linear.app/me8/issue/BEE-2316) | 🎛️ Advanced config: `SetAudioSignature` + `SetLogPath` (paridad iOS) + skip `Reset` | 3 | C API coverage | ✅ Done |
 | 28 | [BEE-2320](https://linear.app/me8/issue/BEE-2320) | 🚀 Cut & publish wave-2 release a Maven Central (release-please + GPG) — *blocked by 21–27* | 3 | release ops | ⏳ Pending |
 | 29 | [BEE-2321](https://linear.app/me8/issue/BEE-2321) | ✅ Verify wave-2 release end-to-end (Maven Central consumible + smoke) — *blocked by 28* | 2 | release ops | ⏳ Pending |
-| 30 | [BEE-2326](https://linear.app/me8/issue/BEE-2326) | 🔒 Bump `fast-uri` ≥3.1.2 — resolver 2 Dependabot high (host confusion + path traversal) | 1 | security | ⏳ Pending |
+| 30 | [BEE-2326](https://linear.app/me8/issue/BEE-2326) | 🔒 Bump `fast-uri` ≥3.1.2 — resolver 2 Dependabot high (host confusion + path traversal) | 1 | security | ✅ Done |
 | 31 | [BEE-2331](https://linear.app/me8/issue/BEE-2331) | 📱 ~~Sample app: selector de encoding mode~~ | 2 | sample/QA | ❌ Canceled (superseded por BEE-2336, Phase 10) |
 | — | [BEE-2336](https://linear.app/me8/issue/BEE-2336) | 📱 Rebuild example app como copia del de beeping_flutter | 8 | example | 🌅 Phase 10 (diferido) |
-| | **Totales wave 2** | | **34** | | **7 cerrados (2307, 2306, 2305, 2313, 2314, 2315, 2316) / 6 open** |
+| | **Totales wave 2** | | **34** | | **8 cerrados (2307, 2306, 2305, 2313, 2314, 2315, 2316, 2326) / 5 open (solo release)** |
 
 > **Release gating**: BEE-2320 (cut+publish) tiene relaciones `blocks` desde las 7 features → no arranca hasta cerrarlas. BEE-2321 (verify) `blocked by` BEE-2320. El topological sort de `/tasks` las mantiene al final automáticamente.
 
