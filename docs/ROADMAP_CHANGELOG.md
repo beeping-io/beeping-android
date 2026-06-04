@@ -13,20 +13,33 @@
 - **Fecha de inicio del proyecto**: 2026-04-28 (mar)
 - **Fecha fin real (wave 1)**: ✅ **2026-05-16 (sáb)** — followups extension (core release Phase 8 cerró 2026-05-12)
 - **Velocidad asumida**: 8 story points / día hábil
-- **Estado global**: 🔄 **REABIERTO (wave 2 · desde 2026-06-02)** — Phase 8 vuelve a abrir para una segunda ola de followups: **C API coverage** (audit reveló 13 funciones de `beeping-core` v0.8.1 sin exponer + `BeepingPayload.confidence` campo muerto) + **contract parity** con `beeping_flutter`/iOS (`AudioFocusLost`, trace-id externo, encoding mode) + **security cleanup** (Dependabot). ✅ **BEE-2307 cerrada** (2026-06-03). Wave 1 sigue ✅: `io.beeping:beeping-android:0.0.0` en Maven Central + scheduler API (BEE-2240). BEE-67 deferred a Phase 9.
-- **Última actualización**: 2026-06-03 (trigger: `Scope change — remove :app sample (BEE-2336 deferred to Phase 10) + cancel BEE-2331`)
-- **Story points totales**: 159 SP (125 wave 1 + 34 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security BEE-2326). BEE-2331 cancelada; BEE-2336 (rebuild example) movida a Phase 10.
-- **Story points cerrados**: **151 SP** (122 wave 1 + BEE-2307/2306/2305/2313/2314/2315/2316/2326 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
-- **Story points remaining (esta Phase)**: **5 SP** (solo release: BEE-2320 3 + BEE-2321 2) — **features + security completas; BEE-2320 desbloqueada**
-- **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 en curso desde 2026-06-02
+- **Estado global**: ✅ **WAVE 2 RELEASED** — `io.beeping:beeping-android:0.2.0` **LIVE en Maven Central** (2026-06-04, firmado + sources + javadoc). 10 tasks: contract parity (BEE-2305/06/07) + C API coverage (BEE-2313..2316) + security (BEE-2326) + release (BEE-2320/2321). Milestone **sigue abierto** por 1 task diferida: **BEE-2340** (commitlint upstream). BEE-2331 cancelada; BEE-2336 → Phase 10; BEE-67 → Phase 9.
+- **Última actualización**: 2026-06-04 (trigger: `Released wave 2 v0.2.0 (BEE-2320 + BEE-2321 done); BEE-2340 deferred — milestone open`)
+- **Story points totales**: 160 SP (125 wave 1 + 35 wave 2: 9 contract-parity + 19 C-API-coverage + 5 release + 1 security + 1 tooling BEE-2340). BEE-2331 cancelada; BEE-2336 → Phase 10.
+- **Story points cerrados**: **156 SP** (122 wave 1 + BEE-2307/2306/2305/2313/2314/2315/2316/2326/2320/2321 wave 2) — BEE-67 deferred = 3 SP movidos a Phase 9
+- **Story points remaining (esta Phase)**: **1 SP** (BEE-2340 deferred — upstream del `release` type al preset commitlint; mantiene el milestone abierto)
+- **Days esfuerzo (real)**: 12 sesiones across 18 días calendario (wave 1, 2026-04-28 → 2026-05-16) + wave 2 (2026-06-02 → 2026-06-04)
 
 | # | Milestone | SP | Inicio est. | Fin est. | Estado |
 |---|---|---|---|---|---|
-| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 159 | 2026-04-28 | wave 2 ETA 2026-06-09 | 🔄 In Progress (wave 2) |
+| 1 | 🤖 Phase 8 — beeping-android (Kotlin 2.0) | 160 | 2026-04-28 | wave 2 released 2026-06-04 | 🔄 Open (v0.2.0 released; BEE-2340 deferred) |
 
 ---
 
 ## 📜 History
+
+### [2026-06-04] — 🚀 Released wave 2 — beeping-android v0.2.0 LIVE en Maven Central (BEE-2320 + BEE-2321)
+
+**Trigger**: cierre del release de wave 2. `io.beeping:beeping-android` **0.1.0 → 0.2.0** (feat → MINOR, regla 0.x).
+
+**Flujo ejecutado**:
+- **BEE-2320** — version bump 0.2.0 + **PR #10** `milestone/phase-8` → develop (squash `49b4488`) + **PR #11** develop → main (merge `fb99256`) + **tag `v0.2.0`** → `release.yml` corrió verde (validate secrets → publishToMavenLocal → publishAndReleaseToMavenCentral, firma GPG). El artefacto se **auto-liberó** desde Sonatype (sin click manual).
+- **BEE-2321** — verificado en `repo1.maven.org`: `.pom` + `.aar` + `.module` + firmas `.asc` (pom/aar/sources) + `-sources.jar` + `-javadoc.jar` → todos 200; POM lista las deps (ktor-*, kotlinx-*, timber). Smoke en device físico diferido (sin hardware + example app borrado → BEE-2336).
+- **Incidencia resuelta**: el preset commitlint compartido no permitía el tipo `release`, bloqueando develop→main. Fix local (`commitlint.config.mjs`, **PR #12** `3375be2`). Upstream del fix → **BEE-2340** (deferred, Phase 8).
+
+**Net delta**: BEE-2320 (3) + BEE-2321 (2) cerradas → 156 SP cerrados. +1 SP nuevo (BEE-2340, deferred). Total 159 → 160. **El milestone Phase 8 NO se cierra** — queda abierto por BEE-2340 (trabajo de tooling para otro momento).
+
+---
 
 ### [2026-06-03] — ✅ Closed BEE-2326 (fast-uri ≥3.1.2 — 2 Dependabot high resueltas)
 
