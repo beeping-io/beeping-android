@@ -4,7 +4,7 @@
 [versions]
 # Android Gradle Plugin + NDK
 agp = "8.7.3"
-ndk = "27.0.12077973"
+ndk = "28.2.13676358"
 
 # Android SDK levels (Android 7.0+ → Android 15)
 compileSdk = "35"
