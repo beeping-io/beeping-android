@@ -413,9 +413,8 @@ Cualquier task que se cierre antes/después de su SP estimado **dispara recálcu
 
 ## 📎 Referencias
 
-- Global methodology: `~/.claude/CLAUDE.md`
-- Beeping Platform Linear project: `https://linear.app/me8/project/03da887d924e`
-- Phase 8 milestone: `https://linear.app/me8/project/03da887d924e?selectedProjectMilestone=cf4da38e-c680-40ba-9194-20d0f075ef73`
+- Global methodology: `~/.gemini/config/rules/methodology.md`
+- Beeping Platform GitHub Project: `https://github.com/orgs/beeping-io/projects/22`
 - Conventions (commit + branch + PR + Renovate): `beeping-io/beeping-meta` → `CONVENTIONS.md`
 - Brand kit: `beeping-io/beeping-meta` → `brand/`
 - Code of Conduct + Security: `beeping-io/beeping-meta` → `CODE_OF_CONDUCT.md`, `SECURITY.md`

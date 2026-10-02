@@ -16,7 +16,7 @@
   `beepingCore = "0.8.0"`.
 - **Verificación**: SHA256 contra el `SHA256SUMS.txt` publicado en la
   misma release. Cosign signature verify está deferred — ver
-  [pending-011](PENDING.md) y [BEE-2225](https://linear.app/me8/issue/BEE-2225) upstream.
+  [pending-011](PENDING.md) y BEE-2225 upstream.
 - **Cache**: el download es up-to-date si la versión y los archivos
   extraídos no cambian. Builds incrementales no re-descargan.
 
@@ -75,7 +75,7 @@ keyless local requiere `--certificate <file>` o `--bundle <file>`
 además de la signature.
 
 Tracked:
-- [BEE-2225](https://linear.app/me8/issue/BEE-2225) upstream — cambiar a `--bundle`.
+- BEE-2225 upstream — cambiar a `--bundle`.
 - [pending-011](PENDING.md) en este repo — añadir verify cuando upstream cierre.
 
 Mientras tanto, SHA256SUMS.txt provee garantía de integridad: el
@@ -129,7 +129,7 @@ Significa que el `.so` no se compiló con `-Wl,-z,max-page-size=16384`.
 Es un bug en el release upstream; abrir issue en
 [`beeping-core`](https://github.com/beeping-io/beeping-core/issues).
 El último checked working: v0.8.0 cierra
-[BEE-2221](https://linear.app/me8/issue/BEE-2221) que añadió el flag.
+BEE-2221 que añadió el flag.
 
 ### Build offline post-cache
 

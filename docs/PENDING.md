@@ -5,10 +5,10 @@ no ahora".
 
 🎯 **Aquí entra**: deuda detectada, follow-ups de incidentes, feedback accionable,
 "esto hay que hacerlo pero no hemos decidido cuándo".
-🚫 **Aquí NO entra**: trabajo ya agendado a un milestone (eso va a Linear).
+🚫 **Aquí NO entra**: trabajo ya agendado a un milestone (eso va a GitHub Projects).
 
-🪄 **Promoción**: ponerle un milestone a un pending lo convierte en task Linear
-`BEE-XXXX` y se elimina automáticamente de este fichero.
+🪄 **Promoción**: ponerle un milestone a un pending lo convierte en issue en GitHub Projects
+(`task-#<id>`) y se elimina automáticamente de este fichero.
 
 ---
 
@@ -46,7 +46,7 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 |---------|--------|-------------|
 | 🆕 | Nuevo | Recién capturado, sin triage |
 | 🔍 | En triage | Decidiendo prioridad / scope |
-| 📋 | Promovido | Ya es task Linear (`BEE-XXXX`) — debería haberse eliminado de aquí |
+| 📋 | Promovido | Ya es issue en GitHub Projects (`#<id>`) — debería haberse eliminado de aquí |
 | 🚧 | Bloqueado | Esperando algo externo (especificar) |
 | ❌ | No procede | Decidido no avanzar (apuntar el porqué) |
 
@@ -166,7 +166,7 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 - 📅 **Fecha añadida**: 2026-05-09
 - 🏷️ **Tipo**: security
 - 🧭 **Trigger**: BEE-65 implementa SHA256-only verify del download de `beeping-core` releases porque el workflow upstream solo emite `.sig` sin `.bundle` ni cert. La verificación cosign keyless local es imposible sin uno de los dos. Detectado durante BEE-65 al intentar `cosign verify-blob` contra `beeping-core v0.8.0`.
-- ⚙️ **Acción requerida**: cuando [BEE-2225](https://linear.app/me8/issue/BEE-2225) (Phase 1, `beeping-core`) cierre y emita `.cosign-bundle` por artifact, abrir task en `beeping-android` para añadir `cosign verify-blob --bundle <file>.cosign-bundle --certificate-identity-regexp '...beeping-core...' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'` a `DownloadBeepingCoreTask`. Bumpear versión `beepingCore` en `libs.versions.toml` a la primera release con bundles.
+- ⚙️ **Acción requerida**: cuando BEE-2225 (Phase 1, `beeping-core`) cierre y emita `.cosign-bundle` por artifact, abrir task en `beeping-android` para añadir `cosign verify-blob --bundle <file>.cosign-bundle --certificate-identity-regexp '...beeping-core...' --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'` a `DownloadBeepingCoreTask`. Bumpear versión `beepingCore` en `libs.versions.toml` a la primera release con bundles.
 - 🚧 **Bloqueado por**: BEE-2225 upstream en `beeping-core`.
 - 🚦 **Estado**: 🆕 Nuevo
 
@@ -183,9 +183,9 @@ Usa el skill `/pending` (recomendado). O copia este bloque al final del fichero:
 
 - 📅 **Fecha añadida**: 2026-05-11
 - 🏷️ **Tipo**: test
-- 🧭 **Trigger**: durante BEE-2226 el test `SdkPlumbingTest` se diseñó para asertar "SDK plumbing alive" (start token detected + DECODE_COMPLETE reached + getDecodedData callable sin crash) pero NO el exact char round-trip. Razón: `BEEPING_EncodeDataToAudioBuffer` + `BEEPING_DecodeAudioBuffer` no producen un round-trip limpio en in-process feed (el decoder depende de la "función de transferencia" del micrófono físico — AGC, anti-aliasing, ruido térmico — para alinear correctamente el spectral grid). Encoder produce "abc12" → decoder devuelve `null` (integrity fail) o `"faic00cll"` determinista. Tracked upstream en [BEE-2228](https://linear.app/me8/issue/BEE-2228).
+- 🧭 **Trigger**: durante BEE-2226 el test `SdkPlumbingTest` se diseñó para asertar "SDK plumbing alive" (start token detected + DECODE_COMPLETE reached + getDecodedData callable sin crash) pero NO el exact char round-trip. Razón: `BEEPING_EncodeDataToAudioBuffer` + `BEEPING_DecodeAudioBuffer` no producen un round-trip limpio en in-process feed (el decoder depende de la "función de transferencia" del micrófono físico — AGC, anti-aliasing, ruido térmico — para alinear correctamente el spectral grid). Encoder produce "abc12" → decoder devuelve `null` (integrity fail) o `"faic00cll"` determinista. Tracked upstream en BEE-2228.
 - ⚙️ **Acción requerida**: cuando BEE-2228 cierre y publique nueva release de `beeping-core` con in-process round-trip funcional, (1) bumpear `beepingCore` en `gradle/libs.versions.toml`, (2) reactivar la assertion strict en `SdkPlumbingTest.kt`: `assertEquals("abc12", decoded?.trimEnd(' '))`, (3) confirmar verde en emulator.
-- 🚧 **Bloqueado por**: [BEE-2228](https://linear.app/me8/issue/BEE-2228) upstream en `beeping-core`.
+- 🚧 **Bloqueado por**: BEE-2228 upstream en `beeping-core`.
 - 🚦 **Estado**: 🆕 Nuevo
 
 ### ⏳ pending-015 — `BEEPING_ResetEncodedAudioBuffer` no expuesto (skip intencional)

@@ -303,7 +303,7 @@ Release ops (al final del milestone · 5 SP · gated por `blocks` relations sobr
 - **Sample app**: quitado el cosmético "Send (LOCAL — TODO BEE-65)" → "Send". KDoc de `SampleEnv` actualizado.
 - **Kover**: `LocalEncoder*` excluida del verify rule (path real exercise = instrumented), justificación documentada inline.
 - **Pending entries**: `pending-012` (eliminar chdir workaround) + `pending-013` (instrumented tests CI setup).
-- **Upstream task creada**: [BEE-2227](https://linear.app/me8/issue/BEE-2227) en `beeping-core` Phase 1 milestone — Backlog, priority 3.
+- **Upstream task creada**: BEE-2227 en `beeping-core` Phase 1 milestone — Backlog, priority 3.
 
 **Side effect descubierto durante QA**: `BEEPING_Create()` internamente abre un `spdlog::rotating_file_sink` con path **relativo** `logs/beeping.log`. En Android cwd = `/` (read-only) → `fopen` fails → `spdlog_ex` uncaught → SIGABRT. Workaround downstream: el shim `mkdir($filesDir/logs)` + `chdir($filesDir)` antes de `BEEPING_Create`. Funciona pero `chdir` es process-wide → hack temporal. Solución correcta upstream en BEE-2227 (Phase 1).
 
