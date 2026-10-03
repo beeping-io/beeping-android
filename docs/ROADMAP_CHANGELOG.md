@@ -450,7 +450,7 @@ BEE-67 **depende de BEE-65** (necesita `.so` listener funcional en API 35+/emula
   - `:app:assembleDebug` — APK 19 MB.
 - **QA emulator API 37** (los 7 checks de Linear):
   1. ✅ App abre · main screen render correcto.
-  2. ⏭️ Send audio chirp — saltado por pivot a BEE-67.
+  2. ⏭️ Send audio beep — saltado por pivot a BEE-67.
   3. ✅ Permission flow Listen deny → chip rojo `RECORD_AUDIO permission not granted...`.
   4. ✅ 5-tap → debug console (bottom sheet 70%, logs JSON con trace-IDs).
   5. ✅ Share button → ACTION_SEND chooser con preview de logs.

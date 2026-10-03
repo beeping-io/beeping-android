@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
  *   (beeping-core ≥ 0.8.1 logs to logcat via android_sink_mt — BEE-2227).
  * - `BEEPING_Configure` accepts mode/sample-rate/buffer-size and returns ≥ 0.
  * - `BEEPING_EncodeDataToAudioBuffer` produces a non-empty audio buffer for
- *   a valid base32 payload — fingerprint of a real chirp.
+ *   a valid base32 payload — fingerprint of a real beep.
  * - `BEEPING_GetEncodedAudioBuffer` drains the buffer cleanly across multiple
  *   calls until exhausted.
  * - `BEEPING_DecodeAudioBuffer` reaches `DECODE_COMPLETE` (-3) when fed back
@@ -91,7 +91,7 @@ class SdkPlumbingTest {
 
         // ── DECODE ──────────────────────────────────────────────────────────
         // Pre/post pad with silence — the decoder needs a calibration window
-        // before the chirp and slack after the last token to fire DECODE_COMPLETE.
+        // before the beep and slack after the last token to fire DECODE_COMPLETE.
         // MODE_ALL accepts both audible + inaudible; empirically MODE_INAUDIBLE
         // alone never reached DECODE_COMPLETE in this in-process feed (upstream
         // codec calibration assumes mic-introduced noise).
@@ -147,7 +147,7 @@ class SdkPlumbingTest {
         // ── ASSERT: SDK plumbing alive ──────────────────────────────────────
         assertTrue(
             "decoder must detect the encoder's start token (proves spectral " +
-                "analysis sees the chirp)",
+                "analysis sees the beep)",
             sawStartToken,
         )
         assertTrue(

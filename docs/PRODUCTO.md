@@ -219,7 +219,7 @@ Internamente:
 | **Tests calidad** | Pitest mutation score ≥ 70% en módulo SDK |
 | **CI tiempo** | < 10 min build + test + lint full pipeline |
 | **APK tamaño** | AAR < 500 KB (excluyendo native libs); native libs < 2 MB por ABI |
-| **Latencia decode** | < 200 ms desde fin de chirp hasta emisión de `BeepingEvent.Decoded` (LOCAL) |
+| **Latencia decode** | < 200 ms desde fin de beep hasta emisión de `BeepingEvent.Decoded` (LOCAL) |
 | **Latencia decode** | < 1500 ms (CLOUD) — depende de RTT |
 | **Memory** | Steady-state < 30 MB durante listen |
 | **Privacy** | Cero PII en logs, telemetry opt-out por defecto, audit anual de eventos emitidos |
